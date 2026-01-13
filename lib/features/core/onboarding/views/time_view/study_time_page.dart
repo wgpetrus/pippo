@@ -130,9 +130,20 @@ class StudyTimePage extends StatelessWidget {
       child: Obx(() => AppButton(
         text: 'Continue',
         onPressed: controller.studyTime.value.isNotEmpty
-            ? controller.nav.goToPauseTwo
+            ? () => _onContinue(controller)
             : null,
       )),
     );
+  }
+
+  // Métodos
+  void _onContinue(OnboardingController controller) {
+    if (controller.isAddingCourse.value) {
+      // Pula direto para conclusão (sem passar por cadastro)
+      controller.nav.goToConclusion();
+    } else {
+      // Fluxo normal do onboarding
+      controller.nav.goToPauseTwo();
+    }
   }
 }

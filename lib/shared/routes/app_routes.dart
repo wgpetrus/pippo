@@ -4,6 +4,8 @@ import '../../features/core/auth/bindings/auth_binding.dart';
 import '../../features/core/auth/views/signin_view.dart';
 import '../../features/core/onboarding/bindings/onboarding_binding.dart';
 import '../../features/core/onboarding/views/welcome_view.dart';
+import '../../features/inners/home/bindings/home_binding.dart';
+import '../../features/inners/home/views/home_view.dart';
 import '../../features/inners/splash/bindings/splash_binding.dart';
 import '../../features/inners/splash/views/splash_view.dart';
 
@@ -13,6 +15,7 @@ class AppRoutes {
   static const splash = '/splash';
   static const onboarding = '/onboarding';
   static const auth = '/auth';
+  static const home = '/home';
 
   // Lista de rotas
   static final routes = [
@@ -30,6 +33,11 @@ class AppRoutes {
       name: auth,
       page: () => const SigninView(),
       binding: AuthBinding(),
+    ),
+    GetPage(
+      name: home,
+      page: () => const HomeView(),
+      binding: HomeBinding(),
     ),
   ];
 }

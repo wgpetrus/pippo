@@ -35,6 +35,7 @@ class AppTheme {
   static const Color pink100 = Color(0xFFFFD0F1);
   static const Color blue = Color(0xFF004CBD);
   static const Color blue100 = Color(0xFFE2EEFF);
+  static const Color blueDark = Color(0xFF1565C0);
   static const Color brightCyanBlue = Color(0xFF00C3EC);
   static const Color brightCyanBlue100 = Color(0xFFBFF4FF);
   static const Color purple = Color(0xFF9200FF);

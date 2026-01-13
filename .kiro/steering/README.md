@@ -6,11 +6,25 @@
 
 ## Arquivos
 
+### Padrões Fixos (todos os projetos)
+
 | Arquivo | Conteúdo |
 |---------|----------|
+| [code-rules.md](./code-rules.md) | Regras gerais e resumo de todas as regras |
 | [architecture.md](./architecture.md) | Estrutura de pastas, navegação, nomenclatura |
-| [code-rules.md](./code-rules.md) | Regras de código, controllers, views |
-| [firebase.md](./firebase.md) | Error handlers, conversão de datas |
+| [dev-flow.md](./dev-flow.md) | Fluxo de desenvolvimento etapa por etapa |
+| [getx-patterns.md](./getx-patterns.md) | Controllers, Views, Obx, navegação |
+| [forms-validation.md](./forms-validation.md) | Padrão de formulários e validação |
+| [firebase.md](./firebase.md) | Error handlers padronizados, conversão de datas |
+| [project-structure.md](./project-structure.md) | Organização de arquivos e imports |
+| [styling-guide.md](./styling-guide.md) | Theme, fontes, ícones e packages de UI |
+| [security-storage.md](./security-storage.md) | SharedPreferences, SecureStorage, segurança |
+| [conventions.md](./conventions.md) | Comentários, mensagens e formatação |
+
+### Por Projeto
+
+| Arquivo | Conteúdo |
+|---------|----------|
 | [project.md](./project.md) | Definição do projeto (preencher por projeto) |
 
 ---

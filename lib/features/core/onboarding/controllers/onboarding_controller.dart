@@ -7,6 +7,7 @@ class OnboardingController extends GetxController {
   // Estados
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+  final isAddingCourse = false.obs;
 
   // Navegação
   final nav = OnboardingNavigation();

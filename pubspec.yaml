@@ -55,6 +55,7 @@ flutter:
   assets:
     - lib/assets/images/logo/
     - lib/assets/images/onboarding/
+    - lib/assets/images/onboarding/avatars/
     - lib/assets/images/auth/
     - lib/assets/images/characters/
     - lib/assets/images/flags/
@@ -62,6 +63,15 @@ flutter:
     - lib/assets/images/icons/icons-level/
     - lib/assets/images/icons/icon-motivation/
     - lib/assets/images/icons/icon-stars/
+    - lib/assets/images/icons/icons-appbar-home/
+    - lib/assets/images/icons/icons-bottom-bar/
+    - lib/assets/images/icons/icons-button-lesson/
+    - lib/assets/images/icons/icons-shop-page/
+    - lib/assets/images/icons/icons-escudo/
+    - lib/assets/images/icons/icons-treasure-page/
+    - lib/assets/images/icons/icons-profile/
+    - lib/assets/images/backgrounds/
+    - lib/assets/images/backgrounds/backg-button-effect/
   
   fonts:
     - family: Nunito

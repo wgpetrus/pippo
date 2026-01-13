@@ -18,11 +18,13 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   // Animações
   late final AnimationController _animController;
   late final Animation<double> _animation;
+  late final OnboardingController _controller;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
+    _controller = Get.find<OnboardingController>();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -41,8 +43,6 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OnboardingController>();
-
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: Column(
@@ -68,7 +68,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                   const SizedBox(height: 24),
                   AppButton(
                     text: 'Let\'s Get Learning',
-                    onPressed: controller.nav.finishOnboarding,
+                    onPressed: _onButtonPressed,
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -94,5 +94,17 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
         fit: BoxFit.fitWidth,
       ),
     );
+  }
+
+  // Métodos
+  void _onButtonPressed() {
+    if (_controller.isAddingCourse.value) {
+      // Volta para home e reseta estado
+      _controller.isAddingCourse.value = false;
+      Get.offAllNamed('/home');
+    } else {
+      // Finaliza onboarding normal
+      _controller.nav.finishOnboarding();
+    }
   }
 }

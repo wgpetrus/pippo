@@ -74,16 +74,18 @@ Usar para separar seções em arquivos maiores:
 
 ## Comentários e Mensagens
 
-- **Comentários**: em português, objetivos
+- **Comentários**: em português, objetivos (termos técnico são aceitáveis)
 - **Mensagens de erro para usuário**: em português e amigáveis
 
 ```dart
 // ✅ CORRETO
-errorMessage.value = 'Não foi possível fazer login. Verifique seus dados.';
+errorMessage.value = 'Não foi possível fazer login. Tente novamente.';
 
 // ❌ ERRADO - técnico demais
 errorMessage.value = 'FirebaseAuthException: user-not-found';
 ```
+
+> **Nota:** Para mensagens de erro Firebase, usar os handlers padronizados em [firebase.md](firebase.md).
 
 ---
 

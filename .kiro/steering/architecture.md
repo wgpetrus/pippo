@@ -35,11 +35,12 @@ Cada feature deve ter:
 feature_name/
 ├── views/           # Telas da feature
 ├── controllers/     # Lógica da feature
-├── bindings/        # Injeção de dependência (se tiver rota própria)
-└── widgets/         # Widgets específicos desta feature (opcional)
+├── widgets/         # Widgets específicos desta feature
+└── bindings/        # Injeção de dependência (se tiver rota própria)
 ```
 
 **Regras:**
+- `widgets/` é criada junto com a feature
 - `bindings/` só é necessário se a feature tem rota própria no `app_routes.dart`
 - Features que são páginas internas (via estado) não precisam de binding próprio
 
@@ -170,11 +171,40 @@ Sempre em `lib/assets/`:
 ```
 lib/assets/
 ├── fonts/
-│   └── Poppins/
-│       ├── Poppins-Regular.ttf
-│       ├── Poppins-Medium.ttf
+│   └── NomeDaFonte/
+│       ├── NomeDaFonte-Regular.ttf
+│       ├── NomeDaFonte-Medium.ttf
 │       └── ...
 └── images/
     ├── logo.png
     └── ...
 ```
+
+---
+
+## Estrutura de Testes
+
+A pasta `test/` deve espelhar a estrutura de `lib/` para facilitar localização:
+
+```
+test/
+├── features/
+│   ├── core/
+│   │   └── [feature_name]/
+│   │       └── controllers/
+│   │           └── feature_controller_test.dart
+│   └── inners/
+│       └── [feature_name]/
+│           └── controllers/
+└── shared/
+    ├── utils/
+    │   └── helper_test.dart
+    └── widgets/
+        └── app_button_test.dart
+```
+
+**Regras:**
+- Estrutura idêntica ao `lib/` para fácil navegação
+- Sufixo `_test.dart` obrigatório
+- Testar controllers e widgets reutilizáveis
+- Views não precisam de testes (não contêm lógica)

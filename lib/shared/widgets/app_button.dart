@@ -8,6 +8,7 @@ class AppButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final bool isPrimary;
   final bool isLoading;
+  final Widget? prefixIcon;
   final Widget? suffixIcon;
 
   const AppButton({
@@ -16,6 +17,7 @@ class AppButton extends StatefulWidget {
     this.onPressed,
     this.isPrimary = true,
     this.isLoading = false,
+    this.prefixIcon,
     this.suffixIcon,
   });
 
@@ -46,13 +48,27 @@ class _AppButtonState extends State<AppButton> {
       );
     }
 
-    if (widget.suffixIcon != null) {
+    // Com prefix e suffix
+    if (widget.prefixIcon != null || widget.suffixIcon != null) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(widget.text, style: AppTheme.textLgBold.copyWith(color: textColor)),
-          const SizedBox(width: 8),
-          widget.suffixIcon!,
+          if (widget.prefixIcon != null) ...[
+            widget.prefixIcon!,
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Text(
+              widget.text,
+              style: AppTheme.textLgBold.copyWith(color: textColor),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (widget.suffixIcon != null) ...[
+            const SizedBox(width: 8),
+            widget.suffixIcon!,
+          ],
         ],
       );
     }

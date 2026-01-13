@@ -90,20 +90,24 @@ class _LoginViewState extends State<LoginView> {
 
 ## Validadores no Controller
 
-Validadores ficam no controller, mas são simples (retornam `String?`, sem side effects):
+Validadores ficam no controller, mas são simples (retornam `String?`, sem side effects).
+
+**Importante:** As mensagens devem seguir o padrão definido em [firebase.md](firebase.md) para manter consistência.
 
 ```dart
 class AuthController extends GetxController {
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'E-mail é obrigatório';
-    if (!GetUtils.isEmail(value)) return 'E-mail inválido';
+    if (value == null || value.isEmpty) return 'E-mail é obrigatório.';
+    if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';
     return null;
   }
   
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Senha é obrigatória';
-    if (value.length < 6) return 'Senha deve ter pelo menos 6 caracteres';
+    if (value == null || value.isEmpty) return 'Senha é obrigatória.';
+    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
     return null;
   }
 }
 ```
+
+> **Nota:** Para erros de autenticação Firebase (login, registro, reset), usar os handlers padronizados em [firebase.md](firebase.md).

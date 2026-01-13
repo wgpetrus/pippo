@@ -48,8 +48,14 @@ class AuthController extends GetxController {
   
   // Validadores simples (retornam String?, sem side effects)
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'E-mail é obrigatório';
-    if (!GetUtils.isEmail(value)) return 'E-mail inválido';
+    if (value == null || value.isEmpty) return 'E-mail é obrigatório.';
+    if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';
+    return null;
+  }
+  
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Senha é obrigatória.';
+    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
     return null;
   }
   
@@ -69,9 +75,28 @@ class AuthController extends GetxController {
 }
 ```
 
+> **Nota:** Para erros de Firebase (Auth, Firestore), usar os handlers padronizados em [firebase.md](firebase.md).
+
 ---
 
 ## Views
+
+### Regra Principal
+
+> **⚠️ Views NÃO devem conter lógica de negócio.**
+>
+> A View é apenas para exibição. Toda lógica fica no Controller.
+
+### O que PODE na View
+- `TextEditingController` (para forms)
+- Estados visuais simples (`_obscurePassword`, `_selectedIndex`)
+- Chamadas ao controller (`controller.login()`, `controller.validateEmail()`)
+
+### O que NÃO PODE na View
+- Chamadas diretas ao Firebase/API
+- Manipulação de dados
+- Regras de negócio
+- Validações complexas
 
 ### Padrão: StatelessWidget
 

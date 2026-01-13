@@ -1,6 +1,8 @@
 # Estrutura do Projeto
 
 > Referência: [code-rules.md](code-rules.md)
+>
+> Para nomenclatura de arquivos (`_view`, `_page`, `_controller`), ver [architecture.md](architecture.md).
 
 ---
 
