@@ -54,19 +54,19 @@ class _PauseTwoPageState extends State<PauseTwoPage> with SingleTickerProviderSt
               _buildMascot(),
               const SizedBox(height: 32),
               Text(
-                'Ready to Begin Your Adventure?',
+                'Pronto para Começar Sua Aventura?',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
-                'It only takes a moment to unlock your journey!',
+                'Leva só um momento para desbloquear sua jornada!',
                 style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
                 textAlign: TextAlign.center,
               ),
               const Spacer(flex: 1),
               AppButton(
-                text: "Let's Goo",
+                text: "Vamos lá",
                 onPressed: () => Get.find<OnboardingController>().nav.goToUserName(),
               ),
               const SizedBox(height: 48),

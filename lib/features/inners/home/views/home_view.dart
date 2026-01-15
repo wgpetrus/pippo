@@ -4,7 +4,7 @@ import 'package:popover/popover.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../../../shared/widgets/app_bottombar.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_float_anim.dart';
 import '../../../../shared/widgets/app_lesson_button.dart';
 import '../../leaderboard/views/leaderboard_page.dart';
@@ -95,8 +95,8 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
 
-    return Scaffold(
-      body: Obx(() => IndexedStack(
+    return Obx(() => Scaffold(
+      body: IndexedStack(
         index: controller.currentNavIndex.value,
         children: [
           _buildCoursesPage(context, controller),
@@ -105,7 +105,97 @@ class HomeView extends StatelessWidget {
           const TreasurePage(),
           const ProfilePage(),
         ],
-      )),
+      ),
+      bottomNavigationBar: _buildBottomBar(controller),
+    ));
+  }
+
+  // Bottom Navigation Bar
+  Widget _buildBottomBar(HomeController controller) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(20),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Obx(() => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, AppAssets.bottomRay, controller),
+              _buildNavItem(1, AppAssets.bottomCoins, controller),
+              _buildNavItem(2, AppAssets.bottomCoroa, controller),
+              _buildNavItem(3, AppAssets.bottomBox, controller),
+              _buildAvatarNavItem(4, controller),
+            ],
+          )),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, String iconAsset, HomeController controller) {
+    final isSelected = controller.currentNavIndex.value == index;
+    final containerSize = ResponsiveUtils.width(48, min: 44, max: 56);
+    final iconSize = ResponsiveUtils.width(24, min: 24, max: 28);
+
+    return GestureDetector(
+      onTap: () => controller.onNavTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: containerSize,
+        height: containerSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isSelected ? AppTheme.primary100 : Colors.transparent,
+          border: isSelected
+              ? Border.all(color: AppTheme.primary, width: 2)
+              : null,
+        ),
+        child: Center(
+          child: Image.asset(iconAsset, width: iconSize, height: iconSize),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarNavItem(int index, HomeController controller) {
+    final isSelected = controller.currentNavIndex.value == index;
+    final containerSize = ResponsiveUtils.width(48, min: 44, max: 56);
+
+    return GestureDetector(
+      onTap: () => controller.onNavTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: containerSize,
+        height: containerSize,
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isSelected ? AppTheme.primary100 : Colors.transparent,
+          border: isSelected
+              ? Border.all(color: AppTheme.primary, width: 2)
+              : null,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primary,
+          ),
+          child: ClipOval(
+            child: Image.asset(AppAssets.charDiogo, fit: BoxFit.cover),
+          ),
+        ),
+      ),
     );
   }
 
@@ -147,23 +237,11 @@ class HomeView extends StatelessWidget {
           right: 0,
           child: Builder(
             builder: (ctx) => UnitHeader(
-              unitNumber: 'Unit 1',
-              title: 'Use basic phrases',
+              unitNumber: 'Unidade 1',
+              title: 'Use frases básicas',
               onListTap: () => _showLessonPopover(ctx, controller),
             ),
           ),
-        ),
-
-        // Bottom Bar
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Obx(() => AppBottombar(
-            currentIndex: controller.currentNavIndex.value,
-            avatarAsset: AppAssets.charDiogo,
-            onTap: controller.onNavTap,
-          )),
         ),
       ],
     );
@@ -255,7 +333,7 @@ class HomeView extends StatelessWidget {
         Positioned(
           bottom: 85,
           child: LessonTooltip(
-            text: controller.showContinue.value ? 'Continue' : 'Start!',
+            text: controller.showContinue.value ? 'Continuar' : 'Começar!',
             onTap: controller.onStartTap,
           ),
         ),
@@ -289,10 +367,10 @@ class HomeView extends StatelessWidget {
     CoursesModal.show(
       context,
       courses: const [
-        CourseData(flagAsset: AppAssets.flagFrance, name: 'French', isSelected: true),
-        CourseData(flagAsset: AppAssets.flagUsa, name: 'English'),
+        CourseData(flagAsset: AppAssets.flagFrance, name: 'Francês', isSelected: true),
+        CourseData(flagAsset: AppAssets.flagUsa, name: 'Inglês'),
       ],
-      selectedCourseName: 'French',
+      selectedCourseName: 'Francês',
       currentLevel: 10,
       maxLevel: 15,
       onAddCourse: controller.onAddCourse,
@@ -369,7 +447,7 @@ class HomeView extends StatelessWidget {
     showPopover(
       context: context,
       bodyBuilder: (ctx) => LessonPopoverContent(
-        title: 'Use basic phrases',
+        title: 'Use frases básicas',
         currentLesson: 2,
         totalLessons: 5,
         onStartTap: () {

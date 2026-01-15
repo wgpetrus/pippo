@@ -42,6 +42,21 @@ class AppTheme {
   static const Color purple100 = Color(0xFFF6EBFF);
   static const Color darkYellow = Color(0xFFCBA900);
 
+  // CORES COM OPACIDADE (evita withOpacity() em runtime)
+  static const Color black10 = Color(0x1A171717); // black 10%
+  static const Color primary30 = Color(0x4D07B7FA); // primary 30%
+  static const Color primary05 = Color(0x0D07B7FA); // primary 5%
+  static const Color primaryDark30 = Color(0x4D0099D4); // primaryDark 30%
+  static const Color green60 = Color(0x9933C800); // green 60%
+  static const Color gray400_50 = Color(0x80AAAAAA); // gray400 50%
+  static const Color gray400_40 = Color(0x66AAAAAA); // gray400 40%
+  static const Color gray600_50 = Color(0x80D9D9D9); // gray600 50%
+  static const Color gray600_30 = Color(0x4DD9D9D9); // gray600 30%
+  static const Color gray700_50 = Color(0x80E6E6E6); // gray700 50%
+  static const Color white90 = Color(0xE6FFFFFF); // white 90%
+  static const Color white80 = Color(0xCCFFFFFF); // white 80%
+  static const Color white70 = Color(0xB3FFFFFF); // white 70%
+
   // DISPLAY LG
   static const TextStyle displayLgRegular = TextStyle(
     fontFamily: fontFamily,

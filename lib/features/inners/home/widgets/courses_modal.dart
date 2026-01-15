@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 
 /// Dados de um curso
 class CourseData {
@@ -39,13 +41,18 @@ class CoursesModal extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
+    // Padding responsivo - menor em telas pequenas
+    final padding = ResponsiveUtils.isShortScreen
+        ? EdgeInsets.all(ResponsiveUtils.width(16, min: 12, max: 20))
+        : EdgeInsets.all(ResponsiveUtils.width(20, min: 16, max: 24));
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: padding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your courses', style: AppTheme.textLgBold),
+          Text('Seus cursos', style: AppTheme.textLgBold),
           const SizedBox(height: 16),
           _buildCoursesList(),
           const SizedBox(height: 24),
@@ -125,7 +132,7 @@ class CoursesModal extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add course',
+            'Adicionar curso',
             style: AppTheme.textSmMedium.copyWith(color: AppTheme.gray400),
           ),
         ],
@@ -140,7 +147,7 @@ class CoursesModal extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Your $selectedCourseName level',
+          'Seu nível de $selectedCourseName',
           style: AppTheme.textMdBold,
         ),
         const SizedBox(height: 12),
@@ -193,28 +200,30 @@ class CoursesModal extends StatelessWidget {
     VoidCallback? onAddCourse,
     ValueChanged<CourseData>? onCourseSelected,
   }) {
-    showDialog(
+    WoltModalSheet.show(
       context: context,
-      barrierColor: Colors.black26,
-      builder: (ctx) => Dialog(
-        backgroundColor: AppTheme.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        child: CoursesModal(
-          courses: courses,
-          selectedCourseName: selectedCourseName,
-          currentLevel: currentLevel,
-          maxLevel: maxLevel,
-          onAddCourse: () {
-            Navigator.of(ctx).pop();
-            onAddCourse?.call();
-          },
-          onCourseSelected: (course) {
-            Navigator.of(ctx).pop();
-            onCourseSelected?.call(course);
-          },
+      pageListBuilder: (context) => [
+        WoltModalSheetPage(
+          backgroundColor: AppTheme.white,
+          surfaceTintColor: Colors.transparent,
+          hasSabGradient: false,
+          hasTopBarLayer: false,
+          child: CoursesModal(
+            courses: courses,
+            selectedCourseName: selectedCourseName,
+            currentLevel: currentLevel,
+            maxLevel: maxLevel,
+            onAddCourse: () {
+              Navigator.of(context).pop();
+              onAddCourse?.call();
+            },
+            onCourseSelected: (course) {
+              Navigator.of(context).pop();
+              onCourseSelected?.call(course);
+            },
+          ),
         ),
-      ),
+      ],
     );
   }
 }

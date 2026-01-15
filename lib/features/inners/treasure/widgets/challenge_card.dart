@@ -56,7 +56,12 @@ class ChallengeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTheme.textMdBold),
+                Text(
+                  title,
+                  style: AppTheme.textMdBold,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 8),
 
                 // Barra de progresso com degradê

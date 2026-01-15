@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 
 /// Dados de um pack de gems
@@ -43,46 +45,52 @@ class GemsModal extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
+    // Calcular altura máxima disponível (80% da tela)
+    final maxHeight = ResponsiveUtils.screenHeight * 0.8;
+
     return Container(
       width: double.infinity,
+      constraints: BoxConstraints(maxHeight: maxHeight),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(),
-            const SizedBox(height: 8),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              _buildHeader(),
+              const SizedBox(height: 8),
 
-            // Subtítulo
-            Text(
-              'Invest in gems, invest in your learning fun.',
-              style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
-            ),
-            const SizedBox(height: 20),
-
-            // Packs de gems
-            ...packs.map((pack) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _GemPackCard(
-                pack: pack,
-                onTap: () => onPackTap?.call(pack),
+              // Subtítulo
+              Text(
+                'Invista em gemas, invista na diversão do aprendizado.',
+                style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
               ),
-            )),
-            const SizedBox(height: 8),
+              const SizedBox(height: 20),
 
-            // Botão Go to shop
-            AppButton(
-              text: 'Go to shop',
-              isPrimary: false,
-              onPressed: onGoToShop,
-            ),
-          ],
+              // Packs de gems
+              ...packs.map((pack) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _GemPackCard(
+                  pack: pack,
+                  onTap: () => onPackTap?.call(pack),
+                ),
+              )),
+              const SizedBox(height: 8),
+
+              // Botão Go to shop
+              AppButton(
+                text: 'Ir para a loja',
+                isPrimary: false,
+                onPressed: onGoToShop,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -116,30 +124,31 @@ class GemsModal extends StatelessWidget {
     VoidCallback? onGoToShop,
     Function(GemPackData)? onPackTap,
   }) {
-    showDialog(
+    WoltModalSheet.show(
       context: context,
-      barrierColor: Colors.black26,
-      barrierDismissible: true,
-      builder: (ctx) => Center(
-        child: Material(
-          color: Colors.transparent,
+      pageListBuilder: (context) => [
+        WoltModalSheetPage(
+          backgroundColor: AppTheme.white,
+          surfaceTintColor: Colors.transparent,
+          hasSabGradient: false,
+          hasTopBarLayer: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: GemsModal(
               currentGems: currentGems,
               packs: packs,
               onGoToShop: () {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 onGoToShop?.call();
               },
               onPackTap: (pack) {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 onPackTap?.call(pack);
               },
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

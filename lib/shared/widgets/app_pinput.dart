@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 
 import '../theme/theme.dart';
+import '../utils/responsive_utils.dart';
 
 /// Widget de input de PIN/código customizado
 class AppPinput extends StatelessWidget {
@@ -20,9 +21,12 @@ class AppPinput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tamanho responsivo com limites para garantir usabilidade
+    final size = ResponsiveUtils.width(65, min: 48, max: 75);
+
     final defaultTheme = PinTheme(
-      width: 65,
-      height: 65,
+      width: size,
+      height: size,
       textStyle: AppTheme.textXlBold.copyWith(color: AppTheme.gray400),
       decoration: BoxDecoration(
         color: AppTheme.white,
@@ -32,8 +36,8 @@ class AppPinput extends StatelessWidget {
     );
 
     final focusedTheme = PinTheme(
-      width: 65,
-      height: 65,
+      width: size,
+      height: size,
       textStyle: AppTheme.textXlBold.copyWith(color: AppTheme.gray400),
       decoration: BoxDecoration(
         color: AppTheme.primary100,

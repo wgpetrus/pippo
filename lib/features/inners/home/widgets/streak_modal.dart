@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -134,7 +135,7 @@ class StreakModal extends StatelessWidget {
               children: [
                 // Título
                 Text(
-                  'Streak Flash',
+                  'Sequência de Fogo',
                   style: AppTheme.textXlBold.copyWith(color: _titleColor),
                 ),
                 const SizedBox(height: 12),
@@ -172,7 +173,7 @@ class StreakModal extends StatelessWidget {
 
         // Texto
         Text(
-          'Days of streak',
+          'Dias de sequência',
           style: AppTheme.textMdMedium.copyWith(color: _textColor),
         ),
         const SizedBox(height: 6),
@@ -184,7 +185,7 @@ class StreakModal extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'See more',
+                'Ver mais',
                 style: AppTheme.textMdBold.copyWith(color: _textColor),
               ),
               const SizedBox(height: 2),
@@ -216,22 +217,22 @@ class StreakModal extends StatelessWidget {
       Positioned(
         top: 20,
         right: 40,
-        child: _buildCircle(40, AppTheme.gray400.withOpacity(0.5)),
+        child: _buildCircle(40, AppTheme.gray400_50),
       ),
       Positioned(
         top: 50,
         right: 100,
-        child: _buildCircle(24, AppTheme.gray400.withOpacity(0.4)),
+        child: _buildCircle(24, AppTheme.gray400_40),
       ),
       Positioned(
         bottom: 60,
         left: 20,
-        child: _buildCircle(50, AppTheme.gray400.withOpacity(0.5)),
+        child: _buildCircle(50, AppTheme.gray400_50),
       ),
       Positioned(
         bottom: 40,
         left: 90,
-        child: _buildCircle(28, AppTheme.gray400.withOpacity(0.4)),
+        child: _buildCircle(28, AppTheme.gray400_40),
       ),
     ];
   }
@@ -252,7 +253,7 @@ class StreakModal extends StatelessWidget {
         left: 100,
         child: CustomPaint(
           size: const Size(40, 40),
-          painter: _StarPainter(color: AppTheme.primary.withOpacity(0.3)),
+          painter: _StarPainter(color: AppTheme.primary30),
         ),
       ),
     ];
@@ -304,25 +305,26 @@ class StreakModal extends StatelessWidget {
     required int streakDays,
     VoidCallback? onSeeMore,
   }) {
-    showDialog(
+    WoltModalSheet.show(
       context: context,
-      barrierColor: Colors.black26,
-      barrierDismissible: true,
-      builder: (ctx) => Center(
-        child: Material(
-          color: Colors.transparent,
+      pageListBuilder: (context) => [
+        WoltModalSheetPage(
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          hasSabGradient: false,
+          hasTopBarLayer: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: StreakModal(
               streakDays: streakDays,
               onSeeMore: () {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 onSeeMore?.call();
               },
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -93,4 +93,4 @@ static const String logoGoogle = 'lib/assets/images/auth/logo_google.svg';
 - [x] Ícones substituídos por FontAwesome
 - [x] Splash corrigida
 - [x] Cores hardcoded substituídas
-- [ ] Arquivos de imagem renomeados (manual)
+- [x] Arquivos de imagem renomeados (manual)

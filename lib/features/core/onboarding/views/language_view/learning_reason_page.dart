@@ -16,12 +16,12 @@ class LearningReasonPage extends StatelessWidget {
 
   // Dados
   static const _reasons = [
-    {'icon': AppAssets.motivIcon1, 'label': 'I want to explore the world.'},
-    {'icon': AppAssets.motivIcon2, 'label': 'I need it for work or study.'},
-    {'icon': AppAssets.motivIcon3, 'label': 'I want to connect with people.'},
-    {'icon': AppAssets.motivIcon4, 'label': 'I love learning new things.'},
-    {'icon': AppAssets.motivIcon5, 'label': 'I want to enjoy movies, music, and books.'},
-    {'icon': AppAssets.motivIcon6, 'label': 'I want to speak without fear.'},
+    {'icon': AppAssets.motivIcon1, 'label': 'Quero explorar o mundo.'},
+    {'icon': AppAssets.motivIcon2, 'label': 'Preciso para trabalho ou estudo.'},
+    {'icon': AppAssets.motivIcon3, 'label': 'Quero me conectar com pessoas.'},
+    {'icon': AppAssets.motivIcon4, 'label': 'Adoro aprender coisas novas.'},
+    {'icon': AppAssets.motivIcon5, 'label': 'Quero curtir filmes, músicas e livros.'},
+    {'icon': AppAssets.motivIcon6, 'label': 'Quero falar sem medo.'},
   ];
 
   // Build
@@ -34,8 +34,8 @@ class LearningReasonPage extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           OnboardingHeader(
-            title: 'Learning Reason',
-            bubbleText: 'Why Do You Want to Learn ${controller.selectedLanguage.value}?',
+            title: 'Motivo para Aprender',
+            bubbleText: 'Por que você quer aprender ${controller.selectedLanguage.value}?',
             progress: 33,
           ),
           _buildReasonList(context, controller),
@@ -67,10 +67,10 @@ class LearningReasonPage extends StatelessWidget {
                     child: FaIcon(FontAwesomeIcons.ellipsis, color: AppTheme.gray300, size: 20),
                   ),
                 ),
-                label: controller.learningReason.value.startsWith('Other:')
-                    ? controller.learningReason.value.replaceFirst('Other: ', '')
-                    : 'Other',
-                isSelected: controller.learningReason.value.startsWith('Other'),
+                label: controller.learningReason.value.startsWith('Outro:')
+                    ? controller.learningReason.value.replaceFirst('Outro: ', '')
+                    : 'Outro',
+                isSelected: controller.learningReason.value.startsWith('Outro'),
                 onTap: () => _showOtherModal(context, controller),
               )),
             );
@@ -100,7 +100,7 @@ class LearningReasonPage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continue',
+        text: 'Continuar',
         onPressed: controller.learningReason.value.isNotEmpty
             ? controller.nav.goToPauseOne
             : null,
@@ -112,8 +112,8 @@ class LearningReasonPage extends StatelessWidget {
   void _showOtherModal(BuildContext context, OnboardingController controller) {
     final textController = TextEditingController();
 
-    if (controller.learningReason.value.startsWith('Other:')) {
-      textController.text = controller.learningReason.value.replaceFirst('Other: ', '');
+    if (controller.learningReason.value.startsWith('Outro:')) {
+      textController.text = controller.learningReason.value.replaceFirst('Outro: ', '');
     }
 
     WoltModalSheet.show(
@@ -122,21 +122,21 @@ class LearningReasonPage extends StatelessWidget {
         WoltModalSheetPage(
           backgroundColor: AppTheme.white,
           hasTopBarLayer: true,
-          topBarTitle: Text('Other Reason', style: AppTheme.textLgBold.copyWith(color: AppTheme.black)),
+          topBarTitle: Text('Outro Motivo', style: AppTheme.textLgBold.copyWith(color: AppTheme.black)),
           isTopBarLayerAlwaysVisible: true,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Tell us your reason', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.black)),
+                Text('Conte-nos seu motivo', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.black)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: textController,
                   maxLines: 3,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
                   decoration: InputDecoration(
-                    hintText: 'Write your reason here...',
+                    hintText: 'Escreva seu motivo aqui...',
                     hintStyle: AppTheme.textMdRegular.copyWith(color: AppTheme.gray400),
                     filled: true,
                     fillColor: AppTheme.white,
@@ -157,13 +157,13 @@ class LearningReasonPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 AppButton(
-                  text: 'Confirm',
+                  text: 'Confirmar',
                   onPressed: () {
                     final text = textController.text.trim();
                     if (text.isNotEmpty) {
-                      controller.learningReason.value = 'Other: $text';
+                      controller.learningReason.value = 'Outro: $text';
                     } else {
-                      controller.learningReason.value = 'Other';
+                      controller.learningReason.value = 'Outro';
                     }
                     Navigator.of(context).pop();
                   },

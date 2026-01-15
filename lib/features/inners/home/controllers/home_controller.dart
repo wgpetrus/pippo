@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
 import '../widgets/home_appbar.dart';
 
@@ -25,7 +26,7 @@ class HomeController extends GetxController {
 
   void onStartTap() {
     showContinue.value = true;
-    // TODO: Navegar para a lição
+    Get.to(() => const SectionsPage(courseName: 'French'));
   }
 
   void onAddCourse() {

@@ -8,6 +8,7 @@ class AppAssets {
   static const String logoGoogle = 'lib/assets/images/auth/logo_google.svg';
 
   // ONBOARDING - Mascotes
+  static const String mascotLesson = 'lib/assets/images/onboarding/mascot_lesson.png';
   static const String mascotWelcome = 'lib/assets/images/onboarding/personagem_onboarding.png';
   static const String mascotHappy = 'lib/assets/images/onboarding/pers2-onboarding.png';
   static const String mascotExcited = 'lib/assets/images/onboarding/pers3-onboarding.png';
@@ -90,6 +91,17 @@ class AppAssets {
   static const String charMara = 'lib/assets/images/characters/mara.png';
   static const String charRenner = 'lib/assets/images/characters/renner.png';
 
+  // LESSON - Exercícios
+  static const String lessonBoy = 'lib/assets/images/lesson/boy.png';
+  static const String lessonDog = 'lib/assets/images/lesson/dog.png';
+  static const String lessonGirl = 'lib/assets/images/lesson/girl.png';
+  static const String lessonWaiter = 'lib/assets/images/lesson/waiter.png';
+  static const String lessonSpider = 'lib/assets/images/lesson/aranha.png';
+  static const String lessonMascotError = 'lib/assets/images/lesson/message_error.png';
+  static const String lessonMascotFire = 'lib/assets/images/lesson/mascot_fogo.png';
+  static const String lessonMascotComplete = 'lib/assets/images/lesson/mascot_complete.png';
+  static const String lessonClock = 'lib/assets/images/lesson/relogio.png';
+
   // SHOP
   static const String shopChest = 'lib/assets/images/icons/icons-shop-page/bau_dourado.png';
   static const String shopElixir2x = 'lib/assets/images/icons/icons-shop-page/elixir_2x.png';
@@ -119,6 +131,7 @@ class AppAssets {
   static const String profileStar = 'lib/assets/images/icons/icons-profile/star.svg';
   static const String profileMascot0 = 'lib/assets/images/icons/icons-profile/mascot0.png';
   static const String profileMascot1 = 'lib/assets/images/icons/icons-profile/mascot1.png';
+  static const String profileMascotDelete = 'lib/assets/images/profile/mascot_delete.png';
   static const String profileWarrior1 = 'lib/assets/images/icons/icons-profile/warrior1.png';
   static const String profileWarrior2 = 'lib/assets/images/icons/icons-profile/warrior2.png';
   static const String profileWarrior3 = 'lib/assets/images/icons/icons-profile/warrior3.png';

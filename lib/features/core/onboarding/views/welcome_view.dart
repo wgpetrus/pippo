@@ -39,17 +39,17 @@ class WelcomeView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Ready to Begin Your Adventure?',
+                  'Pronto para Começar sua Aventura?',
                   style: AppTheme.textLgRegular.copyWith(color: AppTheme.gray300),
                 ),
                 const SizedBox(height: 40),
                 AppButton(
-                  text: 'Get started',
+                  text: 'Começar',
                   onPressed: controller.nav.goToIntro,
                 ),
                 const SizedBox(height: 16),
                 AppButton(
-                  text: 'Already have an account',
+                  text: 'Já tenho uma conta',
                   isPrimary: false,
                   onPressed: controller.nav.goToAuth,
                 ),

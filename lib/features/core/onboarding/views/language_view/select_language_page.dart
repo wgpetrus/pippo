@@ -14,14 +14,14 @@ class SelectLanguagePage extends StatelessWidget {
 
   // Dados
   static const _languages = [
-    {'flag': AppAssets.flagUsa, 'name': 'English'},
-    {'flag': AppAssets.flagGermany, 'name': 'German'},
-    {'flag': AppAssets.flagSpain, 'name': 'Spanish'},
-    {'flag': AppAssets.flagFrance, 'name': 'French'},
-    {'flag': AppAssets.flagSaudi, 'name': 'Arabic'},
-    {'flag': AppAssets.flagJapan, 'name': 'Japanese'},
-    {'flag': AppAssets.flagChina, 'name': 'Chinese'},
-    {'flag': AppAssets.flagBrazil, 'name': 'Portuguese'},
+    {'flag': AppAssets.flagUsa, 'name': 'Inglês'},
+    {'flag': AppAssets.flagGermany, 'name': 'Alemão'},
+    {'flag': AppAssets.flagSpain, 'name': 'Espanhol'},
+    {'flag': AppAssets.flagFrance, 'name': 'Francês'},
+    {'flag': AppAssets.flagSaudi, 'name': 'Árabe'},
+    {'flag': AppAssets.flagJapan, 'name': 'Japonês'},
+    {'flag': AppAssets.flagChina, 'name': 'Chinês'},
+    {'flag': AppAssets.flagBrazil, 'name': 'Português'},
   ];
 
   // Build
@@ -34,8 +34,8 @@ class SelectLanguagePage extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           const OnboardingHeader(
-            title: 'Select Language',
-            bubbleText: 'Which language do you want to learn?',
+            title: 'Selecionar Idioma',
+            bubbleText: 'Qual idioma você quer aprender?',
             progress: 11,
           ),
           _buildLanguageList(controller),
@@ -73,7 +73,7 @@ class SelectLanguagePage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continue',
+        text: 'Continuar',
         onPressed: controller.selectedLanguage.value.isNotEmpty
             ? controller.nav.goToLanguageLevel
             : null,

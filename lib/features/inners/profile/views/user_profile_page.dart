@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/widgets/app_appbar.dart';
 import '../widgets/overview_section.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/weekly_progress_chart.dart';
@@ -27,15 +26,7 @@ class UserProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.chevronLeft, color: AppTheme.gray400, size: 20),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text('Profile', style: AppTheme.displaySmBold),
-      ),
+      appBar: const AppAppbar(title: 'Perfil'),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -56,7 +47,6 @@ class UserProfilePage extends StatelessWidget {
               showFollowButton: true,
               onFollowTap: () {
                 // TODO: Seguir usuário
-                debugPrint('Follow tapped');
               },
             ),
             const SizedBox(height: 24),

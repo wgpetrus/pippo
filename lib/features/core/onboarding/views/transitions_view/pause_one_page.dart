@@ -74,19 +74,19 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
                     _buildMascotWithFlags(),
                     const SizedBox(height: 32),
                     Text(
-                      "Let's craft your learning journey!",
+                      "Vamos criar sua jornada de aprendizado!",
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Pick your pace, shape your path, and unlock a world of words. Every choice you make builds your personal quest—ready to begin?",
+                      "Escolha seu ritmo, trace seu caminho e desbloqueie um mundo de palavras. Cada escolha que você faz constrói sua missão pessoal—pronto para começar?",
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
                     AppButton(
-                      text: 'Next',
+                      text: 'Próximo',
                       onPressed: () => Get.find<OnboardingController>().nav.goToStudyTime(),
                       suffixIcon: const FaIcon(FontAwesomeIcons.arrowRight, color: AppTheme.white, size: 18),
                     ),
@@ -206,13 +206,13 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
     return Container(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.black.withOpacity(0.1),
+            color: AppTheme.black10,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),

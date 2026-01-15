@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 
 /// Tile de amigo na lista
 class FriendTile extends StatelessWidget {
@@ -31,16 +32,21 @@ class FriendTile extends StatelessWidget {
         child: Row(
           children: [
             // Avatar
-            Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.pink100,
-              ),
-              child: ClipOval(
-                child: Image.asset(avatar, fit: BoxFit.cover),
-              ),
+            Builder(
+              builder: (context) {
+                final avatarSize = ResponsiveUtils.width(48, min: 40, max: 56);
+                return Container(
+                  width: avatarSize,
+                  height: avatarSize,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.pink100,
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(avatar, fit: BoxFit.cover),
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 12),
 

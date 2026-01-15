@@ -56,7 +56,7 @@ class _UserEmailPageState extends State<UserEmailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'What is your e-mail address?',
+                'Qual é o seu e-mail?',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 24),
@@ -68,13 +68,13 @@ class _UserEmailPageState extends State<UserEmailPage> {
               OnboardingTextField(
                 controller: _emailController,
                 focusNode: _focusNode,
-                hint: 'enter your e-mail',
+                hint: 'digite seu e-mail',
                 isFocused: _isFocused,
                 keyboardType: TextInputType.emailAddress,
               ),
               const Spacer(),
               AppButton(
-                text: 'Continue',
+                text: 'Continuar',
                 onPressed: hasText
                     ? () {
                         _controller.userEmail.value = _emailController.text.trim();

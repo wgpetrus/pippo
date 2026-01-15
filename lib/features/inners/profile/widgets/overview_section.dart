@@ -26,7 +26,7 @@ class OverviewSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Overview', style: AppTheme.textLgBold),
+          const Text('Visão Geral', style: AppTheme.textLgBold),
           const SizedBox(height: 12),
 
           Row(
@@ -35,7 +35,7 @@ class OverviewSection extends StatelessWidget {
                 child: OverviewCard(
                   iconAsset: AppAssets.treasureXpCoin,
                   value: '$xp',
-                  label: 'Total XP',
+                  label: 'XP Total',
                   iconSize: 45,
                   starColor: AppTheme.gold,
                 ),
@@ -45,7 +45,7 @@ class OverviewSection extends StatelessWidget {
                 child: OverviewCard(
                   iconAsset: AppAssets.appbarFire,
                   value: '$streak',
-                  label: 'Day streak',
+                  label: 'Dias de sequência',
                   iconSize: 45,
                   starColor: AppTheme.orange,
                 ),
@@ -60,7 +60,7 @@ class OverviewSection extends StatelessWidget {
                 child: OverviewCard(
                   iconAsset: flagAsset,
                   value: '$level',
-                  label: 'French level',
+                  label: 'Nível de Francês',
                   iconSize: 30,
                   starColor: AppTheme.red,
                 ),
@@ -70,7 +70,7 @@ class OverviewSection extends StatelessWidget {
                 child: OverviewCard(
                   imageAsset: AppAssets.profileWarrior1,
                   value: '',
-                  label: 'Word Warrior',
+                  label: 'Guerreiro das Palavras',
                   iconSize: 90,
                   starColor: AppTheme.blue,
                 ),

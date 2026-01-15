@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 
 /// Modal de Energy Sparks
@@ -28,17 +30,22 @@ class EnergyModal extends StatelessWidget {
 
   String get _messageText {
     if (isFull) {
-      return 'Your learning energy is fully charged ⚡\nReady to go?';
+      return 'Sua energia de aprendizado está totalmente carregada ⚡\nPronto para começar?';
     } else if (isEmpty) {
-      return 'No flashes left; Take a short break, then\ncome back stronger.';
+      return 'Sem energia restante. Faça uma pausa e\nvolte mais forte.';
     } else {
-      return 'Only one flash left... use it wisely!';
+      return 'Apenas uma energia restante... use com sabedoria!';
     }
   }
 
   // Build
   @override
   Widget build(BuildContext context) {
+    // Padding responsivo para telas pequenas
+    final verticalPadding = ResponsiveUtils.isShortScreen ? 16.0 : 24.0;
+    final spacing = ResponsiveUtils.isShortScreen ? 16.0 : 24.0;
+    final smallSpacing = ResponsiveUtils.isShortScreen ? 8.0 : 12.0;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -46,20 +53,20 @@ class EnergyModal extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        padding: EdgeInsets.all(verticalPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Título
-            Text(
-              'Your Energy Sparks',
+            const Text(
+              'Sua Energia',
               style: AppTheme.displayXsBold,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: spacing),
 
             // Raios de energia
             _buildEnergyBolts(),
-            const SizedBox(height: 24),
+            SizedBox(height: spacing),
 
             // Mensagem
             Text(
@@ -70,12 +77,12 @@ class EnergyModal extends StatelessWidget {
 
             // Next Flash (se não estiver cheio)
             if (!isFull && nextEnergyTime != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: smallSpacing),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Next Flash in  ',
+                    'Próxima energia em  ',
                     style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray300),
                   ),
                   Text(
@@ -85,11 +92,11 @@ class EnergyModal extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 24),
+            SizedBox(height: spacing),
 
             // Botão Unlimited Flashes
             AppButton(
-              text: 'Unlimited',
+              text: 'Ilimitado',
               isPrimary: true,
               onPressed: onUnlimitedTap,
               prefixIcon: const FaIcon(
@@ -98,15 +105,15 @@ class EnergyModal extends StatelessWidget {
                 size: 18,
               ),
               suffixIcon: Text(
-                'Free trial',
+                'Teste grátis',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.white),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: smallSpacing),
 
             // Botão Refill Flashes
             AppButton(
-              text: 'Refill Flashes',
+              text: 'Recarregar',
               isPrimary: false,
               onPressed: onRefillTap,
               prefixIcon: Image.asset(AppAssets.appbarRay, width: 24, height: 24),
@@ -130,6 +137,8 @@ class EnergyModal extends StatelessWidget {
 
   // Widgets
   Widget _buildEnergyBolts() {
+    final boltSize = ResponsiveUtils.width(40, min: 28, max: 48);
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(maxEnergy, (index) {
@@ -138,8 +147,8 @@ class EnergyModal extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6),
           child: Image.asset(
             isFilled ? AppAssets.bottomRay : AppAssets.bottomRayDisable,
-            width: 40,
-            height: 40,
+            width: boltSize,
+            height: boltSize,
             fit: BoxFit.contain,
           ),
         );
@@ -156,13 +165,14 @@ class EnergyModal extends StatelessWidget {
     VoidCallback? onUnlimitedTap,
     VoidCallback? onRefillTap,
   }) {
-    showDialog(
+    WoltModalSheet.show(
       context: context,
-      barrierColor: Colors.black26,
-      barrierDismissible: true,
-      builder: (ctx) => Center(
-        child: Material(
-          color: Colors.transparent,
+      pageListBuilder: (context) => [
+        WoltModalSheetPage(
+          backgroundColor: AppTheme.white,
+          surfaceTintColor: Colors.transparent,
+          hasSabGradient: false,
+          hasTopBarLayer: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: EnergyModal(
@@ -170,17 +180,17 @@ class EnergyModal extends StatelessWidget {
               maxEnergy: maxEnergy,
               nextEnergyTime: nextEnergyTime,
               onUnlimitedTap: () {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 onUnlimitedTap?.call();
               },
               onRefillTap: () {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 onRefillTap?.call();
               },
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

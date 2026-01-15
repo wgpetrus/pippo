@@ -13,12 +13,12 @@ class StudyTimePage extends StatelessWidget {
 
   // Dados
   static const _times = [
-    '5 min / day',
-    '10 min / day',
-    '15 min / day',
-    '20 min / day',
-    '30 min / day',
-    '40 min / day',
+    '5 min / dia',
+    '10 min / dia',
+    '15 min / dia',
+    '20 min / dia',
+    '30 min / dia',
+    '40 min / dia',
   ];
 
   // Build
@@ -31,8 +31,8 @@ class StudyTimePage extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           const OnboardingHeader(
-            title: 'Study Time',
-            bubbleText: 'Choose Your Daily Learning Time Goal',
+            title: 'Tempo de Estudo',
+            bubbleText: 'Escolha sua meta diária de aprendizado',
             progress: 44,
           ),
           _buildTimeList(controller),
@@ -128,7 +128,7 @@ class StudyTimePage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continue',
+        text: 'Continuar',
         onPressed: controller.studyTime.value.isNotEmpty
             ? () => _onContinue(controller)
             : null,

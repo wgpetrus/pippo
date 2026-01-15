@@ -3,6 +3,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 
 /// Modal para trocar avatar
@@ -45,7 +46,7 @@ class ChangeAvatarModal {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Título
-                const Text('Change Avatar', style: AppTheme.displaySmBold),
+                const Text('Trocar Avatar', style: AppTheme.displaySmBold),
                 const SizedBox(height: 24),
 
                 // Grid de avatares 5x2
@@ -61,7 +62,7 @@ class ChangeAvatarModal {
 
                 // Botão Save
                 AppButton(
-                  text: 'Save',
+                  text: 'Salvar',
                   onPressed: () {
                     onAvatarSelected(selectedAvatar.value);
                     Navigator.of(context).pop();
@@ -86,11 +87,12 @@ class ChangeAvatarModal {
   }
 
   static Widget _buildAvatarItem(String avatar, bool isSelected, VoidCallback onTap) {
+    final avatarSize = ResponsiveUtils.width(60, min: 44, max: 72);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 60,
-        height: 60,
+        width: avatarSize,
+        height: avatarSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(

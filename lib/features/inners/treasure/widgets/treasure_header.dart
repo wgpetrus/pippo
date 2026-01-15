@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 
 /// Banner header do Treasure Hunt
 class TreasureHeader extends StatelessWidget {
@@ -11,7 +12,7 @@ class TreasureHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(20),
-      height: 180,
+      height: ResponsiveUtils.height(180, min: 140, max: 220),
       decoration: BoxDecoration(
         color: AppTheme.pink,
         borderRadius: BorderRadius.circular(24),
@@ -42,7 +43,7 @@ class TreasureHeader extends StatelessWidget {
                         Text(
                           'Where every challenge\nleads to a reward.',
                           style: AppTheme.textSmRegular.copyWith(
-                            color: AppTheme.white.withOpacity(0.9),
+                            color: AppTheme.white90,
                           ),
                         ),
                       ],

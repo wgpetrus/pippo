@@ -56,24 +56,24 @@ class _UserNamePageState extends State<UserNamePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'What is your name?',
+                'Qual é o seu nome?',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 24),
               Text(
-                'Name',
+                'Nome',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 8),
               OnboardingTextField(
                 controller: _nameController,
                 focusNode: _focusNode,
-                hint: 'enter your name',
+                hint: 'digite seu nome',
                 isFocused: _isFocused,
               ),
               const Spacer(),
               AppButton(
-                text: 'Continue',
+                text: 'Continuar',
                 onPressed: hasText
                     ? () {
                         _controller.userName.value = _nameController.text.trim();

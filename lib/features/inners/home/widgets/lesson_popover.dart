@@ -43,9 +43,9 @@ class LessonPopoverContent extends StatelessWidget {
 
           // Subtítulo
           Text(
-            'Lesson $currentLesson of $totalLessons',
+            'Lição $currentLesson de $totalLessons',
             style: AppTheme.textMdMedium.copyWith(
-              color: AppTheme.white.withOpacity(0.8),
+              color: AppTheme.white80,
             ),
           ),
 
@@ -71,7 +71,7 @@ class LessonPopoverContent extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            'Start + $xpReward XP',
+            'Começar + $xpReward XP',
             style: AppTheme.textLgBold.copyWith(
               color: isCompleted ? AppTheme.white : AppTheme.primary,
             ),

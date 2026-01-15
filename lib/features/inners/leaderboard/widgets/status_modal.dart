@@ -36,7 +36,7 @@ class StatusModal {
           backgroundColor: AppTheme.white,
           surfaceTintColor: AppTheme.white,
           hasSabGradient: false,
-          topBarTitle: Text('Set your status', style: AppTheme.textXlBold),
+          topBarTitle: Text('Defina seu status', style: AppTheme.textXlBold),
           trailingNavBarWidget: _buildGemCounter(),
           isTopBarLayerAlwaysVisible: true,
           child: StatefulBuilder(
@@ -60,7 +60,7 @@ class StatusModal {
 
                     // Botões
                     AppButton(
-                      text: 'Done',
+                      text: 'Pronto',
                       onPressed: () {
                         onStatusSelected(selectedStatus);
                         Navigator.pop(context);
@@ -68,7 +68,7 @@ class StatusModal {
                     ),
                     const SizedBox(height: 12),
                     AppButton(
-                      text: 'Clear status',
+                      text: 'Limpar status',
                       isPrimary: false,
                       onPressed: () {
                         onStatusSelected(null);

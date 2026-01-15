@@ -48,13 +48,20 @@ class BoostItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTheme.textMdBold),
+                  Text(
+                    title,
+                    style: AppTheme.textMdBold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     description,
                     style: AppTheme.textSmRegular.copyWith(
                       color: AppTheme.gray300,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

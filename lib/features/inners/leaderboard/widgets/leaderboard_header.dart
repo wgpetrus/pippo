@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import 'league_selector.dart';
 
 /// Header colapsável do leaderboard com escudos
@@ -23,7 +24,7 @@ class LeaderboardHeader extends StatelessWidget {
       surfaceTintColor: AppTheme.white,
       elevation: 0,
       pinned: true,
-      expandedHeight: 220,
+      expandedHeight: ResponsiveUtils.height(220, min: 180, max: 260),
       toolbarHeight: 70,
       automaticallyImplyLeading: false,
       title: Text(title, style: AppTheme.displaySmBold),

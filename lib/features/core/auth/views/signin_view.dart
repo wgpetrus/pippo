@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
@@ -46,15 +47,7 @@ class _SigninViewState extends State<SigninView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppTheme.black, size: 20),
-          onPressed: () => Get.back(),
-        ),
-        title: Text('Sign in', style: AppTheme.textXlBold.copyWith(color: AppTheme.black)),
-      ),
+      appBar: const AppAppbar(title: 'Entrar'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -65,15 +58,15 @@ class _SigninViewState extends State<SigninView> {
               children: [
                 const SizedBox(height: 8),
                 AppTextField(
-                  label: 'User name / email',
-                  hint: 'enter your user name / email',
+                  label: 'Usuário / e-mail',
+                  hint: 'digite seu usuário / e-mail',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 20),
                 AppTextField(
-                  label: 'Password',
-                  hint: 'enter your Password',
+                  label: 'Senha',
+                  hint: 'digite sua senha',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -89,7 +82,7 @@ class _SigninViewState extends State<SigninView> {
                 _buildForgotPassword(),
                 const SizedBox(height: 32),
                 AppButton(
-                  text: 'Sign in',
+                  text: 'Entrar',
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       // TODO: implementar login
@@ -113,7 +106,7 @@ class _SigninViewState extends State<SigninView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Forget your password', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary)),
+          Text('Esqueceu sua senha', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary)),
           const SizedBox(height: 2),
           Container(height: 1.5, width: 165, color: AppTheme.primary),
         ],

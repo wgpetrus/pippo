@@ -28,19 +28,19 @@ class CompleteProfileCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Título
-          Text('Finish your profile!', style: AppTheme.textLgBold),
+          Text('Complete seu perfil!', style: AppTheme.textLgBold),
           const SizedBox(height: 4),
 
           // Steps left
           Text(
-            '$stepsLeft step left',
+            '$stepsLeft passo restante',
             style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
           ),
           const SizedBox(height: 12),
 
           // Botão usando AppButton
           AppButton(
-            text: 'Complete your profile',
+            text: 'Completar perfil',
             isPrimary: false,
             onPressed: onTap,
           ),

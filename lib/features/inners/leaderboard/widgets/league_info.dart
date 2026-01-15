@@ -40,7 +40,7 @@ class LeagueInfo extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '$daysLeft Days left',
+                    '$daysLeft Dias restantes',
                     style: AppTheme.textSmSemibold.copyWith(
                       color: AppTheme.orange,
                     ),

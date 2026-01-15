@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
@@ -50,15 +51,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppTheme.black, size: 20),
-          onPressed: () => Get.back(),
-        ),
-        title: Text('Change password', style: AppTheme.textXlBold.copyWith(color: AppTheme.black)),
-      ),
+      appBar: const AppAppbar(title: 'Alterar senha'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -69,8 +62,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
               children: [
                 const SizedBox(height: 8),
                 AppTextField(
-                  label: 'New Password',
-                  hint: 'enter new Password',
+                  label: 'Nova Senha',
+                  hint: 'digite a nova senha',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
@@ -84,8 +77,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 ),
                 const SizedBox(height: 20),
                 AppTextField(
-                  label: 'Confirm password',
-                  hint: 'rewrite your Password',
+                  label: 'Confirmar senha',
+                  hint: 'repita sua senha',
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
@@ -99,7 +92,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 ),
                 const SizedBox(height: 32),
                 AppButton(
-                  text: 'Continue',
+                  text: 'Continuar',
                   onPressed: _isFormValid
                       ? () {
                           if (_formKey.currentState!.validate()) {

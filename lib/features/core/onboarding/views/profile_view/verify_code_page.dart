@@ -53,6 +53,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
       appBar: const OnboardingHeader(progress: 100),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: SingleChildScrollView(
@@ -70,10 +71,12 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                     ),
                     const SizedBox(height: 32),
-                    AppPinput(
-                      controller: _pinController,
-                      focusNode: _focusNode,
-                      onCompleted: (pin) => _controller.nav.goToConclusion(),
+                    Center(
+                      child: AppPinput(
+                        controller: _pinController,
+                        focusNode: _focusNode,
+                        onCompleted: (pin) => _controller.nav.goToConclusion(),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     AppResendCode(isComplete: _isComplete, onResend: () {}),

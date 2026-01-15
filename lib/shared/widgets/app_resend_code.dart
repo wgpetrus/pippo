@@ -21,7 +21,7 @@ class AppResendCode extends StatelessWidget {
       return Row(
         children: [
           Text(
-            "Didn't get it?  ",
+            'Não recebeu?  ',
             style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
           ),
           GestureDetector(
@@ -30,10 +30,10 @@ class AppResendCode extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tap to resend.',
+                  'Toque para reenviar.',
                   style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary),
                 ),
-                Container(height: 1.5, width: 100, color: AppTheme.primary),
+                Container(height: 1.5, width: 130, color: AppTheme.primary),
               ],
             ),
           ),
@@ -44,7 +44,7 @@ class AppResendCode extends StatelessWidget {
     return Row(
       children: [
         Text(
-          "Didn't get it?  You can resend code in   ",
+          'Não recebeu?  Reenviar código em   ',
           style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
         ),
         Text(

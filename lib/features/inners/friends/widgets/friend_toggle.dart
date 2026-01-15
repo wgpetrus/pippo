@@ -19,7 +19,7 @@ class FriendToggle extends StatelessWidget {
     return ToggleSwitch(
       initialLabelIndex: isFollowing ? 0 : 1,
       totalSwitches: 2,
-      labels: const ['Following', 'Followers'],
+      labels: const ['Seguindo', 'Seguidores'],
       activeBgColor: const [AppTheme.primary],
       activeFgColor: AppTheme.white,
       inactiveBgColor: AppTheme.white,

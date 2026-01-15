@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import 'profile_card.dart';
 
 /// Header colapsável do profile com card azul
@@ -43,7 +44,12 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Altura maior se tiver botão Follow back
-    final expandedHeight = showFollowButton ? 340.0 : 260.0;
+    final baseHeight = showFollowButton ? 340.0 : 260.0;
+    final expandedHeight = ResponsiveUtils.height(
+      baseHeight,
+      min: showFollowButton ? 280.0 : 220.0,
+      max: showFollowButton ? 380.0 : 300.0,
+    );
     
     return SliverAppBar(
       backgroundColor: AppTheme.white,

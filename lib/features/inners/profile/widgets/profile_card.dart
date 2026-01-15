@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 
 /// Card azul do perfil do usuário
@@ -58,16 +59,21 @@ class ProfileCard extends StatelessWidget {
               // Avatar
               GestureDetector(
                 onTap: isOwnProfile ? onAvatarTap : null,
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppTheme.pink100,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(avatarAsset, fit: BoxFit.cover),
-                  ),
+                child: Builder(
+                  builder: (context) {
+                    final avatarSize = ResponsiveUtils.width(64, min: 48, max: 72);
+                    return Container(
+                      width: avatarSize,
+                      height: avatarSize,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.pink100,
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(avatarAsset, fit: BoxFit.cover),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 16),
@@ -81,12 +87,14 @@ class ProfileCard extends StatelessWidget {
                     Text(
                       name,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.white),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '@$username',
                       style: AppTheme.textMdRegular.copyWith(
-                        color: AppTheme.white.withOpacity(0.7),
+                        color: AppTheme.white70,
                       ),
                     ),
                   ],
@@ -130,7 +138,7 @@ class ProfileCard extends StatelessWidget {
               Expanded(
                 child: GestureDetector(
                   onTap: onFollowingTap,
-                  child: _buildStat('$following', 'Following'),
+                  child: _buildStat('$following', 'Seguindo'),
                 ),
               ),
 
@@ -138,7 +146,7 @@ class ProfileCard extends StatelessWidget {
               Expanded(
                 child: GestureDetector(
                   onTap: onFollowersTap,
-                  child: _buildStat('$followers', 'Followers'),
+                  child: _buildStat('$followers', 'Seguidores'),
                 ),
               ),
 
@@ -162,9 +170,9 @@ class ProfileCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Courses',
+                      'Cursos',
                       style: AppTheme.textMdRegular.copyWith(
-                        color: AppTheme.white.withOpacity(0.7),
+                        color: AppTheme.white70,
                       ),
                     ),
                   ],
@@ -177,7 +185,7 @@ class ProfileCard extends StatelessWidget {
           if (showFollowButton) ...[
             const SizedBox(height: 16),
             AppButton(
-              text: 'Follow back',
+              text: 'Seguir de volta',
               isPrimary: false,
               onPressed: onFollowTap,
             ),
@@ -199,7 +207,7 @@ class ProfileCard extends StatelessWidget {
         Text(
           label,
           style: AppTheme.textMdRegular.copyWith(
-            color: AppTheme.white.withOpacity(0.7),
+            color: AppTheme.white70,
           ),
         ),
       ],

@@ -78,10 +78,10 @@ class HomeAppbar extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildStatChip(flagAsset, flagCount, StatType.flag),
-                  _buildStatChip(AppAssets.appbarFire, fireCount, StatType.fire),
-                  _buildStatChip(AppAssets.appbarGem, gemCount, StatType.gem),
-                  _buildStatChip(AppAssets.appbarRay, rayCount, StatType.ray),
+                  Flexible(child: _buildStatChip(flagAsset, flagCount, StatType.flag)),
+                  Flexible(child: _buildStatChip(AppAssets.appbarFire, fireCount, StatType.fire)),
+                  Flexible(child: _buildStatChip(AppAssets.appbarGem, gemCount, StatType.gem)),
+                  Flexible(child: _buildStatChip(AppAssets.appbarRay, rayCount, StatType.ray)),
                 ],
               ),
             ),
@@ -107,7 +107,7 @@ class HomeAppbar extends StatelessWidget {
               : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha(25),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

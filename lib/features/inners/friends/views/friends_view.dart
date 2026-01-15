@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/widgets/app_appbar.dart';
 import '../../profile/views/user_profile_page.dart';
 import '../widgets/friend_tile.dart';
 import '../widgets/friend_toggle.dart';
@@ -43,15 +43,7 @@ class _FriendsViewState extends State<FriendsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.chevronLeft, color: AppTheme.gray400, size: 20),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text('Friends', style: AppTheme.displaySmBold),
-      ),
+      appBar: const AppAppbar(title: 'Amigos'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -71,7 +63,7 @@ class _FriendsViewState extends State<FriendsView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              _isFollowing ? '2500 Following' : '1500 Followers',
+              _isFollowing ? '2500 Seguindo' : '1500 Seguidores',
               style: AppTheme.textLgBold,
             ),
           ),

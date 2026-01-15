@@ -1,11 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/widgets/app_back_button.dart';
 import 'bouncing_mascot.dart';
 import 'progress_bar.dart';
 
@@ -35,7 +34,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
       return AppBar(
         backgroundColor: AppTheme.white,
         elevation: 0,
-        leading: _buildBackButton(),
+        leading: const AppBackButton(),
         title: progress != null ? ProgressBar(progress: progress!) : null,
         titleSpacing: 12,
       );
@@ -50,7 +49,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
       pinned: true,
       expandedHeight: screenHeight * expandedHeight,
       toolbarHeight: 80,
-      leading: _buildBackButton(),
+      leading: const AppBackButton(),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -68,8 +67,8 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
             image: DecorationImage(
               image: AssetImage(AppAssets.mascotExcited),
               fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                AppTheme.white.withOpacity(0.7),
+              colorFilter: const ColorFilter.mode(
+                AppTheme.white70,
                 BlendMode.srcOver,
               ),
             ),
@@ -104,24 +103,6 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
         ),
-      ),
-    );
-  }
-
-  // Widgets
-  Widget _buildBackButton() {
-    return Container(
-      margin: const EdgeInsets.only(left: 16),
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(
-        color: AppTheme.primary,
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppTheme.white, size: 18),
-        onPressed: () => Get.back(),
       ),
     );
   }

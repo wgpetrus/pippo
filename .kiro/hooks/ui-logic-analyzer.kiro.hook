@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Analisador de UI",
+  "description": "Monitora arquivos de UI (views, pages, widgets) e analisa se contêm lógica de negócio indevida, verificando conformidade com os padrões e regras da empresa definidos no steering.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "lib/features/**/*_view.dart",
+      "lib/features/**/*_page.dart",
+      "lib/features/**/widgets/*.dart",
+      "lib/shared/widgets/*.dart"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analise o arquivo de UI que acabei de editar e verifique:\n\n1. **Lógica de negócio na View** - A view deve ser APENAS para exibição. Verifique se há:\n   - Chamadas diretas ao Firebase/API\n   - Manipulação de dados\n   - Regras de negócio\n   - Validações complexas (validadores simples no controller são OK, mas para fins de desenvolvimento temporario de UI)\n\n2. **Conformidade com padrões** - Consulte as regras em .kiro/steering e verifique:\n   - StatelessWidget padrão, StatefulWidget só para forms\n   - TextEditingController na View (não no Controller)\n   - Obx() apenas onde é reativo (não envolvendo tudo)\n   - Uso de widgets globais existentes (AppButton, AppBackButton, etc.)\n   - Fontes e estilos centralizados no theme (não hardcoded)\n   - Comentários organizacionais e espaçamentos corretos\n   - Pronto para ser implementada a lógica futuramente\n\n3. **Widgets** - Verifique se:\n   - Está usando widgets existentes em shared/widgets/ antes de criar novos\n   - Widgets específicos estão na pasta correta da feature\n\nSe encontrar problemas, liste-os de forma clara e corrija seguindo os padrões da empresa."
+  },
+  "workspaceFolderName": "pippo",
+  "shortName": "ui-logic-analyzer"
+}

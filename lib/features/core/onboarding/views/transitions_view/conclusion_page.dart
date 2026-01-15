@@ -55,19 +55,19 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
               child: Column(
                 children: [
                   Text(
-                    'I\'ve been waiting for you! Let\'s make this fun.',
+                    'Estava te esperando! Vamos nos divertir.',
                     style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your course is ready and waiting — just one click away.',
+                    'Seu curso está pronto e esperando — a apenas um clique.',
                     style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   AppButton(
-                    text: 'Let\'s Get Learning',
+                    text: 'Vamos Aprender',
                     onPressed: _onButtonPressed,
                   ),
                   const SizedBox(height: 32),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
@@ -41,15 +41,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppTheme.black, size: 20),
-          onPressed: () => Get.back(),
-        ),
-        title: Text('What is your e-mail address?', style: AppTheme.textXlBold.copyWith(color: AppTheme.black)),
-      ),
+      appBar: const AppAppbar(title: 'Qual é o seu e-mail?'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -60,14 +52,14 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               children: [
                 const SizedBox(height: 8),
                 AppTextField(
-                  label: 'User name / email',
-                  hint: 'enter your user name / email',
+                  label: 'Usuário / e-mail',
+                  hint: 'digite seu usuário / e-mail',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 32),
                 AppButton(
-                  text: 'Continue',
+                  text: 'Continuar',
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       _controller.goToVerifyCode();

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../home/controllers/home_controller.dart';
-import '../../../../shared/widgets/app_bottombar.dart';
 import '../widgets/leaderboard_header.dart';
 import '../widgets/league_info.dart';
 import '../widgets/rank_item.dart';
@@ -17,7 +14,7 @@ class LeaderboardPage extends StatelessWidget {
   // Dados mockados
   static const _players = [
     {'avatar': AppAssets.charMara, 'name': 'Sami', 'xp': 49, 'status': null},
-    {'avatar': AppAssets.charFrancilene, 'name': 'Me', 'xp': 49, 'status': '🎭', 'isMe': true},
+    {'avatar': AppAssets.charFrancilene, 'name': 'Eu', 'xp': 49, 'status': '🎭', 'isMe': true},
     {'avatar': AppAssets.charGlauciane, 'name': 'Haruto', 'xp': 49, 'status': '😊'},
     {'avatar': AppAssets.charLindoedson, 'name': 'Hakan', 'xp': 49, 'status': null},
     {'avatar': AppAssets.charRenner, 'name': 'Mayumi', 'xp': 49, 'status': '😊'},
@@ -36,66 +33,47 @@ class LeaderboardPage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HomeController>();
-
     return Scaffold(
       backgroundColor: AppTheme.white,
-      body: Stack(
-        children: [
-          // Conteúdo com sliver scroll
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Header colapsável com escudos
-              LeaderboardHeader(
-                title: 'Leaderboard',
-                shieldAssets: [
-                  AppAssets.shield1,
-                  AppAssets.shield2,
-                  AppAssets.shield3,
-                  AppAssets.shield4,
-                  AppAssets.shield5,
-                  AppAssets.shield6,
-                ],
-                currentLevel: 2,
-              ),
-
-              // Info da liga
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    SizedBox(height: 8),
-                    LeagueInfo(
-                      leagueName: 'Flare League',
-                      daysLeft: 6,
-                      description: 'The next league awaits the best 15 contenders.',
-                    ),
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
-
-              // Lista de ranking
-              _buildRankingList(),
-
-              // Espaço para bottom bar
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 120),
-              ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Header colapsável com escudos
+          LeaderboardHeader(
+            title: 'Ranking',
+            shieldAssets: [
+              AppAssets.shield1,
+              AppAssets.shield2,
+              AppAssets.shield3,
+              AppAssets.shield4,
+              AppAssets.shield5,
+              AppAssets.shield6,
             ],
+            currentLevel: 2,
           ),
 
-          // Bottom Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Obx(() => AppBottombar(
-              currentIndex: controller.currentNavIndex.value,
-              avatarAsset: AppAssets.charDiogo,
-              onTap: controller.onNavTap,
-            )),
+          // Info da liga
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                SizedBox(height: 8),
+                LeagueInfo(
+                  leagueName: 'Liga Chama',
+                  daysLeft: 6,
+                  description: 'A próxima liga aguarda os 15 melhores competidores.',
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          ),
+
+          // Lista de ranking
+          _buildRankingList(),
+
+          // Espaço para bottom bar
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 16),
           ),
         ],
       ),

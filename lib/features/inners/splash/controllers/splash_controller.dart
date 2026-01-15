@@ -16,7 +16,13 @@ class SplashController extends GetxController {
   // Métodos privados
   Future<void> _navigate() async {
     await Future.delayed(const Duration(seconds: 2));
-    // Temporário: vai direto para home para testar
+
+    // TODO: Implementar lógica de autenticação
+    // 1. Não autenticado? → /onboarding (primeiro acesso) ou /auth (já tem conta)
+    // 2. Autenticado, setup incompleto? → /setup
+    // 3. Autenticado, setup completo? → /home
+
+    // Por enquanto, vai para onboarding (fluxo de novo usuário)
     Get.offAllNamed('/home');
   }
 }

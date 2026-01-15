@@ -29,7 +29,7 @@ class UnitHeader extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryDark.withOpacity(0.3),
+              color: AppTheme.primaryDark30,
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -54,7 +54,7 @@ class UnitHeader extends StatelessWidget {
                   Text(
                     unitNumber,
                     style: AppTheme.textSmMedium.copyWith(
-                      color: AppTheme.white.withOpacity(0.9),
+                      color: AppTheme.white90,
                     ),
                   ),
                   const SizedBox(height: 2),

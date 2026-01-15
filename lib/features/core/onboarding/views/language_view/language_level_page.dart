@@ -14,11 +14,11 @@ class LanguageLevelPage extends StatelessWidget {
 
   // Dados
   static const _levels = [
-    {'icon': AppAssets.levelIcon1, 'label': "I'm new to {lang}"},
-    {'icon': AppAssets.levelIcon2, 'label': 'I know a few words'},
-    {'icon': AppAssets.levelIcon3, 'label': 'I can hold basic conversations'},
-    {'icon': AppAssets.levelIcon4, 'label': 'I understand grammar and read comfortably.'},
-    {'icon': AppAssets.levelIcon5, 'label': 'I speak, read, and write with ease.'},
+    {'icon': AppAssets.levelIcon1, 'label': "Sou novo em {lang}"},
+    {'icon': AppAssets.levelIcon2, 'label': 'Sei algumas palavras'},
+    {'icon': AppAssets.levelIcon3, 'label': 'Consigo ter conversas básicas'},
+    {'icon': AppAssets.levelIcon4, 'label': 'Entendo gramática e leio confortavelmente'},
+    {'icon': AppAssets.levelIcon5, 'label': 'Falo, leio e escrevo com facilidade'},
   ];
 
   // Build
@@ -31,8 +31,8 @@ class LanguageLevelPage extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           const OnboardingHeader(
-            title: 'Language Level',
-            bubbleText: 'How would you rate your level?',
+            title: 'Nível do Idioma',
+            bubbleText: 'Como você avalia seu nível?',
             progress: 22,
           ),
           _buildLevelList(controller),
@@ -72,7 +72,7 @@ class LanguageLevelPage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continue',
+        text: 'Continuar',
         onPressed: controller.languageLevel.value.isNotEmpty
             ? controller.nav.goToLearningReason
             : null,

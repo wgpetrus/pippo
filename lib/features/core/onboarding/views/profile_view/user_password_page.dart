@@ -70,19 +70,19 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Create your magic password',
+                'Crie sua senha mágica',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 24),
               Text(
-                'Password',
+                'Senha',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 8),
               OnboardingTextField(
                 controller: _passwordController,
                 focusNode: _passwordFocus,
-                hint: 'enter your Password',
+                hint: 'digite sua senha',
                 isFocused: _passwordFocused,
                 obscureText: _obscurePassword,
                 suffixIcon: IconButton(
@@ -96,14 +96,14 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Confirm Password',
+                'Confirmar Senha',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 8),
               OnboardingTextField(
                 controller: _confirmController,
                 focusNode: _confirmFocus,
-                hint: 're-enter your password',
+                hint: 'repita sua senha',
                 isFocused: _confirmFocused,
                 obscureText: _obscureConfirm,
                 suffixIcon: IconButton(
@@ -117,7 +117,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
               ),
               const Spacer(),
               AppButton(
-                text: 'Continue',
+                text: 'Continuar',
                 onPressed: _canContinue
                     ? () {
                         _controller.userPassword.value = _passwordController.text;

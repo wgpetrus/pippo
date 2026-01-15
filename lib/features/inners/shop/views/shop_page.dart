@@ -3,9 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../../../shared/widgets/app_page_header.dart';
-import '../../home/controllers/home_controller.dart';
-import '../../../../shared/widgets/app_bottombar.dart';
 import '../widgets/boost_item.dart';
 import '../widgets/collectible_item.dart';
 import '../widgets/section_title.dart';
@@ -18,53 +15,56 @@ class ShopPage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HomeController>();
-
     return Scaffold(
       backgroundColor: AppTheme.white,
-      body: Stack(
-        children: [
-          // Conteúdo scrollável
-          SingleChildScrollView(
-            clipBehavior: Clip.none,
-            padding: const EdgeInsets.only(top: 60, bottom: 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(
+        backgroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text('Loja', style: AppTheme.displaySmBold),
+        titleSpacing: 20,
+        centerTitle: false,
+        actions: [
+          // Contador de gems
+          // TODO: Substituir valor hardcoded por controller.gems.value
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: Row(
               children: [
-                // Header
-                const AppPageHeader(title: 'Shop', gemCount: 650),
-                const SizedBox(height: 24),
-
-                // Your packs
-                _buildYourPacks(),
-                const SizedBox(height: 32),
-
-                // Spatial offer (espaço extra para badge NEW)
-                _buildSpatialOffer(),
-                const SizedBox(height: 24),
-
-                // Learning Boosts
-                _buildLearningBoosts(),
-                const SizedBox(height: 24),
-
-                // Customization & Collectibles
-                _buildCustomization(),
+                Image.asset(AppAssets.appbarGem, width: 24, height: 24),
+                const SizedBox(width: 6),
+                Text(
+                  '650',
+                  style: AppTheme.textLgBold.copyWith(color: AppTheme.red),
+                ),
               ],
             ),
           ),
-
-          // Bottom Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Obx(() => AppBottombar(
-              currentIndex: controller.currentNavIndex.value,
-              avatarAsset: AppAssets.charDiogo,
-              onTap: controller.onNavTap,
-            )),
-          ),
         ],
+      ),
+      body: SingleChildScrollView(
+        clipBehavior: Clip.none,
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Your packs
+            _buildYourPacks(),
+            const SizedBox(height: 32),
+
+            // Spatial offer (espaço extra para badge NEW)
+            _buildSpatialOffer(),
+            const SizedBox(height: 24),
+
+            // Learning Boosts
+            _buildLearningBoosts(),
+            const SizedBox(height: 24),
+
+            // Customization & Collectibles
+            _buildCustomization(),
+          ],
+        ),
       ),
     );
   }
@@ -76,7 +76,7 @@ class ShopPage extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text('Your packs', style: AppTheme.textLgBold),
+          child: Text('Seus pacotes', style: AppTheme.textLgBold),
         ),
         const SizedBox(height: 12),
 
@@ -87,12 +87,12 @@ class ShopPage extends StatelessWidget {
             children: [
               ShopItemCard(
                 iconAsset: AppAssets.shopElixirXp,
-                label: 'XP Booster x10',
+                label: 'Boost de XP x10',
               ),
               const SizedBox(width: 12),
               ShopItemCard(
                 iconAsset: AppAssets.shopChest,
-                label: 'Lesson Skip x5',
+                label: 'Pular Lição x5',
               ),
             ],
           ),
@@ -107,7 +107,7 @@ class ShopPage extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text('Spatial offer', style: AppTheme.textLgBold),
+          child: Text('Oferta especial', style: AppTheme.textLgBold),
         ),
         const SizedBox(height: 16),
 
@@ -131,7 +131,7 @@ class ShopPage extends StatelessWidget {
               ShopItemCard(
                 iconAsset: AppAssets.shopChest,
                 label: '100',
-                price: '\$ FREE',
+                price: '\$ GRÁTIS',
                 backgroundColor: AppTheme.green100,
                 borderColor: AppTheme.green,
                 priceColor: AppTheme.green,
@@ -149,7 +149,7 @@ class ShopPage extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
-          child: SectionTitle(emoji: '🚀', title: 'Learning Boosts'),
+          child: SectionTitle(emoji: '🚀', title: 'Boosts de Aprendizado'),
         ),
         const SizedBox(height: 12),
 
@@ -159,16 +159,16 @@ class ShopPage extends StatelessWidget {
             children: [
               BoostItem(
                 iconAsset: AppAssets.shopElixirXp,
-                title: 'XP Booster',
-                description: 'Earn 2× gems from lessons!',
+                title: 'Boost de XP',
+                description: 'Ganhe 2× gemas nas lições!',
                 price: 420,
                 oldPrice: 20,
               ),
               const SizedBox(height: 12),
               BoostItem(
                 iconAsset: AppAssets.shopElixir2x,
-                title: 'Gem Multiplier',
-                description: 'Earn 2× gems from lessons!',
+                title: 'Multiplicador de Gemas',
+                description: 'Ganhe 2× gemas nas lições!',
                 price: 50,
                 badge: 'POPULAR',
                 badgeColor: AppTheme.orange,
@@ -186,7 +186,7 @@ class ShopPage extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
-          child: SectionTitle(emoji: '🎨', title: 'Customization & Collectibles'),
+          child: SectionTitle(emoji: '🎨', title: 'Personalização e Colecionáveis'),
         ),
         const SizedBox(height: 12),
 
@@ -196,16 +196,16 @@ class ShopPage extends StatelessWidget {
             children: [
               CollectibleItem(
                 iconAsset: AppAssets.shopGemPot,
-                title: 'Mascot Skins',
+                title: 'Skins do Mascote',
                 price: '\$ 4.99',
                 oldPrice: '20',
-                badge: 'NEW',
+                badge: 'NOVO',
                 badgeColor: AppTheme.primary,
               ),
               const SizedBox(height: 12),
               CollectibleItem(
                 iconAsset: AppAssets.shopChest,
-                title: 'Badge Packs',
+                title: 'Pacotes de Emblemas',
                 price: '\$ 8',
                 oldPrice: '20',
               ),

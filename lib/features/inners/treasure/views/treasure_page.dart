@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../home/controllers/home_controller.dart';
-import '../../../../shared/widgets/app_bottombar.dart';
 import '../widgets/challenge_card.dart';
 import '../widgets/treasure_header.dart';
 
@@ -16,51 +13,41 @@ class TreasurePage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HomeController>();
-
     return Scaffold(
       backgroundColor: AppTheme.white,
-      body: Stack(
-        children: [
-          // Conteúdo scrollável
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(top: 50, bottom: 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Banner header
-                const TreasureHeader(),
+      appBar: AppBar(
+        backgroundColor: AppTheme.white,
+        surfaceTintColor: AppTheme.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text('Caça ao Tesouro', style: AppTheme.displaySmBold),
+        titleSpacing: 20,
+      ),
+      body: SingleChildScrollView(
+        clipBehavior: Clip.none,
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Banner header
+            const TreasureHeader(),
 
-                // Daily Challenges
-                _buildSectionHeader('Daily Challenges', '6 hours left'),
-                _buildDailyChallenges(),
+            // Daily Challenges
+            _buildSectionHeader('Desafios Diários', '6 horas restantes'),
+            _buildDailyChallenges(),
 
-                const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-                // Weekly Quests
-                _buildSectionHeader('Weekly Quests', '2 day left'),
-                _buildWeeklyQuests(),
-              ],
-            ),
-          ),
-
-          // Bottom Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Obx(() => AppBottombar(
-              currentIndex: controller.currentNavIndex.value,
-              avatarAsset: AppAssets.charDiogo,
-              onTap: controller.onNavTap,
-            )),
-          ),
-        ],
+            // Weekly Quests
+            _buildSectionHeader('Missões Semanais', '2 dias restantes'),
+            _buildWeeklyQuests(),
+          ],
+        ),
       ),
     );
   }
 
-  // Widgets
+  // Widgets privados
   Widget _buildSectionHeader(String title, String timeLeft) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -90,7 +77,7 @@ class TreasurePage extends StatelessWidget {
         children: [
           ChallengeCard(
             iconAsset: AppAssets.treasureBook,
-            title: 'Complete 1 lesson',
+            title: 'Complete 1 lição',
             current: 2,
             total: 2,
             rewardAsset: AppAssets.treasureChest,
@@ -98,7 +85,7 @@ class TreasurePage extends StatelessWidget {
           ),
           ChallengeCard(
             iconAsset: AppAssets.treasureTarget,
-            title: 'Earn 50 XP',
+            title: 'Ganhe 50 XP',
             current: 2,
             total: 2,
             rewardAsset: AppAssets.treasureChestGem,
@@ -118,7 +105,7 @@ class TreasurePage extends StatelessWidget {
         children: [
           ChallengeCard(
             iconAsset: AppAssets.treasureBook,
-            title: 'Finish 5 lessons',
+            title: 'Termine 5 lições',
             current: 2,
             total: 2,
             rewardAsset: AppAssets.treasureChestGem,
@@ -128,7 +115,7 @@ class TreasurePage extends StatelessWidget {
           ),
           ChallengeCard(
             iconAsset: AppAssets.treasureXpCoin,
-            title: 'Maintain a 5-day streak',
+            title: 'Mantenha 5 dias de sequência',
             current: 0,
             total: 5,
             rewardAsset: AppAssets.treasureChest,

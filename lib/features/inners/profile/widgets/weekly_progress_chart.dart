@@ -30,7 +30,7 @@ class WeeklyProgressChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Título
-          const Text('Weekly progress', style: AppTheme.textLgBold),
+          const Text('Progresso semanal', style: AppTheme.textLgBold),
           const SizedBox(height: 12),
 
           // Legenda
@@ -55,9 +55,9 @@ class WeeklyProgressChart extends StatelessWidget {
               ),
               primaryYAxis: NumericAxis(
                 isVisible: true,
-                majorGridLines: MajorGridLines(
+                majorGridLines: const MajorGridLines(
                   width: 1,
-                  color: AppTheme.gray600.withOpacity(0.3),
+                  color: AppTheme.gray600_30,
                 ),
                 axisLine: const AxisLine(width: 0),
                 labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
@@ -90,10 +90,10 @@ class WeeklyProgressChart extends StatelessWidget {
                   dataSource: userProgress,
                   xValueMapper: (ChartData data, _) => data.day,
                   yValueMapper: (ChartData data, _) => data.xp,
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [
-                      AppTheme.primary.withOpacity(0.3),
-                      AppTheme.primary.withOpacity(0.05),
+                      AppTheme.primary30,
+                      AppTheme.primary05,
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
