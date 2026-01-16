@@ -12,7 +12,6 @@
    - Botões → `AppButton`, `AppBackButton`
    - Inputs → `AppTextField`, `AppPinput`
    - AppBar → `AppAppbar`
-   - Bottom bar → `AppBottombar`
    - Listas → `AppListItem`
    - Outros → verificar pasta
 

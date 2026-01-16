@@ -22,7 +22,7 @@ class SplashController extends GetxController {
     // 2. Autenticado, setup incompleto? → /setup
     // 3. Autenticado, setup completo? → /home
 
-    // Por enquanto, vai para onboarding (fluxo de novo usuário)
+    // Por enquanto, vai para home (temporário)
     Get.offAllNamed('/home');
   }
 }

@@ -1,0 +1,1 @@
+vamos fazer uma spec de #2-autenticacao seguindo todas nossas regras e padrões de steering e entendendo #0-docs e o que for necessario. OBS: #2-autenticacao é uma base para voce entender, mas não limita sua capacidade de gerar specs mais incriveis, o importante é seguir todas nossas regras e padroes definidos.A SPEC DEVE SER FEITA EM INGLES.
