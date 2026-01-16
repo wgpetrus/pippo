@@ -314,14 +314,48 @@ Obx(() => Column(
 
 ## Navegação
 
-### Após Login/Logout
+### Quando Usar Cada Tipo
 
-Usar `Get.offAllNamed()` para limpar stack:
+| Método | Quando Usar | Exemplo |
+|--------|-------------|---------|
+| `Get.to()` | Navegação interna (permite voltar) | Páginas dentro de uma feature |
+| `Get.toNamed()` | Navegação para rota (permite voltar) | Ir para `/auth` do onboarding |
+| `Get.offAllNamed()` | Limpar stack (sem voltar) | Após login/logout bem sucedido |
+| `Get.back()` | Voltar para tela anterior | Botão voltar padrão |
+
+### Após Login/Logout (Limpar Stack)
+
+Usar `Get.offAllNamed()` **apenas** após ações definitivas:
 
 ```dart
-// Após login bem sucedido
+// ✅ Após login bem sucedido → limpa stack
 Get.offAllNamed('/home');
 
-// Após logout
+// ✅ Após logout → limpa stack
 Get.offAllNamed('/auth');
+
+// ✅ Após completar onboarding → limpa stack
+Get.offAllNamed('/home');
 ```
+
+### Navegação com Possibilidade de Voltar
+
+Usar `Get.toNamed()` ou `Get.to()` quando o usuário pode querer voltar:
+
+```dart
+// ✅ Ir para auth do onboarding (pode voltar para welcome)
+Get.toNamed('/auth');
+
+// ✅ Navegação interna entre páginas
+Get.to(() => SettingsPage());
+
+// ❌ ERRADO - usar offAllNamed quando usuário pode querer voltar
+Get.offAllNamed('/auth');  // Não permite voltar!
+```
+
+### Regra Importante
+
+> **⚠️ `Get.offAllNamed()` limpa TODO o stack de navegação.**
+> 
+> Use apenas quando o usuário NÃO deve poder voltar (após login, logout, completar onboarding).
+> Para navegação normal onde o botão voltar deve funcionar, use `Get.toNamed()` ou `Get.to()`.

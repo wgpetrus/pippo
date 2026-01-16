@@ -48,42 +48,6 @@
           ]
         }
       }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:335019597433:android:8b3446b0dc3c6256cd3ea8",
-        "android_client_info": {
-          "package_name": "br.com.kmelon.dev.pippo"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "335019597433-n4s65rlr0ovq174lf0k73ofgloap8vju.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyA8bcV6w6xW07duyGhhbum9k9yuNcjWvTA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "335019597433-n4s65rlr0ovq174lf0k73ofgloap8vju.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "335019597433-agrsn7de7sbr5i8gqtka17aj47jd72ok.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "br.com.kmelon.dev"
-              }
-            }
-          ]
-        }
-      }
     }
   ],
   "configuration_version": "1"

@@ -16,7 +16,7 @@ class AuthController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados para recuperação de senha (públicos para UI)
+  // Estados para recuperação de senha
   final resendTimer = 0.obs;
 
   // Email temporário para reenvio de código
@@ -54,10 +54,9 @@ class AuthController extends GetxController {
     return null;
   }
 
-  // Métodos de ação
+  // Métodos públicos
 
   /// Realiza login com email e senha
-  /// Assume que os dados já foram validados pela View
   Future<void> login(String email, String password) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -106,7 +105,7 @@ class AuthController extends GetxController {
     }
   }
 
-  // Métodos de recuperação de senha
+  // Métodos privados
 
   /// Gera código OTP de 5 dígitos
   String _generateOTP() {
@@ -126,6 +125,25 @@ class AuthController extends GetxController {
       value: expirationTime.toIso8601String(),
     );
   }
+
+  /// Inicia timer de reenvio de 60 segundos
+  void _startResendTimer() {
+    resendTimer.value = 60;
+    _resendCountdownTimer?.cancel();
+
+    _resendCountdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (resendTimer.value > 0) {
+          resendTimer.value--;
+        } else {
+          timer.cancel();
+        }
+      },
+    );
+  }
+
+  // Métodos de recuperação de senha
 
   /// Envia código de recuperação de senha por email
   Future<void> sendPasswordResetCode(String email) async {
@@ -204,23 +222,6 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  /// Inicia timer de reenvio de 60 segundos
-  void _startResendTimer() {
-    resendTimer.value = 60;
-    _resendCountdownTimer?.cancel();
-
-    _resendCountdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) {
-        if (resendTimer.value > 0) {
-          resendTimer.value--;
-        } else {
-          timer.cancel();
-        }
-      },
-    );
   }
 
   /// Verifica código OTP
@@ -318,8 +319,8 @@ class AuthController extends GetxController {
 
       // Navegar para login com mensagem de sucesso
       Get.snackbar(
-        'Sucesso',
-        'Senha redefinida com sucesso!',
+        'Link Enviado',
+        'Um link para redefinir sua senha foi enviado para seu e-mail.',
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 3),
       );
@@ -334,9 +335,9 @@ class AuthController extends GetxController {
     }
   }
 
-  // Error handlers
+  // Handlers
 
-  /// Handler de erros de login do Firebase Auth (mensagens em português)
+  /// Handler de erros de login do Firebase Auth
   String _handleFirebaseLoginError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

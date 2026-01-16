@@ -43,6 +43,8 @@ class ResponsiveUtils {
   bool get isDesktop => widthScreen >= 1024;
 
   // Orientação
+  bool get isLandscape =>
+      _context != null ? _mq.orientation == Orientation.landscape : isLandscapeStatic;
   bool get isPortrait =>
       _context != null ? _mq.orientation == Orientation.portrait : !isLandscapeStatic;
 

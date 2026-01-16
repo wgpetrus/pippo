@@ -46,7 +46,8 @@
 | FontAwesome gratuito para ícones | ✅ SIM |
 | Packages de UI padrão da empresa | ✅ SIM |
 | Comentários em português | ✅ SIM |
-| Get.offAllNamed() após login/logout | ✅ SIM |
+| Get.offAllNamed() apenas após login/logout/onboarding completo | ✅ SIM |
+| Get.toNamed() para navegação com possibilidade de voltar | ✅ SIM |
 | Cada page na sua feature (não tudo em home) | ✅ SIM |
 | Cada arquivo na pasta correta | ✅ SIM |
 | SharedPreferences para dados não sensíveis | ✅ SIM |
