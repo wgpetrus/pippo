@@ -70,9 +70,10 @@ class CompletePage extends StatelessWidget {
               const Spacer(),
 
               // Cards de estatísticas
+              // TODO: [etapa 8] substituir valores mockados por dados do controller
               // Em landscape: exibir em uma única linha
               // Em portrait: exibir em duas linhas
-              ResponsiveUtils.isLandscape
+              ResponsiveUtils.isLandscapeStatic
                   ? Row(
                       children: [
                         Expanded(

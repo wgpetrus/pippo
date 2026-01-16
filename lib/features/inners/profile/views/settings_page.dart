@@ -36,7 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   // Build
   @override
   Widget build(BuildContext context) {
-    final r = Responsive(context);
+    final r = ResponsiveUtils(context);
     
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -176,7 +176,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // Widgets
   Widget _buildSection({
-    required Responsive r,
+    required ResponsiveUtils r,
     required String title,
     required List<Widget> children,
   }) {

@@ -44,7 +44,7 @@ class ResponsiveUtils {
 
   // Orientação
   bool get isPortrait =>
-      _context != null ? _mq.orientation == Orientation.portrait : !isLandscape;
+      _context != null ? _mq.orientation == Orientation.portrait : !isLandscapeStatic;
 
   // SafeArea paddings
   EdgeInsets get safeAreaPadding =>

@@ -44,7 +44,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   // Build
   @override
   Widget build(BuildContext context) {
-    final r = Responsive(context);
+    final r = ResponsiveUtils(context);
     
     return Scaffold(
       backgroundColor: AppTheme.white,

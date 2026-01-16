@@ -81,7 +81,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: ResponsiveUtils.isLandscape ? 4 : 2,
+                    crossAxisCount: ResponsiveUtils.isLandscapeStatic ? 4 : 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                     childAspectRatio: 0.85,

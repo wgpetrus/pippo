@@ -181,7 +181,7 @@ void main() {
 
     testWidgets('isLandscape returns false when not initialized', (tester) async {
       // screenWidth e screenHeight são 0 quando não inicializado
-      expect(ResponsiveUtils.isLandscape, isFalse);
+      expect(ResponsiveUtils.isLandscapeStatic, isFalse);
     });
   });
 }

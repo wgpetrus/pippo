@@ -118,7 +118,7 @@ class AuthController extends GetxController {
   /// Armazena OTP no FlutterSecureStorage com expiração de 10 minutos
   Future<void> _storeOTP(String code, String email) async {
     final expirationTime = DateTime.now().add(const Duration(minutes: 10));
-    
+
     await _secureStorage.write(key: 'otp_code', value: code);
     await _secureStorage.write(key: 'otp_email', value: email);
     await _secureStorage.write(
@@ -227,7 +227,7 @@ class AuthController extends GetxController {
   Future<void> verifyCode(String code) async {
     // Sanitizar código (remover espaços)
     final sanitizedCode = code.trim();
-    
+
     // Validar que o código tem exatamente 5 dígitos
     if (sanitizedCode.length != 5) {
       errorMessage.value = 'O código deve ter 5 dígitos.';
@@ -235,7 +235,8 @@ class AuthController extends GetxController {
     }
 
     // Validar que o código contém apenas números
-    if (!RegExp(r'^\d{5}$').hasMatch(sanitizedCode)) {$').hasMatch(sanitizedCode)) {
+    final digitRegex = RegExp(r'^\d{5}$');
+    if (!digitRegex.hasMatch(sanitizedCode)) {
       errorMessage.value = 'O código deve conter apenas números.';
       return;
     }
@@ -290,7 +291,7 @@ class AuthController extends GetxController {
     try {
       // Recuperar email armazenado
       final email = await _secureStorage.read(key: 'otp_email');
-      
+
       if (email == null) {
         errorMessage.value = 'Sessão expirada. Inicie o processo novamente.';
         return;
@@ -298,7 +299,7 @@ class AuthController extends GetxController {
 
       // Obter usuário atual
       final user = _auth.currentUser;
-      
+
       if (user == null) {
         errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
         return;
@@ -322,7 +323,7 @@ class AuthController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 3),
       );
-      
+
       backToSignin();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
