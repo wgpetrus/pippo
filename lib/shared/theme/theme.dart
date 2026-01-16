@@ -352,4 +352,10 @@ class AppTheme {
     fontWeight: FontWeight.w800,
     height: 1.0,
   );
+
+  // CONVENIENCE ALIASES
+  static const Color textSecondary = gray300;
+  static const Color error = red;
+  static const TextStyle textMd = textMdRegular;
+  static const TextStyle textSm = textSmRegular;
 }

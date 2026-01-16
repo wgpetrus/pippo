@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
+import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 
@@ -43,6 +44,8 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = Responsive(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: Column(
@@ -51,7 +54,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: r.spacing24),
               child: Column(
                 children: [
                   Text(
@@ -59,18 +62,18 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                     style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: r.spacing12),
                   Text(
                     'Seu curso está pronto e esperando — a apenas um clique.',
                     style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: r.spacing24),
                   AppButton(
                     text: 'Vamos Aprender',
                     onPressed: _onButtonPressed,
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: r.spacing32),
                 ],
               ),
             ),
@@ -103,8 +106,8 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
       _controller.isAddingCourse.value = false;
       Get.offAllNamed('/home');
     } else {
-      // Finaliza onboarding normal
-      _controller.nav.finishOnboarding();
+      // Finaliza onboarding normal e salva estados
+      _controller.completeOnboarding();
     }
   }
 }

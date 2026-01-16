@@ -41,7 +41,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Qual é o seu e-mail?'),
+      appBar: const AppAppbar(title: 'Esqueci minha senha'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -51,21 +51,58 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
+                
+                // Texto explicativo
+                Text(
+                  'Digite seu e-mail para receber um código de verificação e redefinir sua senha.',
+                  style: AppTheme.textMd.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Campo de e-mail
                 AppTextField(
-                  label: 'Usuário / e-mail',
-                  hint: 'digite seu usuário / e-mail',
+                  label: 'E-mail',
+                  hint: 'Digite seu e-mail',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  validator: _controller.validateEmail,
                 ),
+                
                 const SizedBox(height: 32),
-                AppButton(
-                  text: 'Continuar',
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      _controller.goToVerifyCode();
-                    }
-                  },
-                ),
+                
+                // Mensagem de erro
+                Obx(() {
+                  if (_controller.errorMessage.value.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      _controller.errorMessage.value,
+                      style: AppTheme.textSm.copyWith(
+                        color: AppTheme.error,
+                      ),
+                    ),
+                  );
+                }),
+                
+                // Botão enviar código
+                Obx(() => AppButton(
+                  text: 'Enviar código',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: _controller.isLoading.value
+                      ? null
+                      : () {
+                          if (_formKey.currentState!.validate()) {
+                            _controller.sendPasswordResetCode(
+                              _emailController.text.trim(),
+                            );
+                          }
+                        },
+                )),
               ],
             ),
           ),

@@ -46,5 +46,5 @@ class OnboardingNavigation {
 
   // Finalização
   void finishOnboarding() => Get.offAllNamed('/home');
-  void goToAuth() => Get.toNamed('/auth');
+  void goToAuth() => Get.offAllNamed('/auth');
 }

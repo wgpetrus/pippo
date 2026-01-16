@@ -190,27 +190,63 @@ lib/assets/
 
 ## Estrutura de Testes
 
-A pasta `test/` deve espelhar a estrutura de `lib/` para facilitar localização:
+A pasta `test/` é dividida em dois tipos de testes:
 
 ```
 test/
-├── features/
-│   ├── core/
-│   │   └── [feature_name]/
-│   │       └── controllers/
-│   │           └── feature_controller_test.dart
-│   └── inners/
-│       └── [feature_name]/
-│           └── controllers/
-└── shared/
-    ├── utils/
-    │   └── helper_test.dart
-    └── widgets/
-        └── app_button_test.dart
+├── unit/                    # Testes unitários (exemplos específicos e edge cases)
+│   ├── features/
+│   │   ├── core/
+│   │   │   └── [feature_name]/
+│   │   │       └── controllers/
+│   │   │           └── feature_controller_test.dart
+│   │   └── inners/
+│   │       └── [feature_name]/
+│   │           └── controllers/
+│   └── shared/
+│       ├── utils/
+│       │   └── helper_test.dart
+│       └── widgets/
+│           └── app_button_test.dart
+│
+└── property/                # Property-based tests (propriedades universais)
+    └── features/
+        ├── core/
+        │   └── [feature_name]/
+        │       └── controllers/
+        │           └── feature_controller_property_test.dart
+        └── inners/
+            └── [feature_name]/
+                └── controllers/
 ```
 
-**Regras:**
-- Estrutura idêntica ao `lib/` para fácil navegação
+### Tipos de Testes
+
+| Tipo | Pasta | Propósito |
+|------|-------|-----------|
+| Unit | `test/unit/` | Exemplos específicos, edge cases, validações pontuais |
+| Property | `test/property/` | Propriedades universais que devem valer para qualquer input |
+
+### Regras
+
+- Estrutura dentro de `unit/` e `property/` espelha `lib/`
 - Sufixo `_test.dart` obrigatório
+- Property tests devem ter tag: `Feature: [feature], Property [N]: [descrição]`
 - Testar controllers e widgets reutilizáveis
 - Views não precisam de testes (não contêm lógica)
+
+### Quando usar cada tipo
+
+**Unit Tests:**
+- Validação de inputs específicos (email válido/inválido)
+- Edge cases conhecidos
+- Mapeamento de erros
+- Comportamento com valores específicos
+- etc
+
+**Property Tests:**
+- Ordem de verificação nunca invertida
+- Consistência de estado
+- Timeout sempre aplicado
+- Navegação sempre limpa stack
+- etc

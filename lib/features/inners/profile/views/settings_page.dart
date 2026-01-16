@@ -3,9 +3,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_list_item.dart';
+import '../../../core/auth/controllers/auth_controller.dart';
 import 'courses_page.dart';
 import 'edit_profile_page.dart';
 import 'learning_controls_page.dart';
@@ -20,10 +22,22 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  // Estados
   bool _notificationsEnabled = true;
+  late final AuthController _authController;
 
+  // Lifecycle
+  @override
+  void initState() {
+    super.initState();
+    _authController = Get.find<AuthController>();
+  }
+
+  // Build
   @override
   Widget build(BuildContext context) {
+    final r = Responsive(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
@@ -41,22 +55,21 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.symmetric(horizontal: r.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            SizedBox(height: r.spacing16),
 
             // Account Section
             _buildSection(
+              r: r,
               title: 'Conta',
               children: [
                 AppListItem(
                   icon: FontAwesomeIcons.solidUser,
                   label: 'Perfil',
-                  onTap: () {
-                    Get.to(() => const EditProfilePage());
-                  },
+                  onTap: () => Get.to(() => const EditProfilePage()),
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.solidBell,
@@ -92,10 +105,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
 
-            const SizedBox(height: 28),
+            SizedBox(height: r.spacing24),
 
             // Subscription Section
             _buildSection(
+              r: r,
               title: 'Assinatura',
               children: [
                 AppListItem(
@@ -108,10 +122,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
 
-            const SizedBox(height: 28),
+            SizedBox(height: r.spacing24),
 
             // Support Section
             _buildSection(
+              r: r,
               title: 'Suporte',
               children: [
                 AppListItem(
@@ -138,7 +153,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
 
-            const SizedBox(height: 40),
+            SizedBox(height: r.spacing32),
 
             // Logout Button
             AppButton(
@@ -149,13 +164,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 size: 16,
                 color: AppTheme.primary,
               ),
-              onPressed: () {
-                // TODO: Limpar dados do usuário (Firebase, SecureStorage, etc.)
-                Get.offAllNamed('/auth');
-              },
+              onPressed: () => _authController.logout(),
             ),
 
-            const SizedBox(height: 40),
+            SizedBox(height: r.spacing32),
           ],
         ),
       ),
@@ -163,8 +175,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   // Widgets
-
   Widget _buildSection({
+    required Responsive r,
     required String title,
     required List<Widget> children,
   }) {
@@ -175,7 +187,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title,
           style: AppTheme.textSmBold.copyWith(color: AppTheme.gray300),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: r.spacing8),
         ...children,
       ],
     );

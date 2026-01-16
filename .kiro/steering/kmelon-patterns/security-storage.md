@@ -109,3 +109,94 @@ Future<void> logout() async {
 - ✅ Limpar dados sensíveis no logout
 - ❌ Nunca logar senhas, tokens, CPF
 - ❌ Nunca hardcodar chaves de API
+
+---
+
+## Arquivos Sensíveis e .gitignore
+
+### Nunca Commitar Arquivos Sensíveis
+
+**CRÍTICO:** Arquivos com informações sensíveis **NUNCA** devem ser commitados no repositório.
+
+### Arquivos Sensíveis Comuns
+
+| Arquivo | Conteúdo Sensível |
+|---------|-------------------|
+| `firebase_options.dart` | Chaves de API do Firebase |
+| `google-services.json` | Configuração Android Firebase |
+| `GoogleService-Info.plist` | Configuração iOS Firebase |
+| `.env` | Variáveis de ambiente |
+| `local.properties` | Configurações locais Android |
+| Arquivos com `_secret`, `_key`, `_token` | Credenciais diversas |
+
+### Padrão .gitignore
+
+Sempre verificar se o `.gitignore` contém:
+
+```gitignore
+# Firebase
+firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Android
+android/local.properties
+android/key.properties
+*.keystore
+*.jks
+
+# iOS
+ios/Runner/GoogleService-Info.plist
+ios/firebase_app_id_file.json
+
+# Secrets
+*_secret.*
+*_key.*
+*_token.*
+*.pem
+*.p12
+
+# IDE
+.idea/
+.vscode/
+*.iml
+```
+
+### Checklist Antes de Commitar
+
+- [ ] Verificar se não há chaves de API no código
+- [ ] Confirmar que arquivos de configuração Firebase estão no `.gitignore`
+- [ ] Validar que não há tokens ou senhas hardcodados
+- [ ] Revisar arquivos novos antes de adicionar ao git
+- [ ] Usar `git status` para verificar o que será commitado
+
+### Se Commitou Acidentalmente
+
+```bash
+# Remover arquivo do histórico (CUIDADO!)
+git filter-branch --force --index-filter \
+  "git rm --cached --ignore-unmatch caminho/do/arquivo" \
+  --prune-empty --tag-name-filter cat -- --all
+
+# Forçar push (apenas se necessário e com cuidado)
+git push origin --force --all
+
+# Melhor: Invalidar as credenciais expostas
+# - Regenerar chaves de API
+# - Rotacionar tokens
+# - Atualizar senhas
+```
+
+### Boas Práticas
+
+- ✅ Usar `.env.example` com valores placeholder
+- ✅ Documentar variáveis necessárias no README
+- ✅ Revisar `.gitignore` no início do projeto
+- ✅ Usar secrets do CI/CD para deploy
+- ❌ Nunca commitar arquivos de configuração com valores reais
+- ❌ Nunca compartilhar credenciais por chat/email

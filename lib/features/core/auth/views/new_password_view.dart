@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -8,7 +7,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
 
-/// Tela de nova senha
+/// Tela de redefinição de senha
 class NewPasswordView extends StatefulWidget {
   const NewPasswordView({super.key});
 
@@ -19,31 +18,37 @@ class NewPasswordView extends StatefulWidget {
 class _NewPasswordViewState extends State<NewPasswordView> {
   // Form
   final _formKey = GlobalKey<FormState>();
-  final _passwordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   // Estados
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   late final AuthController _controller;
-
-  bool get _isFormValid =>
-      _passwordController.text.isNotEmpty && _confirmPasswordController.text.isNotEmpty;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
     _controller = Get.find<AuthController>();
-    _passwordController.addListener(() => setState(() {}));
-    _confirmPasswordController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _passwordController.dispose();
+    _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // Validadores
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Confirmação de senha é obrigatória.';
+    }
+    if (value != _newPasswordController.text) {
+      return 'As senhas não coincidem.';
+    }
+    return null;
   }
 
   // Build
@@ -51,7 +56,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Alterar senha'),
+      appBar: const AppAppbar(title: 'Nova senha'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -61,46 +66,91 @@ class _NewPasswordViewState extends State<NewPasswordView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                AppTextField(
-                  label: 'Nova Senha',
-                  hint: 'digite a nova senha',
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: FaIcon(
-                      _obscurePassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
-                      color: AppTheme.gray400,
-                      size: 18,
-                    ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                
+                // Texto explicativo
+                Text(
+                  'Crie uma nova senha para sua conta.',
+                  style: AppTheme.textMd.copyWith(
+                    color: AppTheme.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 20),
+                
+                const SizedBox(height: 24),
+                
+                // Campo de nova senha
+                AppTextField(
+                  label: 'Nova senha',
+                  hint: 'Digite sua nova senha',
+                  controller: _newPasswordController,
+                  obscureText: _obscureNewPassword,
+                  validator: _controller.validatePassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureNewPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppTheme.gray400,
+                    ),
+                    onPressed: () {
+                      setState(() => _obscureNewPassword = !_obscureNewPassword);
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Campo de confirmação de senha
                 AppTextField(
                   label: 'Confirmar senha',
-                  hint: 'repita sua senha',
+                  hint: 'Digite sua senha novamente',
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
+                  validator: _validateConfirmPassword,
                   suffixIcon: IconButton(
-                    icon: FaIcon(
-                      _obscureConfirmPassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: AppTheme.gray400,
-                      size: 18,
                     ),
-                    onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                    onPressed: () {
+                      setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                    },
                   ),
                 ),
+                
                 const SizedBox(height: 32),
-                AppButton(
-                  text: 'Continuar',
-                  onPressed: _isFormValid
-                      ? () {
+                
+                // Mensagem de erro
+                Obx(() {
+                  if (_controller.errorMessage.value.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      _controller.errorMessage.value,
+                      style: AppTheme.textSm.copyWith(
+                        color: AppTheme.error,
+                      ),
+                    ),
+                  );
+                }),
+                
+                // Botão redefinir senha
+                Obx(() => AppButton(
+                  text: 'Redefinir senha',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: _controller.isLoading.value
+                      ? null
+                      : () {
                           if (_formKey.currentState!.validate()) {
-                            _controller.backToSignin();
+                            _controller.resetPassword(
+                              _newPasswordController.text.trim(),
+                            );
                           }
-                        }
-                      : null,
-                ),
+                        },
+                )),
               ],
             ),
           ),

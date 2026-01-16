@@ -8,7 +8,7 @@ import '../../../../shared/widgets/app_pinput.dart';
 import '../../../../shared/widgets/app_resend_code.dart';
 import '../controllers/auth_controller.dart';
 
-/// Tela de verificação de código do auth
+/// Tela de verificação de código de recuperação de senha
 class VerifyCodeView extends StatefulWidget {
   const VerifyCodeView({super.key});
 
@@ -42,13 +42,23 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
     super.dispose();
   }
 
+  // Métodos
+  void _verifyCode() {
+    if (_pinController.text.length == 5) {
+      _controller.verifyCode(_pinController.text);
+    }
+  }
+
+  void _resendCode() {
+    _controller.resendPasswordResetCode();
+  }
+
   // Build
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Confirme seu e-mail'),
+      appBar: const AppAppbar(title: 'Verificar código'),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,51 +69,73 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 8),
+                    
+                    // Texto com email mascarado
                     Text(
-                      'Um passo mais perto da sua sequência!',
-                      style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+                      'Digite o código de 5 dígitos que enviamos para seu e-mail.',
+                      style: AppTheme.textMd.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Enviamos um código de 5 dígitos para seu e-mail. Digite abaixo para desbloquear sua próxima aventura!',
-                      style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
-                    ),
+                    
                     const SizedBox(height: 32),
+                    
+                    // Input de PIN (5 dígitos)
                     Center(
                       child: AppPinput(
                         controller: _pinController,
                         focusNode: _focusNode,
-                        onCompleted: (pin) {
-                          // TODO: Implementar validação do código
-                          _controller.goToNewPassword();
-                        },
+                        length: 5,
+                        onCompleted: (pin) => _verifyCode(),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    AppResendCode(
-                      isComplete: _isComplete,
-                      onResend: () {
-                        // TODO: Implementar reenvio de código
-                        // _controller.resendCode();
-                      },
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Componente de reenvio com timer de 60 segundos
+                    Center(
+                      child: Obx(() => AppResendCode(
+                        isComplete: _controller.resendTimer.value == 0,
+                        secondsRemaining: _controller.resendTimer.value,
+                        onResend: _controller.resendTimer.value == 0
+                            ? _resendCode
+                            : null,
+                      )),
                     ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Mensagem de erro
+                    Obx(() {
+                      if (_controller.errorMessage.value.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          _controller.errorMessage.value,
+                          style: AppTheme.textSm.copyWith(
+                            color: AppTheme.error,
+                          ),
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),
             ),
-            // Botão sempre visível para melhor UX
+            
+            // Botão verificar (desabilitado até 5 dígitos serem digitados)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: AppButton(
+              child: Obx(() => AppButton(
                 text: 'Verificar',
-                onPressed: _isComplete
-                    ? () {
-                        // TODO: Implementar validação do código
-                        _controller.goToNewPassword();
-                      }
-                    : null,
-                isPrimary: _isComplete,
-              ),
+                isLoading: _controller.isLoading.value,
+                onPressed: _controller.isLoading.value
+                    ? null
+                    : (_isComplete ? _verifyCode : null),
+              )),
             ),
           ],
         ),

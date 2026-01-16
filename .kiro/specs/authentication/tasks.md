@@ -14,30 +14,30 @@ This implementation plan breaks down the authentication module into discrete, ma
   - Setup routes in `shared/routes/app_routes.dart` for /splash, /auth, /onboarding, /home
   - _Requirements: 1.1, 1.4, 1.5, 1.8_
 
-- [ ] 2. Implement SplashController with critical verification order
-  - [ ] 2.1 Create SplashController with isLoading and errorMessage states
+- [x] 2. Implement SplashController with critical verification order
+  - [x] 2.1 Create SplashController with isLoading and errorMessage states
     - Initialize controller extending GetxController
     - Add observable states: isLoading, errorMessage
     - _Requirements: 1.2, 5.1_
   
-  - [ ] 2.2 Implement authentication check method
+  - [x] 2.2 Implement authentication check method
     - Check Firebase Auth currentUser
     - Return boolean indicating if user is authenticated
     - _Requirements: 1.2_
   
-  - [ ] 2.3 Implement first access check method
+  - [x] 2.3 Implement first access check method
     - Check SharedPreferences for isFirstAccess key
     - Default to true if key doesn't exist
     - _Requirements: 1.3, 6.3_
   
-  - [ ] 2.4 Implement onboarding completion check method
+  - [x] 2.4 Implement onboarding completion check method
     - Fetch user document from Firestore
     - Extract onboardingCompleted field (default false)
     - Apply 5-second timeout
     - Handle Firestore errors with standardized handler
     - _Requirements: 1.6, 1.7, 1.11, 8.2_
   
-  - [ ] 2.5 Implement navigation decision logic
+  - [x] 2.5 Implement navigation decision logic
     - Follow exact order: auth check → first access → onboarding check → navigate
     - Navigate to /onboarding if first access or onboarding incomplete
     - Navigate to /auth if not authenticated and not first access
@@ -45,27 +45,29 @@ This implementation plan breaks down the authentication module into discrete, ma
     - Navigate to /auth on Firestore error or timeout
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.12_
   
-  - [ ]* 2.6 Write property test for navigation order invariant
+  - [x] 2.6 Write property test for navigation order invariant
+
     - **Property 1: Navigation Order Invariant**
     - **Validates: Requirements 1.2, 1.3, 1.6**
     - Test that verification order is never inverted
     - Generate various authentication states
     - Verify correct navigation for each state
   
-  - [ ]* 2.7 Write property test for timeout application
+  - [x] 2.7 Write property test for timeout application
+
     - **Property 9: Timeout Application**
     - **Validates: Requirements 1.11, 1.12**
     - Test that Firestore operations timeout after 5 seconds
     - Verify navigation to /auth on timeout
 
-- [ ] 3. Implement network error handling in splash
+- [x] 3. Implement network error handling in splash
   - Detect network errors during Firestore fetch
   - Display error message "Verifique sua conexão com a internet"
   - Show "Tentar novamente" button
   - Retry logic on button press
   - _Requirements: 1.10, 8.4_
 
-- [ ] 4. Create SplashView UI
+- [x] 4. Create SplashView UI
   - Display logo centered
   - Show CircularProgressIndicator at bottom (48px from bottom)
   - Display for minimum 2 seconds
@@ -74,44 +76,46 @@ This implementation plan breaks down the authentication module into discrete, ma
 
 ### Phase 2: Login Implementation
 
-- [ ] 5. Implement AuthController for login
-  - [ ] 5.1 Create AuthController with required states
+- [x] 5. Implement AuthController for login
+  - [x] 5.1 Create AuthController with required states
     - Add isLoading, errorMessage observables
     - Initialize Firebase Auth instance
     - _Requirements: 2.1, 5.1_
   
-  - [ ] 5.2 Implement email validation method
+  - [x] 5.2 Implement email validation method
     - Check if email is empty
     - Validate email format using GetUtils.isEmail
     - Return appropriate Portuguese error message
     - _Requirements: 2.2, 2.4, 4.3_
   
-  - [ ] 5.3 Implement password validation method
+  - [x] 5.3 Implement password validation method
     - Check if password is empty
     - Validate minimum 6 characters
     - Return appropriate Portuguese error message
     - _Requirements: 2.3, 4.4_
   
-  - [ ]* 5.4 Write property test for form validation completeness
+  - [x] 5.4 Write property test for form validation completeness
+
     - **Property 4: Form Validation Completeness**
     - **Validates: Requirements 4.1, 4.2**
     - Generate random valid/invalid emails and passwords
     - Verify all validations run before Firebase operations
   
-  - [ ] 5.5 Implement Firebase Auth error handler
+  - [x] 5.5 Implement Firebase Auth error handler
     - Map all Firebase Auth error codes to Portuguese messages
     - Handle: user-not-found, wrong-password, invalid-email, user-disabled, too-many-requests, network-request-failed, invalid-credential
     - Return user-friendly messages without technical terms
     - _Requirements: 2.10, 2.11, 2.12, 2.13, 2.14, 2.15, 2.16, 8.1, 8.3, 8.7_
   
-  - [ ]* 5.6 Write property test for error message mapping
+  - [x] 5.6 Write property test for error message mapping
+
     - **Property 3: Error Message Mapping**
     - **Validates: Requirements 8.1, 8.3**
     - Test all Firebase error codes
     - Verify messages are in Portuguese
     - Verify no technical terms in messages
   
-  - [ ] 5.7 Implement login method
+  - [x] 5.7 Implement login method
     - Set isLoading to true
     - Clear previous error messages
     - Authenticate via Firebase Auth signInWithEmailAndPassword
@@ -124,26 +128,29 @@ This implementation plan breaks down the authentication module into discrete, ma
     - Set isLoading to false in finally block
     - _Requirements: 2.5, 2.6, 2.7, 2.8, 2.9, 2.17, 5.2, 5.3, 7.1_
   
-  - [ ]* 5.8 Write property test for authentication state consistency
+  - [x] 5.8 Write property test for authentication state consistency
+
     - **Property 2: Authentication State Consistency**
     - **Validates: Requirements 2.8, 2.9**
     - Test that lastActiveAt is updated before navigation
     - Verify Get.offAllNamed is called with /home
   
-  - [ ]* 5.9 Write property test for loading state consistency
+  - [x] 5.9 Write property test for loading state consistency
+
     - **Property 7: Loading State Consistency**
     - **Validates: Requirements 5.1, 5.3, 5.4**
     - Test loading indicator appears during operation
     - Test loading indicator removed on completion/error
   
-  - [ ]* 5.10 Write unit tests for login edge cases
+  - [x] 5.10 Write unit tests for login edge cases
+
     - Test empty email and password
     - Test invalid email format
     - Test short password
     - Test network errors
     - Test Firestore fetch failures
 
-- [ ] 6. Create SigninView UI
+- [x] 6. Create SigninView UI
   - Create StatefulWidget with form key
   - Add TextEditingController for email and password
   - Add AppTextField for email with email validator
@@ -157,14 +164,14 @@ This implementation plan breaks down the authentication module into discrete, ma
 
 ### Phase 3: Password Recovery
 
-- [ ] 7. Implement password recovery in AuthController
-  - [ ] 7.1 Implement OTP generation and storage
+- [x] 7. Implement password recovery in AuthController
+  - [x] 7.1 Implement OTP generation and storage
     - Generate 5-digit random numeric code
     - Store code in FlutterSecureStorage with expiration timestamp (10 minutes)
     - Store associated email
     - _Requirements: 3.4, 3.6, 9.4_
   
-  - [ ] 7.2 Implement send password reset code method
+  - [x] 7.2 Implement send password reset code method
     - Validate email is not empty and valid
     - Generate OTP code
     - Send email via Firebase Auth sendPasswordResetEmail
@@ -173,14 +180,14 @@ This implementation plan breaks down the authentication module into discrete, ma
     - Handle errors with standardized handler
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   
-  - [ ] 7.3 Implement resend timer logic
+  - [x] 7.3 Implement resend timer logic
     - Track last send timestamp
     - Calculate seconds remaining until 60 seconds elapsed
     - Update observable resendTimer every second
     - Enable resend button when timer reaches 0
     - _Requirements: 3.14, 3.15, 3.16_
   
-  - [ ] 7.4 Implement OTP verification method
+  - [x] 7.4 Implement OTP verification method
     - Validate code is exactly 5 digits
     - Retrieve stored OTP from FlutterSecureStorage
     - Check if code matches
@@ -189,26 +196,28 @@ This implementation plan breaks down the authentication module into discrete, ma
     - Navigate to new password screen on success
     - _Requirements: 3.8, 3.9, 3.10, 3.11, 3.12, 3.13_
   
-  - [ ]* 7.5 Write property test for OTP expiration
+  - [x] 7.5 Write property test for OTP expiration
+
     - **Property 5: OTP Expiration**
     - **Validates: Requirements 3.6, 3.13**
     - Generate OTPs with various creation times
     - Verify codes older than 10 minutes are rejected
   
-  - [ ] 7.6 Implement password reset method
+  - [x] 7.6 Implement password reset method
     - Validate new password has minimum 6 characters
     - Update password via Firebase Auth
     - Clear OTP from secure storage
     - Navigate to login screen with success message
     - _Requirements: 3.17, 3.18, 3.19, 3.20_
   
-  - [ ]* 7.7 Write unit tests for password recovery flow
+  - [x] 7.7 Write unit tests for password recovery flow
+
     - Test OTP generation format (5 digits)
     - Test OTP expiration logic
     - Test resend timer countdown
     - Test password validation
 
-- [ ] 8. Create ForgotPasswordView UI
+- [x] 8. Create ForgotPasswordView UI
   - Create StatefulWidget with form key
   - Add AppAppbar with "Esqueci minha senha" title
   - Add explanatory text
@@ -218,7 +227,7 @@ This implementation plan breaks down the authentication module into discrete, ma
   - Display error message when errorMessage is not empty
   - _Requirements: 3.1, 3.2, 3.3, 4.2, 5.1_
 
-- [ ] 9. Create VerifyCodeView UI
+- [x] 9. Create VerifyCodeView UI
   - Create StatefulWidget
   - Add AppAppbar with "Verificar código" title
   - Display text with masked email
@@ -231,7 +240,7 @@ This implementation plan breaks down the authentication module into discrete, ma
   - Display error message when errorMessage is not empty
   - _Requirements: 3.7, 3.8, 3.9, 3.12, 3.13, 3.14, 3.15, 3.16_
 
-- [ ] 10. Create NewPasswordView UI
+- [x] 10. Create NewPasswordView UI
   - Create StatefulWidget with form key
   - Add AppAppbar with "Nova senha" title
   - Add AppTextField for new password with validator and toggle visibility
@@ -243,43 +252,45 @@ This implementation plan breaks down the authentication module into discrete, ma
 
 ### Phase 4: State Persistence and Security
 
-- [ ] 11. Implement state persistence
+- [x] 11. Implement state persistence
   - Save isFirstAccess = false to SharedPreferences after first onboarding
   - Save onboardingCompleted = true to Firestore after onboarding completion
   - Maintain isFirstAccess = false on logout
   - _Requirements: 6.1, 6.2, 6.4_
 
-- [ ] 12. Implement secure navigation
-  - [ ] 12.1 Verify Get.offAllNamed usage in all navigation points
+- [x] 12. Implement secure navigation
+  - [x] 12.1 Verify Get.offAllNamed usage in all navigation points
     - Login success → Get.offAllNamed('/home')
     - Onboarding completion → Get.offAllNamed('/home')
     - Logout → Get.offAllNamed('/auth')
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ]* 12.2 Write property test for navigation stack clearing
+  - [x] 12.2 Write property test for navigation stack clearing
+
     - **Property 6: Navigation Stack Clearing**
     - **Validates: Requirements 7.1, 7.2, 7.4**
     - Verify navigation stack is cleared after login
     - Verify cannot navigate back to splash or auth
 
-- [ ] 13. Implement data security measures
-  - [ ] 13.1 Audit code for password/token logging
+- [x] 13. Implement data security measures
+  - [x] 13.1 Audit code for password/token logging
     - Remove any console.log or debugPrint with sensitive data
     - Verify error messages don't expose tokens
     - _Requirements: 9.1, 9.2_
   
-  - [ ]* 13.2 Write property test for sensitive data protection
+  - [x] 13.2 Write property test for sensitive data protection
+
     - **Property 8: Sensitive Data Protection**
     - **Validates: Requirements 9.1, 9.2**
     - Verify passwords never appear in logs
     - Verify tokens never appear in error messages
   
-  - [ ] 13.3 Implement input validation before server calls
+  - [x] 13.3 Implement input validation before server calls
     - Validate all inputs before Firebase operations
     - Sanitize inputs if needed
     - _Requirements: 9.6_
   
-  - [ ] 13.4 Implement secure storage usage
+  - [x] 13.4 Implement secure storage usage
     - Use FlutterSecureStorage for OTP codes
     - Use SharedPreferences for isFirstAccess
     - Clear OTP from secure storage after use
@@ -287,26 +298,28 @@ This implementation plan breaks down the authentication module into discrete, ma
 
 ### Phase 5: Integration and Testing
 
-- [ ] 14. Implement onboarding integration
+- [x] 14. Implement onboarding integration
   - Verify onboardingCompleted field check in login flow
   - Verify navigation to /onboarding when field is false
   - Verify navigation to /home when field is true
   - Preserve authentication state during onboarding
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ]* 15. Write property test for onboarding state persistence
+- [x] 15. Write property test for onboarding state persistence
+
   - **Property 10: Onboarding State Persistence**
   - **Validates: Requirements 10.3, 10.4**
   - Verify onboardingCompleted is set before navigation
   - Test persistence across sessions
 
-- [ ]* 16. Write integration tests for complete flows
+- [x] 16. Write integration tests for complete flows
+
   - Test complete login flow: signin → Firestore → navigation
   - Test complete password recovery: forgot → verify → reset → signin
   - Test splash navigation for all user states
   - Test error recovery and retry mechanisms
 
-- [ ] 17. Final checkpoint - Ensure all tests pass
+- [x] 17. Final checkpoint - Ensure all tests pass
   - Run all unit tests
   - Run all property tests (minimum 100 iterations each)
   - Run all integration tests

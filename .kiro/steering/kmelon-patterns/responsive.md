@@ -14,99 +14,55 @@
 
 ---
 
-## Arquivo Base
+## Arquivo: `shared/utils/responsive_utils.dart`
 
-Criar `shared/utils/responsive.dart` em todos os projetos:
+A classe `ResponsiveUtils` suporta **dois modos de uso**:
+
+### 1. Modo Instanciado (Recomendado para Views)
 
 ```dart
-import 'package:flutter/material.dart';
+final r = ResponsiveUtils(context);
 
-class Responsive {
-  final BuildContext context;
-  
-  Responsive(this.context);
-  
-  // MediaQuery
-  MediaQueryData get _mq => MediaQuery.of(context);
-  
-  // Dimensões da tela
-  double get width => _mq.size.width;
-  double get height => _mq.size.height;
-  
-  // Breakpoints
-  bool get isMobile => width < 600;
-  bool get isTablet => width >= 600 && width < 1024;
-  bool get isDesktop => width >= 1024;
-  
-  // Orientação
-  bool get isPortrait => _mq.orientation == Orientation.portrait;
-  bool get isLandscape => _mq.orientation == Orientation.landscape;
-  
-  // SafeArea paddings (notch, status bar, navigation bar)
-  EdgeInsets get safeAreaPadding => _mq.padding;
-  double get topSafeArea => _mq.padding.top;
-  double get bottomSafeArea => _mq.padding.bottom;
-  double get leftSafeArea => _mq.padding.left;
-  double get rightSafeArea => _mq.padding.right;
-  
-  // Keyboard
-  double get keyboardHeight => _mq.viewInsets.bottom;
-  bool get isKeyboardOpen => keyboardHeight > 0;
-  
-  // Text scaling (acessibilidade)
-  double get textScaleFactor => _mq.textScaleFactor;
-  
-  // Valores responsivos baseados em porcentagem
-  double wp(double percentage) => width * percentage / 100;
-  double hp(double percentage) => height * percentage / 100;
-  
-  // Altura disponível (descontando SafeArea)
-  double get availableHeight => height - topSafeArea - bottomSafeArea;
-  double get availableWidth => width - leftSafeArea - rightSafeArea;
-  
-  // Espaçamentos responsivos
-  double get spacing4 => isMobile ? 4 : 6;
-  double get spacing8 => isMobile ? 8 : 12;
-  double get spacing12 => isMobile ? 12 : 16;
-  double get spacing16 => isMobile ? 16 : 20;
-  double get spacing24 => isMobile ? 24 : 32;
-  double get spacing32 => isMobile ? 32 : 40;
-  double get spacing48 => isMobile ? 48 : 64;
-  
-  // Tamanhos de fonte responsivos (com limite para acessibilidade)
-  double get fontSize10 => _limitFontSize(isMobile ? 10 : 12);
-  double get fontSize12 => _limitFontSize(isMobile ? 12 : 14);
-  double get fontSize14 => _limitFontSize(isMobile ? 14 : 16);
-  double get fontSize16 => _limitFontSize(isMobile ? 16 : 18);
-  double get fontSize18 => _limitFontSize(isMobile ? 18 : 20);
-  double get fontSize20 => _limitFontSize(isMobile ? 20 : 24);
-  double get fontSize24 => _limitFontSize(isMobile ? 24 : 28);
-  double get fontSize32 => _limitFontSize(isMobile ? 32 : 40);
-  
-  // Limita font size para não quebrar layout com text scaling
-  double _limitFontSize(double size) {
-    final scaled = size * textScaleFactor;
-    return scaled > size * 1.3 ? size * 1.3 : scaled;
-  }
-  
-  // MaxWidth para desktop (evita layouts muito largos)
-  double get maxContentWidth => isDesktop ? 1200 : width;
-  
-  // Valor baseado no tipo de dispositivo
-  T value<T>({
-    required T mobile,
-    T? tablet,
-    T? desktop,
-  }) {
-    if (isDesktop && desktop != null) return desktop;
-    if (isTablet && tablet != null) return tablet;
-    return mobile;
-  }
-  
-  // Aspect ratio seguro
-  double aspectRatio(double width, double height) => width / height;
-}
+// Porcentagem da tela
+r.wp(50)        // 50% da largura
+r.hp(30)        // 30% da altura
+
+// Espaçamentos responsivos
+r.spacing16     // 16 em mobile, 20 em tablet/desktop
+r.spacing32     // 32 em mobile, 40 em tablet/desktop
+
+// Breakpoints
+r.isMobile      // < 600px
+r.isTablet      // 600px - 1023px
+r.isDesktop     // >= 1024px
+
+// SafeArea
+r.topSafeArea
+r.bottomSafeArea
+
+// Keyboard
+r.keyboardHeight
+r.isKeyboardOpen
 ```
+
+### 2. Modo Estático (Para Widgets sem Context)
+
+```dart
+// Usado em widgets globais (AppButton, AppPinput, etc.)
+ResponsiveUtils.width(100, min: 48, max: 120)
+ResponsiveUtils.height(62, min: 48, max: 72)
+ResponsiveUtils.fontSizeStatic(16, min: 12)
+```
+
+---
+
+## Quando Usar Cada Modo
+
+| Situação | Modo | Exemplo |
+|----------|------|---------|
+| Views (telas) | Instanciado | `final r = ResponsiveUtils(context);` |
+| Widgets globais | Estático | `ResponsiveUtils.width(100)` |
+| Widgets de feature | Instanciado | `final r = ResponsiveUtils(context);` |
 
 ---
 
@@ -120,7 +76,7 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final r = Responsive(context);
+    final r = ResponsiveUtils(context);
     
     return Scaffold(
       body: SafeArea(
@@ -256,6 +212,46 @@ aspectRatio: r.aspectRatio(3, 4),    // Retrato
 
 ---
 
+## API Completa
+
+### Modo Instanciado
+
+| Propriedade/Método | Tipo | Descrição |
+|--------------------|------|-----------|
+| `wp(percentage)` | double | Porcentagem da largura |
+| `hp(percentage)` | double | Porcentagem da altura |
+| `widthScreen` | double | Largura da tela |
+| `heightScreen` | double | Altura da tela |
+| `isMobile` | bool | < 600px |
+| `isTablet` | bool | 600px - 1023px |
+| `isDesktop` | bool | >= 1024px |
+| `isPortrait` | bool | Orientação retrato |
+| `isLandscape` | bool | Orientação paisagem |
+| `topSafeArea` | double | Padding top (notch) |
+| `bottomSafeArea` | double | Padding bottom |
+| `keyboardHeight` | double | Altura do teclado |
+| `isKeyboardOpen` | bool | Teclado aberto |
+| `spacing4` a `spacing48` | double | Espaçamentos responsivos |
+| `fontSize10` a `fontSize32` | double | Fontes responsivas |
+| `maxContentWidth` | double | Largura máxima (1200 em desktop) |
+| `value<T>()` | T | Valor por dispositivo |
+| `aspectRatio(w, h)` | double | Calcula aspect ratio |
+
+### Modo Estático
+
+| Método | Descrição |
+|--------|-----------|
+| `ResponsiveUtils.init(context)` | Inicializa valores estáticos |
+| `ResponsiveUtils.width(value, {min, max})` | Largura proporcional com limites |
+| `ResponsiveUtils.height(value, {min, max})` | Altura proporcional com limites |
+| `ResponsiveUtils.fontSizeStatic(value, {min})` | Font size com limite |
+| `ResponsiveUtils.isSmallScreen` | < 360px |
+| `ResponsiveUtils.isShortScreen` | < 600px altura |
+| `ResponsiveUtils.screenWidth` | Largura da tela |
+| `ResponsiveUtils.screenHeight` | Altura da tela |
+
+---
+
 ## Breakpoints Padrão
 
 | Dispositivo | Largura | Uso |
@@ -268,7 +264,9 @@ aspectRatio: r.aspectRatio(3, 4),    // Retrato
 
 ## Regras
 
-- ✅ Sempre usar `Responsive` para dimensões e espaçamentos
+- ✅ Sempre usar `ResponsiveUtils` para dimensões e espaçamentos
+- ✅ Usar modo instanciado em views: `final r = ResponsiveUtils(context);`
+- ✅ Usar modo estático em widgets globais: `ResponsiveUtils.width()`
 - ✅ Sempre usar `SafeArea` ou considerar `topSafeArea`/`bottomSafeArea`
 - ✅ Testar em múltiplos tamanhos (mobile, tablet, desktop)
 - ✅ Usar `r.value()` para layouts diferentes
@@ -297,7 +295,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
-    final r = Responsive(context);
+    final r = ResponsiveUtils(context);
     
     return Scaffold(
       body: SafeArea(
@@ -322,7 +320,7 @@ showModalBottomSheet(
   context: context,
   isScrollControlled: true,
   builder: (context) {
-    final r = Responsive(context);
+    final r = ResponsiveUtils(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: r.keyboardHeight,  // Ajusta quando teclado abre

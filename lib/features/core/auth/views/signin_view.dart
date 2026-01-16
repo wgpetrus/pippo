@@ -62,6 +62,7 @@ class _SigninViewState extends State<SigninView> {
                   hint: 'digite seu usuário / e-mail',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  validator: _controller.validateEmail,
                 ),
                 const SizedBox(height: 20),
                 AppTextField(
@@ -69,6 +70,7 @@ class _SigninViewState extends State<SigninView> {
                   hint: 'digite sua senha',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  validator: _controller.validatePassword,
                   suffixIcon: IconButton(
                     icon: FaIcon(
                       _obscurePassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
@@ -81,14 +83,29 @@ class _SigninViewState extends State<SigninView> {
                 const SizedBox(height: 12),
                 _buildForgotPassword(),
                 const SizedBox(height: 32),
-                AppButton(
-                  text: 'Entrar',
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // TODO: implementar login
-                    }
-                  },
-                ),
+                Obx(() => _controller.errorMessage.value.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          _controller.errorMessage.value,
+                          style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
+                        ),
+                      )
+                    : const SizedBox.shrink()),
+                Obx(() => AppButton(
+                      text: 'Entrar',
+                      isLoading: _controller.isLoading.value,
+                      onPressed: _controller.isLoading.value
+                          ? null
+                          : () {
+                              if (_formKey.currentState!.validate()) {
+                                _controller.login(
+                                  _emailController.text.trim(),
+                                  _passwordController.text,
+                                );
+                              }
+                            },
+                    )),
                 const SizedBox(height: 20),
                 _buildSocialButtons(),
               ],
