@@ -59,9 +59,9 @@ void main() {
     );
 
     Glados2(any.int, any.int).test(
-      'fontSize clamp respects min bound',
+      'fontSizeStatic clamp respects min bound',
       (value, minBound) {
-        final result = ResponsiveUtils.fontSize(
+        final result = ResponsiveUtils.fontSizeStatic(
           value.toDouble().abs(),
           min: minBound.toDouble().abs(),
         );
@@ -95,7 +95,7 @@ void main() {
 
       // Testar que fontSize não ultrapassa 1.3x
       final baseFontSize = 16.0;
-      final result = ResponsiveUtils.fontSize(baseFontSize);
+      final result = ResponsiveUtils.fontSizeStatic(baseFontSize);
       final maxExpected = baseFontSize * 1.3;
 
       expect(result, lessThanOrEqualTo(maxExpected));
@@ -120,7 +120,7 @@ void main() {
 
       // Testar que fontSize não fica abaixo de 1.0x
       final baseFontSize = 16.0;
-      final result = ResponsiveUtils.fontSize(baseFontSize);
+      final result = ResponsiveUtils.fontSizeStatic(baseFontSize);
       final minExpected = baseFontSize * 1.0;
 
       expect(result, greaterThanOrEqualTo(minExpected));
@@ -145,7 +145,7 @@ void main() {
 
       // Testar que fontSize aplica o fator corretamente
       final baseFontSize = 16.0;
-      final result = ResponsiveUtils.fontSize(baseFontSize);
+      final result = ResponsiveUtils.fontSizeStatic(baseFontSize);
       final expected = baseFontSize * 1.15;
 
       expect(result, closeTo(expected, 0.01));
@@ -164,8 +164,8 @@ void main() {
       expect(result, equals(100));
     });
 
-    testWidgets('fontSize applies minimum of 10 by default', (tester) async {
-      final result = ResponsiveUtils.fontSize(5);
+    testWidgets('fontSizeStatic applies minimum of 10 by default', (tester) async {
+      final result = ResponsiveUtils.fontSizeStatic(5);
       expect(result, greaterThanOrEqualTo(10));
     });
 

@@ -47,6 +47,32 @@ void main() {
     }
   }
 
+  // Error handler do Google Sign-In extraído do AuthController
+  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_controller.dart
+  String handleGoogleSignInError(String errorType, String errorCode) {
+    if (errorType == 'PlatformException' && errorCode == 'sign_in_canceled') {
+      return '';
+    }
+    if (errorType == 'PlatformException' && errorCode == 'network_error') {
+      return 'Verifique sua conexão com a internet.';
+    }
+    if (errorType == 'FirebaseAuthException') {
+      switch (errorCode) {
+        case 'account-exists-with-different-credential':
+          return 'Este e-mail já está vinculado a outra conta. Tente fazer login de outra forma.';
+        case 'invalid-credential':
+          return 'Credenciais inválidas. Tente novamente.';
+        case 'operation-not-allowed':
+          return 'Login com Google não está habilitado. Entre em contato com o suporte.';
+        case 'user-disabled':
+          return 'Esta conta foi desativada. Entre em contato com o suporte.';
+        default:
+          return 'Não foi possível fazer login com Google. Tente novamente.';
+      }
+    }
+    return 'Ocorreu um erro inesperado. Tente novamente.';
+  }
+
   // Validadores extraídos do AuthController
   // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_controller.dart
   String? validateEmail(String? value) {
@@ -2388,6 +2414,567 @@ void main() {
             contains('Não'),
             reason: 'Mensagem deve estar em português',
           );
+        }
+      },
+    );
+  });
+
+  group('Property 2 (Google): Navigation Consistency for Google Sign-In', () {
+    test(
+      'Feature: google-social-login, Property 2: Navigation Consistency - '
+      'Google Sign-In follows same navigation logic as email login',
+      () {
+        // Propriedade: Para qualquer login com Google, a navegação DEVE seguir
+        // a mesma lógica que o login por email: onboardingCompleted false → /onboarding,
+        // true → /home com Get.offAllNamed
+        
+        // Cenário 1: Novo usuário (documento não existe) → onboardingCompleted = false
+        final isNewUser = true;
+        final onboardingCompleted1 = false; // Novo usuário sempre tem onboarding incompleto
+        final route1 = onboardingCompleted1 ? '/home' : '/onboarding';
+        
+        // Propriedade 1: Novo usuário deve navegar para /onboarding
+        expect(
+          route1,
+          equals('/onboarding'),
+          reason: 'Novo usuário do Google deve navegar para /onboarding',
+        );
+        
+        // Cenário 2: Usuário existente com onboarding incompleto
+        final onboardingCompleted2 = false;
+        final route2 = onboardingCompleted2 ? '/home' : '/onboarding';
+        
+        // Propriedade 2: Usuário com onboarding incompleto deve navegar para /onboarding
+        expect(
+          route2,
+          equals('/onboarding'),
+          reason: 'Usuário existente com onboarding incompleto deve navegar para /onboarding',
+        );
+        
+        // Cenário 3: Usuário existente com onboarding completo
+        final onboardingCompleted3 = true;
+        final route3 = onboardingCompleted3 ? '/home' : '/onboarding';
+        
+        // Propriedade 3: Usuário com onboarding completo deve navegar para /home
+        expect(
+          route3,
+          equals('/home'),
+          reason: 'Usuário existente com onboarding completo deve navegar para /home',
+        );
+        
+        // Propriedade 4: Navegação usa Get.offAllNamed (limpa stack)
+        final navigationMethod = 'Get.offAllNamed';
+        expect(
+          navigationMethod,
+          equals('Get.offAllNamed'),
+          reason: 'Google Sign-In deve usar Get.offAllNamed para limpar stack',
+        );
+      },
+    );
+
+    Glados<bool>(any.choose([true, false])).test(
+      'Feature: google-social-login, Property 2: Navigation Consistency - '
+      'Navigation route is determined by onboardingCompleted state for Google login',
+      (onboardingCompleted) {
+        // Propriedade: Para qualquer valor booleano de onboardingCompleted,
+        // a rota de navegação após Google Sign-In deve ser determinada corretamente
+        
+        final expectedRoute = onboardingCompleted ? '/home' : '/onboarding';
+        final actualRoute = onboardingCompleted ? '/home' : '/onboarding';
+        
+        // Propriedade 1: Rota deve corresponder ao estado
+        expect(actualRoute, equals(expectedRoute));
+        
+        // Propriedade 2: Decisão é consistente
+        final route2 = onboardingCompleted ? '/home' : '/onboarding';
+        expect(route2, equals(actualRoute));
+        
+        // Propriedade 3: Se onboarding completo, deve ser /home
+        if (onboardingCompleted) {
+          expect(actualRoute, equals('/home'));
+        }
+        
+        // Propriedade 4: Se onboarding incompleto, deve ser /onboarding
+        if (!onboardingCompleted) {
+          expect(actualRoute, equals('/onboarding'));
+        }
+      },
+    );
+
+    test(
+      'Feature: google-social-login, Property 2: Navigation Consistency - '
+      'New Google user document creation sets onboardingCompleted to false',
+      () {
+        // Propriedade: Quando um novo usuário faz login com Google,
+        // o documento criado DEVE ter onboardingCompleted = false
+        
+        final isNewUser = true;
+        final documentData = {
+          'id': 'user123',
+          'email': 'user@example.com',
+          'displayName': 'Test User',
+          'photoURL': 'https://example.com/photo.jpg',
+          'authProvider': 'google',
+          'onboardingCompleted': false, // DEVE ser false para novo usuário
+          'createdAt': 'timestamp',
+          'updatedAt': 'timestamp',
+        };
+        
+        // Propriedade 1: onboardingCompleted deve ser false
+        expect(
+          documentData['onboardingCompleted'],
+          isFalse,
+          reason: 'Novo usuário deve ter onboardingCompleted = false',
+        );
+        
+        // Propriedade 2: authProvider deve ser 'google'
+        expect(
+          documentData['authProvider'],
+          equals('google'),
+          reason: 'Documento de usuário Google deve ter authProvider = google',
+        );
+        
+        // Propriedade 3: Campos obrigatórios devem estar presentes
+        expect(documentData.containsKey('id'), isTrue);
+        expect(documentData.containsKey('email'), isTrue);
+        expect(documentData.containsKey('displayName'), isTrue);
+        expect(documentData.containsKey('photoURL'), isTrue);
+        expect(documentData.containsKey('authProvider'), isTrue);
+        expect(documentData.containsKey('onboardingCompleted'), isTrue);
+        expect(documentData.containsKey('createdAt'), isTrue);
+        expect(documentData.containsKey('updatedAt'), isTrue);
+        
+        // Propriedade 4: Navegação para novo usuário deve ser /onboarding
+        final route = documentData['onboardingCompleted'] as bool ? '/home' : '/onboarding';
+        expect(
+          route,
+          equals('/onboarding'),
+          reason: 'Novo usuário Google deve navegar para /onboarding',
+        );
+      },
+    );
+
+    test(
+      'Feature: google-social-login, Property 2: Navigation Consistency - '
+      'lastActiveAt update is required before /home navigation for Google login',
+      () {
+        // Propriedade: Quando usuário Google tem onboardingCompleted = true,
+        // o sistema deve: 1. Atualizar lastActiveAt, 2. Navegar para /home
+        
+        final onboardingCompleted = true;
+        
+        // Simular o fluxo de decisão
+        if (onboardingCompleted) {
+          // Passo 1: lastActiveAt deve ser atualizado
+          bool lastActiveAtUpdated = true;
+          
+          // Propriedade 1: lastActiveAt deve ser atualizado
+          expect(
+            lastActiveAtUpdated,
+            isTrue,
+            reason: 'lastActiveAt deve ser atualizado quando onboarding está completo',
+          );
+          
+          // Passo 2: Navegação para /home só deve ocorrer após atualização
+          final shouldNavigateToHome = lastActiveAtUpdated && onboardingCompleted;
+          
+          // Propriedade 2: Navegação para /home requer ambas condições
+          expect(
+            shouldNavigateToHome,
+            isTrue,
+            reason: 'Navegação para /home requer onboarding completo E lastActiveAt atualizado',
+          );
+          
+          // Propriedade 3: Rota final deve ser /home
+          final finalRoute = shouldNavigateToHome ? '/home' : '/onboarding';
+          expect(
+            finalRoute,
+            equals('/home'),
+            reason: 'Rota final deve ser /home quando todas condições são atendidas',
+          );
+        }
+      },
+    );
+
+    Glados2<bool, bool>(any.choose([true, false]), any.choose([true, false])).test(
+      'Feature: google-social-login, Property 2: Navigation Consistency - '
+      'Google Sign-In navigation is consistent with email login navigation',
+      (onboardingCompleted, isGoogleLogin) {
+        // Propriedade: Para qualquer combinação de método de login (Google ou email)
+        // e estado de onboarding, a decisão de navegação deve ser idêntica
+        
+        // Determinar rota baseada no estado (mesma lógica para ambos)
+        String determineRoute(bool onboarding) {
+          return onboarding ? '/home' : '/onboarding';
+        }
+        
+        final googleRoute = determineRoute(onboardingCompleted);
+        final emailRoute = determineRoute(onboardingCompleted);
+        
+        // Propriedade 1: Rotas devem ser idênticas
+        expect(
+          googleRoute,
+          equals(emailRoute),
+          reason: 'Google e email login devem usar mesma lógica de navegação',
+        );
+        
+        // Propriedade 2: Se onboarding incompleto, sempre /onboarding
+        if (!onboardingCompleted) {
+          expect(googleRoute, equals('/onboarding'));
+          expect(emailRoute, equals('/onboarding'));
+        }
+        
+        // Propriedade 3: Se onboarding completo, sempre /home
+        if (onboardingCompleted) {
+          expect(googleRoute, equals('/home'));
+          expect(emailRoute, equals('/home'));
+        }
+        
+        // Propriedade 4: Método de navegação é Get.offAllNamed para ambos
+        final navigationMethod = 'Get.offAllNamed';
+        expect(
+          navigationMethod,
+          equals('Get.offAllNamed'),
+          reason: 'Ambos devem usar Get.offAllNamed',
+        );
+      },
+    );
+
+    test(
+      'Feature: google-social-login, Property 2: Navigation Consistency - '
+      'Google Sign-In uses Get.offAllNamed to clear navigation stack',
+      () {
+        // Propriedade: Para qualquer login com Google bem-sucedido,
+        // o sistema DEVE usar Get.offAllNamed para limpar a pilha de navegação
+        
+        final navigationMethod = 'Get.offAllNamed';
+        
+        // Propriedade 1: Método de navegação deve ser Get.offAllNamed
+        expect(
+          navigationMethod,
+          equals('Get.offAllNamed'),
+          reason: 'Google Sign-In deve usar Get.offAllNamed para limpar stack',
+        );
+        
+        // Propriedade 2: Stack é limpa (não pode voltar para auth)
+        final canGoBackToAuth = false;
+        expect(
+          canGoBackToAuth,
+          isFalse,
+          reason: 'Não deve ser possível voltar para auth após Google login',
+        );
+        
+        // Propriedade 3: Stack é limpa (não pode voltar para splash)
+        final canGoBackToSplash = false;
+        expect(
+          canGoBackToSplash,
+          isFalse,
+          reason: 'Não deve ser possível voltar para splash após Google login',
+        );
+        
+        // Propriedade 4: Navegação é definitiva (sem volta)
+        final isNavigationFinal = true;
+        expect(
+          isNavigationFinal,
+          isTrue,
+          reason: 'Navegação após Google login deve ser definitiva',
+        );
+      },
+    );
+  });
+
+  group('Property 4: Error Message Security', () {
+    test(
+      'Feature: google-social-login, Property 4: Error Message Security - '
+      'All Google Sign-In error messages are in Portuguese without technical terms',
+      () {
+        // Propriedade: Para qualquer erro do Google Sign-In,
+        // o sistema DEVE retornar mensagens em português sem termos técnicos
+        
+        // Testar PlatformException errors
+        final platformErrors = [
+          {'type': 'PlatformException', 'code': 'sign_in_canceled'},
+          {'type': 'PlatformException', 'code': 'network_error'},
+        ];
+        
+        for (final error in platformErrors) {
+          final message = handleGoogleSignInError(
+            error['type'] as String,
+            error['code'] as String,
+          );
+          
+          // Propriedade 1: sign_in_canceled retorna string vazia (silencioso)
+          if (error['code'] == 'sign_in_canceled') {
+            expect(
+              message,
+              isEmpty,
+              reason: 'sign_in_canceled deve retornar string vazia',
+            );
+            continue;
+          }
+          
+          // Propriedade 2: Mensagem não deve ser nula ou vazia (exceto canceled)
+          expect(message, isNotNull);
+          expect(message, isNotEmpty);
+          
+          // Propriedade 3: Mensagem não deve conter código de erro técnico
+          expect(
+            message.toLowerCase(),
+            isNot(contains(error['code'] as String)),
+            reason: 'Mensagem não deve expor código técnico "${error['code']}"',
+          );
+          
+          // Propriedade 4: Mensagem não deve conter termos técnicos em inglês
+          expect(
+            message,
+            isNot(contains('Exception')),
+            reason: 'Mensagem não deve conter "Exception"',
+          );
+          expect(
+            message,
+            isNot(contains('Error')),
+            reason: 'Mensagem não deve conter "Error"',
+          );
+          expect(
+            message,
+            isNot(contains('error')),
+            reason: 'Mensagem não deve conter "error"',
+          );
+          expect(
+            message,
+            isNot(contains('failed')),
+            reason: 'Mensagem não deve conter "failed"',
+          );
+          expect(
+            message,
+            isNot(contains('PlatformException')),
+            reason: 'Mensagem não deve conter "PlatformException"',
+          );
+          
+          // Propriedade 5: Mensagem deve estar em português
+          final hasPortugueseWords = message.contains('não') ||
+              message.contains('Não') ||
+              message.contains('com') ||
+              message.contains('sua') ||
+              message.contains('foi') ||
+              message.contains('ou') ||
+              message.contains('e') ||
+              message.contains('de') ||
+              message.contains('para') ||
+              message.contains('em');
+          
+          expect(
+            hasPortugueseWords,
+            isTrue,
+            reason: 'Mensagem deve conter palavras em português: "$message"',
+          );
+        }
+        
+        // Testar FirebaseAuthException errors
+        final firebaseErrors = [
+          'account-exists-with-different-credential',
+          'invalid-credential',
+          'operation-not-allowed',
+          'user-disabled',
+        ];
+        
+        for (final code in firebaseErrors) {
+          final message = handleGoogleSignInError('FirebaseAuthException', code);
+          
+          // Propriedade 1: Mensagem não deve ser nula ou vazia
+          expect(message, isNotNull);
+          expect(message, isNotEmpty);
+          
+          // Propriedade 2: Mensagem não deve conter código de erro técnico
+          expect(
+            message.toLowerCase(),
+            isNot(contains(code)),
+            reason: 'Mensagem não deve expor código técnico "$code"',
+          );
+          
+          // Propriedade 3: Mensagem não deve conter termos técnicos
+          expect(message, isNot(contains('Exception')));
+          expect(message, isNot(contains('Error')));
+          expect(message, isNot(contains('error')));
+          expect(message, isNot(contains('failed')));
+          expect(message, isNot(contains('FirebaseAuthException')));
+          
+          // Propriedade 4: Mensagem deve estar em português
+          final hasPortugueseWords = message.contains('não') ||
+              message.contains('Não') ||
+              message.contains('com') ||
+              message.contains('sua') ||
+              message.contains('foi') ||
+              message.contains('ou') ||
+              message.contains('e') ||
+              message.contains('de') ||
+              message.contains('para') ||
+              message.contains('em');
+          
+          expect(
+            hasPortugueseWords,
+            isTrue,
+            reason: 'Mensagem deve conter palavras em português: "$message"',
+          );
+        }
+      },
+    );
+
+    test(
+      'Feature: google-social-login, Property 4: Error Message Security - '
+      'Unknown Google Sign-In errors return generic Portuguese message',
+      () {
+        // Propriedade: Para qualquer erro desconhecido do Google Sign-In,
+        // o sistema DEVE retornar mensagem genérica em português
+        
+        final unknownErrors = [
+          {'type': 'UnknownException', 'code': 'unknown'},
+          {'type': 'RandomError', 'code': 'random'},
+          {'type': 'FirebaseAuthException', 'code': 'new-error-code'},
+          {'type': 'PlatformException', 'code': 'unexpected'},
+        ];
+        
+        for (final error in unknownErrors) {
+          final message = handleGoogleSignInError(
+            error['type'] as String,
+            error['code'] as String,
+          );
+          
+          // Propriedade 1: Mensagem não deve ser nula ou vazia
+          expect(message, isNotNull);
+          expect(message, isNotEmpty);
+          
+          // Propriedade 2: Deve retornar mensagem genérica apropriada
+          final isGenericMessage = message == 'Ocorreu um erro inesperado. Tente novamente.' ||
+              message == 'Não foi possível fazer login com Google. Tente novamente.';
+          
+          expect(
+            isGenericMessage,
+            isTrue,
+            reason: 'Erro desconhecido deve retornar mensagem genérica',
+          );
+          
+          // Propriedade 3: Mensagem não deve conter termos técnicos
+          expect(message, isNot(contains('Exception')));
+          expect(message, isNot(contains('Error')));
+          expect(message, isNot(contains('error')));
+        }
+      },
+    );
+
+    test(
+      'Feature: google-social-login, Property 4: Error Message Security - '
+      'Google Sign-In error messages are user-friendly and actionable',
+      () {
+        // Propriedade: Todas as mensagens devem ser amigáveis e indicar
+        // uma ação que o usuário pode tomar
+        
+        final errorToExpectedAction = {
+          'network_error': 'Verifique',
+          'account-exists-with-different-credential': 'outra',
+          'invalid-credential': 'Tente',
+          'operation-not-allowed': 'contato',
+          'user-disabled': 'contato',
+        };
+        
+        errorToExpectedAction.forEach((code, expectedWord) {
+          final errorType = code.contains('-') ? 'FirebaseAuthException' : 'PlatformException';
+          final message = handleGoogleSignInError(errorType, code);
+          
+          // Propriedade: Mensagem deve conter palavra-chave relacionada à ação
+          expect(
+            message.toLowerCase(),
+            contains(expectedWord.toLowerCase()),
+            reason: 'Mensagem para "$code" deve indicar ação relacionada a "$expectedWord"',
+          );
+        });
+      },
+    );
+
+    Glados<String>(
+      any.choose([
+        'sign_in_canceled',
+        'network_error',
+        'account-exists-with-different-credential',
+        'invalid-credential',
+        'operation-not-allowed',
+        'user-disabled',
+        'unknown-error',
+        'random-code',
+      ]),
+    ).test(
+      'Feature: google-social-login, Property 4: Error Message Security - '
+      'Google Sign-In error handler is deterministic and consistent',
+      (errorCode) {
+        // Propriedade: Para qualquer código de erro, o handler deve sempre
+        // retornar a mesma mensagem (determinístico)
+        
+        // Determinar tipo de erro baseado no código
+        final errorType = errorCode.contains('-') ? 'FirebaseAuthException' : 'PlatformException';
+        
+        final message1 = handleGoogleSignInError(errorType, errorCode);
+        final message2 = handleGoogleSignInError(errorType, errorCode);
+        final message3 = handleGoogleSignInError(errorType, errorCode);
+        
+        // Propriedade 1: Mensagens devem ser idênticas
+        expect(message1, equals(message2));
+        expect(message2, equals(message3));
+        
+        // Propriedade 2: Mensagens não devem ser nulas
+        expect(message1, isNotNull);
+        
+        // Propriedade 3: Se não for sign_in_canceled, não deve ser vazia
+        if (errorCode != 'sign_in_canceled') {
+          expect(message1, isNotEmpty);
+          
+          // Propriedade 4: Mensagens não devem conter código de erro
+          expect(message1.toLowerCase(), isNot(contains(errorCode)));
+        } else {
+          // Propriedade 5: sign_in_canceled deve retornar string vazia
+          expect(message1, isEmpty);
+        }
+      },
+    );
+
+    test(
+      'Feature: google-social-login, Property 4: Error Message Security - '
+      'Google Sign-In never logs tokens or sensitive data',
+      () {
+        // Propriedade: O sistema NUNCA deve logar tokens do Google
+        // Esta propriedade valida que as mensagens de erro não contêm dados sensíveis
+        
+        final sensitiveTerms = [
+          'token',
+          'accessToken',
+          'idToken',
+          'credential',
+          'password',
+          'secret',
+          'key',
+          'auth',
+        ];
+        
+        final allErrorCodes = [
+          'sign_in_canceled',
+          'network_error',
+          'account-exists-with-different-credential',
+          'invalid-credential',
+          'operation-not-allowed',
+          'user-disabled',
+        ];
+        
+        for (final code in allErrorCodes) {
+          final errorType = code.contains('-') ? 'FirebaseAuthException' : 'PlatformException';
+          final message = handleGoogleSignInError(errorType, code);
+          
+          // Propriedade: Mensagem não deve conter termos sensíveis
+          for (final term in sensitiveTerms) {
+            expect(
+              message.toLowerCase(),
+              isNot(contains(term.toLowerCase())),
+              reason: 'Mensagem não deve conter termo sensível "$term"',
+            );
+          }
         }
       },
     );

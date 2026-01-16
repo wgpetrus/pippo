@@ -118,30 +118,41 @@ class _SigninViewState extends State<SigninView> {
 
   // Widgets
   Widget _buildForgotPassword() {
-    return GestureDetector(
-      onTap: _controller.goToForgotPassword,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Esqueceu sua senha', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary)),
-          const SizedBox(height: 2),
-          Container(height: 1.5, width: 165, color: AppTheme.primary),
-        ],
-      ),
-    );
+    return Obx(() => GestureDetector(
+          onTap: _controller.isLoading.value ? null : _controller.goToForgotPassword,
+          child: Opacity(
+            opacity: _controller.isLoading.value ? 0.5 : 1.0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Esqueceu sua senha', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary)),
+                const SizedBox(height: 2),
+                Container(height: 1.5, width: 165, color: AppTheme.primary),
+              ],
+            ),
+          ),
+        ));
   }
 
   Widget _buildSocialButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: SocialButton(text: 'Facebook', iconPath: AppAssets.logoFacebook, onPressed: () {}),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SocialButton(text: 'Gmail', iconPath: AppAssets.logoGoogle, onPressed: () {}),
-        ),
-      ],
-    );
+    return Obx(() => Row(
+          children: [
+            Expanded(
+              child: SocialButton(
+                text: 'Facebook',
+                iconPath: AppAssets.logoFacebook,
+                onPressed: _controller.isLoading.value ? null : _controller.onFacebookTap,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SocialButton(
+                text: 'Gmail',
+                iconPath: AppAssets.logoGoogle,
+                onPressed: _controller.isLoading.value ? null : _controller.signInWithGoogle,
+              ),
+            ),
+          ],
+        ));
   }
 }

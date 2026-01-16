@@ -43,7 +43,9 @@ dependencies:
   
   # SVG
   flutter_svg: ^2.0.10+1
-  google_sign_in: ^7.2.0
+  
+  # Social Login
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:

@@ -3,8 +3,11 @@ import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../views/forgot_password_view.dart';
 import '../views/new_password_view.dart';
@@ -26,6 +29,9 @@ class AuthController extends GetxController {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
   final _secureStorage = const FlutterSecureStorage();
+  final _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   // Timer para countdown de reenvio
   Timer? _resendCountdownTimer;
@@ -100,6 +106,104 @@ class AuthController extends GetxController {
       errorMessage.value = _handleFirebaseLoginError(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível fazer login. Tente novamente.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Métodos de autenticação social
+
+  /// Placeholder para login com Facebook
+  void onFacebookTap() {
+    Get.snackbar(
+      'Em breve',
+      'O login com Facebook estará disponível em breve.',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  /// Realiza login com Google
+  Future<void> signInWithGoogle() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      // Iniciar fluxo de autenticação do Google
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      // Se o usuário cancelou o login, retornar silenciosamente
+      if (googleUser == null) {
+        isLoading.value = false;
+        return;
+      }
+
+      // Obter credenciais de autenticação
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Criar credencial do Firebase
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Autenticar com Firebase
+      final userCredential = await _auth.signInWithCredential(credential);
+
+      // Verificar se documento do usuário existe no Firestore
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        // Criar novo documento de usuário
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'id': userCredential.user!.uid,
+          'email': userCredential.user!.email,
+          'displayName': userCredential.user!.displayName,
+          'photoURL': userCredential.user!.photoURL,
+          'authProvider': 'google',
+          'onboardingCompleted': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        // Navegar para onboarding
+        Get.offAllNamed('/onboarding');
+      } else {
+        // Usuário existente - verificar onboarding
+        final userData = userDoc.data()!;
+        final onboardingCompleted = userData['onboardingCompleted'] ?? false;
+
+        if (!onboardingCompleted) {
+          // Onboarding incompleto - navegar para onboarding
+          Get.offAllNamed('/onboarding');
+        } else {
+          // Onboarding completo - atualizar lastActiveAt e navegar para home
+          await _firestore
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .update({
+            'lastActiveAt': FieldValue.serverTimestamp(),
+          });
+
+          Get.offAllNamed('/home');
+        }
+      }
+    } on PlatformException catch (e) {
+      debugPrint('Google Sign-In PlatformException: ${e.code} - ${e.message}');
+      errorMessage.value = _handleGoogleSignInError(e);
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Google Sign-In FirebaseAuthException: ${e.code} - ${e.message}');
+      errorMessage.value = _handleGoogleSignInError(e);
+    } catch (e, stackTrace) {
+      debugPrint('Google Sign-In Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      errorMessage.value = 'Ocorreu um erro inesperado. Tente novamente.';
     } finally {
       isLoading.value = false;
     }
@@ -373,6 +477,31 @@ class AuthController extends GetxController {
       default:
         return 'Não foi possível enviar o e-mail de recuperação. Tente novamente.';
     }
+  }
+
+  /// Handler de erros do Google Sign-In
+  String _handleGoogleSignInError(dynamic error) {
+    if (error is PlatformException && error.code == 'sign_in_canceled') {
+      return '';
+    }
+    if (error is PlatformException && error.code == 'network_error') {
+      return 'Verifique sua conexão com a internet.';
+    }
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'account-exists-with-different-credential':
+          return 'Este e-mail já está vinculado a outra conta. Tente fazer login de outra forma.';
+        case 'invalid-credential':
+          return 'Credenciais inválidas. Tente novamente.';
+        case 'operation-not-allowed':
+          return 'Login com Google não está habilitado. Entre em contato com o suporte.';
+        case 'user-disabled':
+          return 'Esta conta foi desativada. Entre em contato com o suporte.';
+        default:
+          return 'Não foi possível fazer login com Google. Tente novamente.';
+      }
+    }
+    return 'Ocorreu um erro inesperado. Tente novamente.';
   }
 
   // Navegação
