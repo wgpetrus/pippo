@@ -7,12 +7,18 @@ import '../navigation/onboarding_navigation.dart';
 
 /// Controller do fluxo de onboarding
 class OnboardingController extends GetxController {
+  // Flag estático para pular WelcomeView (setado antes da navegação)
+  static bool shouldSkipWelcome = false;
+
   // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
   
   // Estados adicionais
   final isAddingCourse = false.obs;
+  
+  // Flag para pular WelcomeView (quando vem de login social)
+  final skipWelcome = false.obs;
 
   // Navegação
   final nav = OnboardingNavigation();

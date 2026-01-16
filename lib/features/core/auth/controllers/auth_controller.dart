@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
@@ -12,6 +11,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../views/forgot_password_view.dart';
 import '../views/new_password_view.dart';
 import '../views/verify_code_view.dart';
+import '../../onboarding/controllers/onboarding_controller.dart';
 
 /// Controller de autenticação
 class AuthController extends GetxController {
@@ -172,7 +172,8 @@ class AuthController extends GetxController {
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
-        // Navegar para onboarding
+        // Setar flag para pular WelcomeView (já está autenticado)
+        OnboardingController.shouldSkipWelcome = true;
         Get.offAllNamed('/onboarding');
       } else {
         // Usuário existente - verificar onboarding
@@ -180,7 +181,8 @@ class AuthController extends GetxController {
         final onboardingCompleted = userData['onboardingCompleted'] ?? false;
 
         if (!onboardingCompleted) {
-          // Onboarding incompleto - navegar para onboarding
+          // Setar flag para pular WelcomeView (já está autenticado)
+          OnboardingController.shouldSkipWelcome = true;
           Get.offAllNamed('/onboarding');
         } else {
           // Onboarding completo - atualizar lastActiveAt e navegar para home
@@ -195,14 +197,10 @@ class AuthController extends GetxController {
         }
       }
     } on PlatformException catch (e) {
-      debugPrint('Google Sign-In PlatformException: ${e.code} - ${e.message}');
       errorMessage.value = _handleGoogleSignInError(e);
     } on FirebaseAuthException catch (e) {
-      debugPrint('Google Sign-In FirebaseAuthException: ${e.code} - ${e.message}');
       errorMessage.value = _handleGoogleSignInError(e);
-    } catch (e, stackTrace) {
-      debugPrint('Google Sign-In Error: $e');
-      debugPrint('Stack trace: $stackTrace');
+    } catch (e) {
       errorMessage.value = 'Ocorreu um erro inesperado. Tente novamente.';
     } finally {
       isLoading.value = false;
