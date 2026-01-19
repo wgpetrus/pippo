@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
+import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 import '../../widgets/onboarding_header.dart';
@@ -38,27 +39,31 @@ class _PauseTwoPageState extends State<PauseTwoPage> with SingleTickerProviderSt
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     if (_mascotAnim == null) {
       return const Scaffold(backgroundColor: AppTheme.white);
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: false, // Prevent back navigation
+      child: Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const OnboardingHeader(),
+      appBar: const OnboardingHeader(showBackButton: false),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing24),
           child: Column(
             children: [
               const Spacer(flex: 2),
               _buildMascot(),
-              const SizedBox(height: 32),
+              SizedBox(height: r.spacing32),
               Text(
                 'Pronto para Começar Sua Aventura?',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: r.spacing16),
               Text(
                 'Leva só um momento para desbloquear sua jornada!',
                 style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
@@ -69,12 +74,12 @@ class _PauseTwoPageState extends State<PauseTwoPage> with SingleTickerProviderSt
                 text: "Vamos lá",
                 onPressed: () => Get.find<OnboardingController>().nav.goToUserName(),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: r.spacing48),
             ],
           ),
         ),
       ),
-    );
+    ));
   }
 
   // Widgets
@@ -82,12 +87,13 @@ class _PauseTwoPageState extends State<PauseTwoPage> with SingleTickerProviderSt
     return AnimatedBuilder(
       animation: _mascotAnim!,
       builder: (context, child) {
+        final r = ResponsiveUtils(context);
         final value = Curves.easeInOut.transform(_mascotAnim!.value);
         return Transform.translate(
           offset: Offset(0, -value * 12),
           child: Image.asset(
             AppAssets.mascotAdventure,
-            width: 280,
+            width: r.wp(70),
             fit: BoxFit.contain,
           ),
         );

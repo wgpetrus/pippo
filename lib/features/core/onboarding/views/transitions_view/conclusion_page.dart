@@ -46,7 +46,9 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
     
-    return Scaffold(
+    return PopScope(
+      canPop: false, // Prevent back navigation
+      child: Scaffold(
       backgroundColor: AppTheme.white,
       body: Column(
         children: [
@@ -69,10 +71,11 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: r.spacing24),
-                  AppButton(
+                  Obx(() => AppButton(
                     text: 'Vamos Aprender',
-                    onPressed: _onButtonPressed,
-                  ),
+                    isLoading: _controller.isLoading.value,
+                    onPressed: _controller.isLoading.value ? null : _onButtonPressed,
+                  )),
                   SizedBox(height: r.spacing32),
                 ],
               ),
@@ -80,7 +83,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
           ),
         ],
       ),
-    );
+    ));
   }
 
   // Widgets

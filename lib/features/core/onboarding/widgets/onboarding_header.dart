@@ -1,10 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/widgets/app_back_button.dart';
+import '../controllers/onboarding_controller.dart';
 import 'bouncing_mascot.dart';
 import 'progress_bar.dart';
 
@@ -12,15 +14,19 @@ import 'progress_bar.dart';
 class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final String? bubbleText;
-  final int? progress;
+  final String? currentScreen; // Screen name for progress calculation
+  final int? progress; // Manual progress override (deprecated, use currentScreen)
   final double expandedHeight;
+  final bool showBackButton; // Controls back button visibility
 
   const OnboardingHeader({
     super.key,
     this.title,
     this.bubbleText,
+    this.currentScreen,
     this.progress,
     this.expandedHeight = 0.35,
+    this.showBackButton = true, // Default: show back button
   });
 
   @override
@@ -29,13 +35,33 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
   // Build
   @override
   Widget build(BuildContext context) {
+    // Calculate progress if currentScreen is provided
+    int? calculatedProgress;
+    if (currentScreen != null) {
+      try {
+        final controller = Get.find<OnboardingController>();
+        final progressData = controller.calculateProgress(currentScreen!);
+        final current = progressData['current']!;
+        final total = progressData['total']!;
+        // Convert to percentage (0-100)
+        calculatedProgress = ((current / total) * 100).round();
+      } catch (e) {
+        // Controller not found or error calculating progress
+        calculatedProgress = null;
+      }
+    }
+
+    // Use calculated progress or manual override
+    final displayProgress = calculatedProgress ?? progress;
+
     // Modo simples: apenas botão voltar (+ progress bar opcional)
     if (title == null) {
       return AppBar(
         backgroundColor: AppTheme.white,
         elevation: 0,
-        leading: const AppBackButton(),
-        title: progress != null ? ProgressBar(progress: progress!) : null,
+        automaticallyImplyLeading: false,
+        leading: showBackButton ? const AppBackButton() : null,
+        title: displayProgress != null ? ProgressBar(progress: displayProgress) : null,
         titleSpacing: 12,
       );
     }
@@ -49,14 +75,15 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
       pinned: true,
       expandedHeight: screenHeight * expandedHeight,
       toolbarHeight: 80,
-      leading: const AppBackButton(),
+      automaticallyImplyLeading: false,
+      leading: showBackButton ? const AppBackButton() : null,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title!, style: AppTheme.textXlBold.copyWith(color: AppTheme.black)),
-          if (progress != null) ...[
+          if (displayProgress != null) ...[
             const SizedBox(height: 8),
-            ProgressBar(progress: progress!),
+            ProgressBar(progress: displayProgress),
           ],
         ],
       ),

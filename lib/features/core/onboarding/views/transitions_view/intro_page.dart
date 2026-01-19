@@ -68,9 +68,11 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
   // Build
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.white,
-      body: SafeArea(
+    return PopScope(
+      canPop: false, // Prevent back navigation
+      child: Scaffold(
+        backgroundColor: AppTheme.white,
+        body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
@@ -97,7 +99,7 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
           ),
         ),
       ),
-    );
+    ));
   }
 
   // Widgets

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
+import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 import '../../widgets/onboarding_header.dart';
@@ -53,13 +54,17 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     if (_mascotAnim == null || _flagsAnim == null || _starsAnim == null) {
       return const Scaffold(backgroundColor: AppTheme.white);
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: false, // Prevent back navigation
+      child: Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const OnboardingHeader(),
+      appBar: const OnboardingHeader(showBackButton: false),
       body: SafeArea(
         child: Stack(
           children: [
@@ -67,7 +72,7 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
             _buildStarsPink(),
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: r.spacing24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -97,7 +102,7 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
           ],
         ),
       ),
-    );
+    ));
   }
 
   // Widgets

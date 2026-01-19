@@ -7,7 +7,6 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../controllers/onboarding_controller.dart';
-import 'transitions_view/intro_page.dart';
 
 /// Tela de boas-vindas
 class WelcomeView extends StatefulWidget {
@@ -35,7 +34,7 @@ class _WelcomeViewState extends State<WelcomeView> {
     if (OnboardingController.shouldSkipWelcome) {
       OnboardingController.shouldSkipWelcome = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Get.off(() => const IntroPage());
+        _controller.nav.goToSelectLanguage();
       });
     }
   }
@@ -59,7 +58,7 @@ class _WelcomeViewState extends State<WelcomeView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(
-                  AppAssets.mascotWelcome,
+                  AppAssets.personagemOnboarding,
                   width: r.wp(85),
                   fit: BoxFit.contain,
                 ),

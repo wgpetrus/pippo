@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
+import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 import '../../widgets/onboarding_header.dart';
@@ -60,12 +61,16 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const OnboardingHeader(progress: 88),
+      appBar: const OnboardingHeader(
+        currentScreen: 'user_password',
+      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(r.spacing24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -73,12 +78,24 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                 'Crie sua senha mágica',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: r.spacing24),
+              
+              // Exibir erro se houver
+              Obx(() => _controller.errorMessage.value.isNotEmpty
+                  ? Padding(
+                      padding: EdgeInsets.only(bottom: r.spacing16),
+                      child: Text(
+                        _controller.errorMessage.value,
+                        style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+              
               Text(
                 'Senha',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: r.spacing8),
               OnboardingTextField(
                 controller: _passwordController,
                 focusNode: _passwordFocus,
@@ -94,12 +111,12 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: r.spacing16),
               Text(
                 'Confirmar Senha',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: r.spacing8),
               OnboardingTextField(
                 controller: _confirmController,
                 focusNode: _confirmFocus,
@@ -116,16 +133,24 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                 ),
               ),
               const Spacer(),
-              AppButton(
+              Obx(() => AppButton(
                 text: 'Continuar',
-                onPressed: _canContinue
+                isLoading: _controller.isLoading.value,
+                onPressed: (_canContinue && !_controller.isLoading.value)
                     ? () {
+                        // Validar senha antes de prosseguir
+                        final passwordError = _controller.validatePassword(_passwordController.text);
+                        if (passwordError != null) {
+                          _controller.errorMessage.value = passwordError;
+                          return;
+                        }
+                        
                         _controller.userPassword.value = _passwordController.text;
-                        _controller.nav.goToVerifyCode();
+                        _controller.createAccount();
                       }
                     : null,
-              ),
-              const SizedBox(height: 16),
+              )),
+              SizedBox(height: r.spacing16),
             ],
           ),
         ),

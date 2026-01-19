@@ -210,22 +210,14 @@ class AuthController extends GetxController {
   // Métodos privados
 
   /// Gera código OTP de 5 dígitos
+  /// 
+  /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
+  /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
+  /// Para produção: implementar envio de email (ver comentários em sendPasswordResetCode)
   String _generateOTP() {
     final random = Random();
     final code = (10000 + random.nextInt(90000)).toString();
     return code;
-  }
-
-  /// Armazena OTP no FlutterSecureStorage com expiração de 10 minutos
-  Future<void> _storeOTP(String code, String email) async {
-    final expirationTime = DateTime.now().add(const Duration(minutes: 10));
-
-    await _secureStorage.write(key: 'otp_code', value: code);
-    await _secureStorage.write(key: 'otp_email', value: email);
-    await _secureStorage.write(
-      key: 'otp_expiration',
-      value: expirationTime.toIso8601String(),
-    );
   }
 
   /// Inicia timer de reenvio de 60 segundos
@@ -250,7 +242,7 @@ class AuthController extends GetxController {
   /// Envia código de recuperação de senha por email
   Future<void> sendPasswordResetCode(String email) async {
     // Sanitizar e validar email
-    final sanitizedEmail = email.trim();
+    final sanitizedEmail = email.trim().toLowerCase();
     final emailError = validateEmail(sanitizedEmail);
     if (emailError != null) {
       errorMessage.value = emailError;
@@ -261,14 +253,58 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
+      // Verificar se usuário existe tentando fazer login com senha temporária
+      // (fetchSignInMethodsForEmail foi deprecado)
+      try {
+        await _auth.signInWithEmailAndPassword(
+          email: sanitizedEmail,
+          password: 'temporary_check_${DateTime.now().millisecondsSinceEpoch}',
+        );
+      } on FirebaseAuthException catch (e) {
+        // Se o erro for user-not-found, o email não existe
+        if (e.code == 'user-not-found') {
+          errorMessage.value = 'Não encontramos uma conta com este e-mail.';
+          return;
+        }
+        // Qualquer outro erro (wrong-password, etc) significa que o usuário existe
+      }
+
       // Gerar código OTP
       final code = _generateOTP();
 
-      // Enviar email via Firebase Auth
-      await _auth.sendPasswordResetEmail(email: sanitizedEmail);
+      // Armazenar código no Firestore com expiração
+      await _firestore.collection('passwordResets').doc(sanitizedEmail).set({
+        'code': code,
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
+        'attempts': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-      // Armazenar código com expiração
-      await _storeOTP(code, sanitizedEmail);
+      // ⚠️ CRÍTICO - IMPLEMENTAÇÃO INCOMPLETA ⚠️
+      // TODO: [PRODUÇÃO OBRIGATÓRIO] Implementar envio de email
+      // 
+      // PROBLEMA ATUAL:
+      // - O código é gerado e salvo no Firestore ✅
+      // - MAS o usuário NÃO recebe email com o código ❌
+      // - Para testar agora: acessar Firestore Console e copiar o código manualmente
+      // 
+      // SOLUÇÃO PARA PRODUÇÃO:
+      // Opção 1 (Recomendada): Cloud Function
+      //   1. Criar Cloud Function que escuta novos documentos em 'passwordResets'
+      //   2. Função envia email via SendGrid/Mailgun/AWS SES
+      //   3. Código nunca é exposto no cliente (mais seguro)
+      // 
+      // Opção 2 (Alternativa): Serviço de Email Direto
+      //   1. Integrar package de email (emailjs, sendgrid_mailer)
+      //   2. Enviar email diretamente do app
+      //   3. Menos seguro (API key no cliente)
+      // 
+      // REFERÊNCIAS:
+      // - Firebase Cloud Functions: https://firebase.google.com/docs/functions
+      // - SendGrid: https://sendgrid.com/
+      // - Mailgun: https://www.mailgun.com/
+      // 
+      // ⚠️ NÃO FAZER DEPLOY EM PRODUÇÃO SEM IMPLEMENTAR ENVIO DE EMAIL ⚠️
 
       // Armazenar email temporariamente para reenvio
       _tempEmail = sanitizedEmail;
@@ -280,6 +316,8 @@ class AuthController extends GetxController {
       goToVerifyCode();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível enviar o código. Tente novamente.';
     } finally {
@@ -301,11 +339,18 @@ class AuthController extends GetxController {
       // Gerar novo código OTP
       final code = _generateOTP();
 
-      // Enviar email via Firebase Auth
-      await _auth.sendPasswordResetEmail(email: _tempEmail!);
+      // Armazenar código no Firestore com expiração
+      await _firestore.collection('passwordResets').doc(_tempEmail!).set({
+        'code': code,
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
+        'attempts': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-      // Armazenar novo código com expiração
-      await _storeOTP(code, _tempEmail!);
+      // ⚠️ CRÍTICO - MESMO PROBLEMA DO sendPasswordResetCode ⚠️
+      // TODO: [PRODUÇÃO OBRIGATÓRIO] Implementar envio de email
+      // O código é gerado mas o usuário NÃO recebe email
+      // Ver comentários detalhados em sendPasswordResetCode()
 
       // Reiniciar timer de reenvio (60 segundos)
       _startResendTimer();
@@ -319,6 +364,8 @@ class AuthController extends GetxController {
       );
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível reenviar o código. Tente novamente.';
     } finally {
@@ -327,6 +374,19 @@ class AuthController extends GetxController {
   }
 
   /// Verifica código OTP
+  /// 
+  /// FLUXO ATUAL (DESENVOLVIMENTO):
+  /// 1. Busca código no Firestore
+  /// 2. Valida formato, expiração e correspondência
+  /// 3. Se válido, navega para tela de nova senha
+  /// 
+  /// COMO TESTAR AGORA:
+  /// 1. Executar sendPasswordResetCode()
+  /// 2. Acessar Firebase Console > Firestore > passwordResets > [seu-email]
+  /// 3. Copiar o valor do campo "code"
+  /// 4. Colar na tela de verificação
+  /// 
+  /// ⚠️ Em produção, o usuário receberá o código por email (quando implementado)
   Future<void> verifyCode(String code) async {
     // Sanitizar código (remover espaços)
     final sanitizedCode = code.trim();
@@ -348,18 +408,25 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Recuperar OTP armazenado
-      final storedCode = await _secureStorage.read(key: 'otp_code');
-      final storedExpirationStr = await _secureStorage.read(key: 'otp_expiration');
+      if (_tempEmail == null) {
+        errorMessage.value = 'Sessão expirada. Inicie o processo novamente.';
+        return;
+      }
 
-      if (storedCode == null || storedExpirationStr == null) {
+      // Recuperar código do Firestore
+      final doc = await _firestore.collection('passwordResets').doc(_tempEmail!).get();
+
+      if (!doc.exists) {
         errorMessage.value = 'Código não encontrado. Solicite um novo código.';
         return;
       }
 
+      final data = doc.data()!;
+      final storedCode = data['code'] as String;
+      final expiresAt = (data['expiresAt'] as Timestamp).toDate();
+
       // Verificar se o código expirou (> 10 minutos)
-      final storedExpiration = DateTime.parse(storedExpirationStr);
-      if (DateTime.now().isAfter(storedExpiration)) {
+      if (DateTime.now().isAfter(expiresAt)) {
         errorMessage.value = 'Código expirado. Solicite um novo código.';
         return;
       }
@@ -372,6 +439,8 @@ class AuthController extends GetxController {
 
       // Código válido - navegar para tela de nova senha
       goToNewPassword();
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
       errorMessage.value = 'Erro ao verificar código. Tente novamente.';
     } finally {
@@ -392,29 +461,44 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Recuperar email armazenado
-      final email = await _secureStorage.read(key: 'otp_email');
-
-      if (email == null) {
+      if (_tempEmail == null) {
         errorMessage.value = 'Sessão expirada. Inicie o processo novamente.';
         return;
       }
 
-      // Obter usuário atual
-      final user = _auth.currentUser;
+      // ⚠️ LIMITAÇÃO DO FIREBASE AUTH ⚠️
+      // O Firebase Auth não permite alterar senha de outro usuário diretamente
+      // A única forma segura é enviar um link de reset por email
+      // 
+      // FLUXO ATUAL (Funcional mas não ideal):
+      // 1. Usuário verifica código OTP ✅
+      // 2. Usuário digita nova senha ✅
+      // 3. App envia link de reset por email ⚠️
+      // 4. Usuário precisa clicar no link E digitar senha novamente ❌
+      // 
+      // ALTERNATIVAS PARA MELHORAR:
+      // 
+      // Opção 1 (Recomendada): Cloud Function Admin SDK
+      //   - Criar Cloud Function com Firebase Admin SDK
+      //   - Admin SDK pode alterar senha diretamente
+      //   - Mais seguro e melhor UX
+      // 
+      // Opção 2: Autenticação temporária
+      //   - Criar token customizado via Cloud Function
+      //   - Fazer signIn com token
+      //   - Alterar senha com updatePassword()
+      //   - Fazer logout
+      // 
+      // Opção 3: Manter fluxo atual
+      //   - Enviar link de reset
+      //   - Usuário clica e define senha
+      //   - Simples mas UX não ideal
 
-      if (user == null) {
-        errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
-        return;
-      }
+      // Enviar link de reset via Firebase Auth
+      await _auth.sendPasswordResetEmail(email: _tempEmail!);
 
-      // Atualizar senha via Firebase Auth
-      await user.updatePassword(newPassword);
-
-      // Limpar OTP do secure storage
-      await _secureStorage.delete(key: 'otp_code');
-      await _secureStorage.delete(key: 'otp_email');
-      await _secureStorage.delete(key: 'otp_expiration');
+      // Limpar documento do Firestore
+      await _firestore.collection('passwordResets').doc(_tempEmail!).delete();
 
       // Limpar email temporário
       _tempEmail = null;
@@ -430,6 +514,8 @@ class AuthController extends GetxController {
       backToSignin();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível redefinir a senha. Tente novamente.';
     } finally {
@@ -474,6 +560,28 @@ class AuthController extends GetxController {
         return 'Verifique sua conexão com a internet.';
       default:
         return 'Não foi possível enviar o e-mail de recuperação. Tente novamente.';
+    }
+  }
+
+  /// Handler de erros do Firestore
+  String _handleFirestoreError(FirebaseException e) {
+    switch (e.code) {
+      case 'permission-denied':
+        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
+      case 'unavailable':
+        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
+      case 'deadline-exceeded':
+        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      case 'resource-exhausted':
+        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
+      case 'unauthenticated':
+        return 'Usuário não autenticado. Faça login novamente.';
+      case 'not-found':
+        return 'Recurso não encontrado.';
+      case 'already-exists':
+        return 'Recurso já existe.';
+      default:
+        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
     }
   }
 
