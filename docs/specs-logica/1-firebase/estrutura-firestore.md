@@ -7,7 +7,7 @@
 ## users/{userId}
 
 **Identificação:**
-- `id` - UUID do usuário
+- `id` - Firebase Auth UID (gerado automaticamente pelo Firebase Auth)
 - `email` - Email de cadastro
 - `name` - Nome completo
 - `username` - Nome de usuário único (@username)
@@ -40,7 +40,7 @@
 ## users/{userId}/courses/{courseId}
 
 **Identificação:**
-- `id` - UUID
+- `id` - Firestore auto-generated ID (gerado via .doc() sem parâmetros)
 - `languageCode` - String (ex: "fr", "es", "de")
 - `languageName` - String (ex: "French", "Spanish")
 - `level` - String (beginner, intermediate, advanced)

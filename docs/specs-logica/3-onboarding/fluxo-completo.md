@@ -62,20 +62,19 @@ await FirebaseFirestore.instance
 
 ### 4. Criar primeiro curso
 
-**Nota**: Usar `uuid` package para gerar IDs únicos:
+**Nota**: Usar Firestore auto-generated ID (não UUID):
 
 ```dart
-import 'package:uuid/uuid.dart';
-
-const uuid = Uuid();
-final courseId = uuid.v4(); // ID aleatório único
-
-await FirebaseFirestore.instance
+// Gerar ID automaticamente via Firestore
+final courseRef = FirebaseFirestore.instance
     .collection('users')
     .doc(userId)
     .collection('courses')
-    .doc(courseId)
-    .set({
+    .doc(); // Auto-generated ID
+
+final courseId = courseRef.id;
+
+await courseRef.set({
   'id': courseId,
   'languageCode': selectedLanguage.code,
   'languageName': selectedLanguage.name,

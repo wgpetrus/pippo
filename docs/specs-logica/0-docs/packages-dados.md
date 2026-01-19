@@ -1,4 +1,4 @@
-# Packages de Dados vs Packages de UI
+ # Packages de Dados vs Packages de UI
 
 > Esclarecimento sobre quais packages devem ser mencionados nas specs
 
@@ -10,26 +10,49 @@ Estes packages lidam com **lógica de dados** e devem ser mencionados nas specs 
 
 ### uuid
 
-**Quando usar**: Geração de IDs únicos para documentos Firestore
+**⚠️ REGRA CRÍTICA: UUID v5 APENAS para informações pessoais**
+
+**Quando usar UUID v5** (determinístico - sempre gera o mesmo ID para o mesmo input):
+- ✅ Dados pessoais sensíveis que precisam ser consistentes
+- ✅ Exemplo: IDs baseados em email, CPF, telefone
 
 ```dart
 import 'package:uuid/uuid.dart';
 
 const uuid = Uuid();
 
-// Para IDs aleatórios (padrão)
-final courseId = uuid.v4();
-
-// Para dados pessoais (determinístico - sempre gera o mesmo ID para o mesmo input)
-final userId = uuid.v5(Uuid.NAMESPACE_URL, 'url_do_cliente');
+// Para dados pessoais (determinístico)
+final userId = uuid.v5(Uuid.NAMESPACE_URL, userEmail);
 ```
 
-**Regra crítica**: Sempre usar `uuid.v5()` ao armazenar informação pessoal.
+**Quando NÃO usar UUID** (usar Firestore auto-generated ID):
+- ❌ Cursos (não são dados pessoais)
+- ❌ Lições, exercícios, desafios
+- ❌ Qualquer documento que não seja informação pessoal
+
+```dart
+// ✅ CORRETO - Firestore auto-generated ID para cursos
+final courseRef = FirebaseFirestore.instance
+    .collection('users')
+    .doc(userId)
+    .collection('courses')
+    .doc(); // Auto-generated ID
+
+final courseId = courseRef.id;
+
+await courseRef.set({
+  'id': courseId,
+  // ... outros campos
+});
+```
+
+**Regra crítica**: 
+- UUID v5 → **APENAS** informações pessoais (determinístico)
+- Firestore auto-generated ID → **TUDO** que não for informação pessoal
 
 **Onde mencionar**:
-- ✅ Onboarding (criação de IDs de curso)
-- ✅ Perfil (gerenciar cursos)
-- ✅ Qualquer lugar que crie documentos no Firestore
+- ✅ Apenas quando for necessário UUID v5 para dados pessoais
+- ❌ NÃO mencionar para cursos, lições, etc (usar Firestore auto-generated ID)
 
 ---
 

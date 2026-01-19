@@ -266,21 +266,32 @@ Showcase(
 
 ### uuid
 
-Geração de IDs únicos. Usar **v5** para dados pessoais (determinístico).
+**⚠️ REGRA CRÍTICA: UUID v5 APENAS para informações pessoais**
+
+Geração de IDs únicos. Usar **v5** APENAS para dados pessoais (determinístico).
 
 ```dart
 import 'package:uuid/uuid.dart';
 
 const uuid = Uuid();
 
-// Para dados pessoais (sempre gera o mesmo ID para o mesmo input)
-final userId = uuid.v5(Uuid.NAMESPACE_URL, 'url_do_cliente');
-
-// Para IDs aleatórios
-final randomId = uuid.v4();
+// ✅ CORRETO - Para dados pessoais (determinístico)
+final recoveryToken = uuid.v5(Uuid.NAMESPACE_URL, userEmail);
+final deduplicationId = uuid.v5(Uuid.NAMESPACE_URL, userCPF);
 ```
 
-**Regra:** Sempre usar `uuid.v5()` ao armazenar informação pessoal.
+**Quando usar UUID v5** (determinístico - sempre gera o mesmo ID para o mesmo input):
+- ✅ Tokens de recuperação baseados em email
+- ✅ IDs de deduplicação (CPF, telefone)
+- ✅ Validação de integridade
+- ✅ Cache determinístico
+
+**Quando NÃO usar UUID** (usar Firestore auto-generated ID ou Firebase Auth UID):
+- ❌ IDs de usuário (usar Firebase Auth UID)
+- ❌ IDs de cursos, lições, exercícios (usar Firestore `.doc()`)
+- ❌ Qualquer documento que não seja informação pessoal auxiliar
+
+**Regra:** UUID v5 → **APENAS** para propósitos auxiliares com dados pessoais (tokens, deduplicação, validação).
 
 **Link:** https://pub.dev/packages/uuid
 

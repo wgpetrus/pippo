@@ -118,17 +118,16 @@ Future<void> createNewCourse({
 }) async {
   final userId = FirebaseAuth.instance.currentUser!.uid;
   
-  // Usar uuid package para gerar ID único
-  import 'package:uuid/uuid.dart';
-  const uuid = Uuid();
-  final courseId = uuid.v4();
-  
-  await FirebaseFirestore.instance
+  // Usar Firestore auto-generated ID
+  final courseRef = FirebaseFirestore.instance
       .collection('users')
       .doc(userId)
       .collection('courses')
-      .doc(courseId)
-      .set({
+      .doc(); // Auto-generated ID
+  
+  final courseId = courseRef.id;
+  
+  await courseRef.set({
     'id': courseId,
     'languageCode': languageCode,
     'languageName': languageName,
