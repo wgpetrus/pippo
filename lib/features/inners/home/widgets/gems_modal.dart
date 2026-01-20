@@ -50,7 +50,7 @@ class GemsModal extends StatelessWidget {
     // Packs de gems (IAP placeholder)
     final packs = [
       GemPackData(
-        iconAsset: AppAssets.shopPoteGema,
+        iconAsset: AppAssets.shopGemPot,
         gems: 100,
         price: 'R\$ 4,99',
         iconSize: r.value(mobile: 48, tablet: 56, desktop: 64),
@@ -65,7 +65,7 @@ class GemsModal extends StatelessWidget {
         iconSize: r.value(mobile: 56, tablet: 64, desktop: 72),
       ),
       GemPackData(
-        iconAsset: AppAssets.shopBauDourado,
+        iconAsset: AppAssets.shopChest,
         gems: 1000,
         price: 'R\$ 34,99',
         oldPrice: 'R\$ 49,99',
@@ -88,7 +88,7 @@ class GemsModal extends StatelessWidget {
         ),
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(r.spacing20, r.spacing24, r.spacing20, r.spacing24),
+            padding: EdgeInsets.fromLTRB(r.spacing16, r.spacing24, r.spacing16, r.spacing24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +109,7 @@ class GemsModal extends StatelessWidget {
                   'Invista em gemas, invista na diversão do aprendizado.',
                   style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
                 ),
-                SizedBox(height: r.spacing20),
+                SizedBox(height: r.spacing16),
 
                 // Packs de gems (IAP placeholder)
                 ...packs.map((pack) => Padding(
@@ -154,7 +154,7 @@ class GemsModal extends StatelessWidget {
         Row(
           children: [
             Image.asset(AppAssets.appbarGem, width: r.value(mobile: 28, tablet: 32, desktop: 36), height: r.value(mobile: 28, tablet: 32, desktop: 36)),
-            SizedBox(width: r.spacing6),
+            SizedBox(width: r.spacing4),
             Text(
               currentGems.toString(),
               style: AppTheme.textXlBold.copyWith(color: AppTheme.red),
@@ -262,7 +262,7 @@ class _GemPackCard extends StatelessWidget {
               top: -8,
               right: r.spacing16,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: r.spacing12, vertical: r.spacing6),
+                padding: EdgeInsets.symmetric(horizontal: r.spacing12, vertical: r.spacing4),
                 decoration: BoxDecoration(
                   color: AppTheme.pink,
                   borderRadius: BorderRadius.circular(8),
@@ -286,7 +286,7 @@ class _GemPackCard extends StatelessWidget {
             pack.price,
             style: AppTheme.textXlBold.copyWith(color: AppTheme.red),
           ),
-          SizedBox(width: r.spacing6),
+          SizedBox(width: r.spacing4),
           Text(
             pack.oldPrice!,
             style: AppTheme.textMdMedium.copyWith(

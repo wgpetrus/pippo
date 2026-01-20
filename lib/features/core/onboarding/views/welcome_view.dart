@@ -58,7 +58,7 @@ class _WelcomeViewState extends State<WelcomeView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(
-                  AppAssets.personagemOnboarding,
+                  AppAssets.mascotWelcome,
                   width: r.wp(85),
                   fit: BoxFit.contain,
                 ),

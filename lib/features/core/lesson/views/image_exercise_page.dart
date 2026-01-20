@@ -63,7 +63,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
 
             // Título
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: r.spacing20),
+              padding: EdgeInsets.symmetric(horizontal: r.spacing16),
               child: Text(
                 'Selecione a imagem correta',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
@@ -74,7 +74,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
 
             // Botão de áudio com palavra
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: r.spacing20),
+              padding: EdgeInsets.symmetric(horizontal: r.spacing16),
               child: AudioWordButton(
                 word: 'le garçon',
                 onTap: () {
@@ -88,7 +88,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
             // Grid de opções
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: r.spacing20),
+                padding: EdgeInsets.symmetric(horizontal: r.spacing16),
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -115,7 +115,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
 
             // Botão Check
             Padding(
-              padding: EdgeInsets.all(r.spacing20),
+              padding: EdgeInsets.all(r.spacing16),
               child: AppButton(
                 text: 'Verificar',
                 onPressed: _selectedIndex != null ? _onCheck : null,

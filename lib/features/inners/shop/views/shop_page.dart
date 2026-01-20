@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 import '../widgets/boost_item.dart';
 import '../widgets/collectible_item.dart';
 import '../widgets/section_title.dart';
@@ -162,7 +162,7 @@ class ShopPage extends StatelessWidget {
             children: [
               // Recarga de Energia - 100 gems
               BoostItem(
-                iconAsset: AppAssets.bottomBarRay,
+                iconAsset: AppAssets.appbarRay,
                 title: 'Recarga de Energia',
                 description: 'Recarregue 5 energias instantaneamente!',
                 price: 100,

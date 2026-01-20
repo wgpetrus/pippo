@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
+import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 import '../../widgets/onboarding_header.dart';
@@ -24,14 +25,22 @@ class _UserEmailPageState extends State<UserEmailPage> {
 
   // Estados
   bool _isFocused = false;
+  String? _errorMessage;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
     _controller = Get.find<OnboardingController>();
-    _emailController.addListener(() => setState(() {}));
+    _emailController.addListener(_validateInput);
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
+  }
+
+  // Validação em tempo real
+  void _validateInput() {
+    setState(() {
+      _errorMessage = ValidationHelper.validateEmail(_emailController.text);
+    });
   }
 
   @override
@@ -45,6 +54,7 @@ class _UserEmailPageState extends State<UserEmailPage> {
   @override
   Widget build(BuildContext context) {
     final hasText = _emailController.text.isNotEmpty;
+    final isValid = _errorMessage == null && hasText;
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -71,11 +81,12 @@ class _UserEmailPageState extends State<UserEmailPage> {
                 hint: 'digite seu e-mail',
                 isFocused: _isFocused,
                 keyboardType: TextInputType.emailAddress,
+                errorText: _errorMessage,
               ),
               const Spacer(),
               AppButton(
                 text: 'Continuar',
-                onPressed: hasText
+                onPressed: isValid
                     ? () {
                         _controller.userEmail.value = _emailController.text.trim();
                         _controller.nav.goToUserPassword();

@@ -379,7 +379,6 @@ class HomeView extends StatelessWidget {
   void _showStreakModal(BuildContext context) {
     StreakModal.show(
       context,
-      streakDays: 7,
       onSeeMore: () {
         // TODO: Navegar para página de detalhes do streak
       },
@@ -389,52 +388,17 @@ class HomeView extends StatelessWidget {
   void _showGemsModal(BuildContext context, HomeController controller) {
     GemsModal.show(
       context,
-      currentGems: 650,
-      packs: [
-        GemPackData(
-          iconAsset: AppAssets.shopGemPot,
-          gems: 100,
-          price: '\$ 4.99',
-          iconSize: 67,
-        ),
-        GemPackData(
-          iconAsset: AppAssets.shopChest,
-          gems: 500,
-          price: '\$ 8.99',
-          oldPrice: '20',
-          isHighlighted: true,
-          badge: 'DISCOUNT',
-          iconSize: 67,
-        ),
-        GemPackData(
-          iconAsset: AppAssets.shopGemCar,
-          gems: 1500,
-          price: '\$ 24.99',
-          iconSize: 56,
-        ),
-      ],
-      onGoToShop: () => controller.onNavTap(1),
-      onPackTap: (pack) {
-        // TODO: Processar compra do pack
+      onGoToShop: () {
+        controller.onNavTap(2); // Navegar para shop tab
       },
     );
   }
 
   void _showEnergyModal(BuildContext context) {
-    // Para testar os 3 estados, mude o currentEnergy:
-    // 1 = "Only one flash left"
-    // 0 = "No flashes left"
-    // 5 = "Fully charged"
     EnergyModal.show(
       context,
-      currentEnergy: 1,
-      maxEnergy: 5,
-      nextEnergyTime: '2h 25m',
       onUnlimitedTap: () {
         // TODO: Ativar unlimited flashes (free trial)
-      },
-      onRefillTap: () {
-        // TODO: Comprar refill com gems
       },
     );
   }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
+import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 import '../../widgets/onboarding_header.dart';
@@ -31,20 +32,47 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
   bool _confirmFocused = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  String? _passwordError;
+  String? _confirmError;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
     _controller = Get.find<OnboardingController>();
-    _passwordController.addListener(() => setState(() {}));
-    _confirmController.addListener(() => setState(() {}));
+    _passwordController.addListener(_validatePassword);
+    _confirmController.addListener(_validateConfirmPassword);
     _passwordFocus.addListener(() => setState(() => _passwordFocused = _passwordFocus.hasFocus));
     _confirmFocus.addListener(() => setState(() => _confirmFocused = _confirmFocus.hasFocus));
   }
 
+  // Validação
+  void _validatePassword() {
+    setState(() {
+      _passwordError = ValidationHelper.validatePassword(_passwordController.text);
+      // Re-validar confirmação se já foi preenchida
+      if (_confirmController.text.isNotEmpty) {
+        _validateConfirmPassword();
+      }
+    });
+  }
+
+  void _validateConfirmPassword() {
+    setState(() {
+      if (_confirmController.text.isEmpty) {
+        _confirmError = null;
+      } else if (_confirmController.text != _passwordController.text) {
+        _confirmError = 'As senhas não coincidem.';
+      } else {
+        _confirmError = null;
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _passwordController.removeListener(_validatePassword);
+    _confirmController.removeListener(_validateConfirmPassword);
     _passwordController.dispose();
     _confirmController.dispose();
     _passwordFocus.dispose();
@@ -56,7 +84,8 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
   bool get _canContinue =>
       _passwordController.text.isNotEmpty &&
       _confirmController.text.isNotEmpty &&
-      _passwordController.text == _confirmController.text;
+      _passwordError == null &&
+      _confirmError == null;
 
   // Build
   @override
@@ -102,6 +131,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                 hint: 'digite sua senha',
                 isFocused: _passwordFocused,
                 obscureText: _obscurePassword,
+                errorText: _passwordError,
                 suffixIcon: IconButton(
                   icon: FaIcon(
                     _obscurePassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
@@ -123,6 +153,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                 hint: 'repita sua senha',
                 isFocused: _confirmFocused,
                 obscureText: _obscureConfirm,
+                errorText: _confirmError,
                 suffixIcon: IconButton(
                   icon: FaIcon(
                     _obscureConfirm ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,

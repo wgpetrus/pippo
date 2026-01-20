@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Import local
 import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
+import 'package:pippo/shared/utils/validation_helper.dart';
 
 void main() {
   setUp(() async {
@@ -1716,6 +1717,406 @@ void main() {
       final progress = calculateProgress('verify_code', true);
       expect(progress['current'], equals(1)); // Not found, defaults to 1
       expect(progress['total'], equals(4));
+    });
+  });
+
+  group('Controller Validation Methods', () {
+    // These tests verify that the controller's validation methods correctly
+    // delegate to ValidationHelper and return the expected results.
+    // Since OnboardingController requires Firebase initialization, we test
+    // the ValidationHelper directly (which is what the controller uses).
+    //
+    // NOTE: The controller methods are simple wrappers:
+    // - validateName() => ValidationHelper.validateName()
+    // - validateEmail() => ValidationHelper.validateEmail()
+    // - validatePassword() => ValidationHelper.validatePassword()
+    //
+    // These tests ensure the ValidationHelper (used by the controller) works correctly.
+
+    group('validateName', () {
+      test('returns null for valid name', () {
+        final result = ValidationHelper.validateName('João Silva');
+        expect(result, isNull);
+      });
+
+      test('returns error for null value', () {
+        final result = ValidationHelper.validateName(null);
+        expect(result, equals('Nome é obrigatório.'));
+      });
+
+      test('returns error for empty string', () {
+        final result = ValidationHelper.validateName('');
+        expect(result, equals('Nome é obrigatório.'));
+      });
+
+      test('returns error for whitespace-only string', () {
+        final result = ValidationHelper.validateName('   ');
+        expect(result, equals('Nome é obrigatório.'));
+      });
+
+      test('returns error for single character name', () {
+        final result = ValidationHelper.validateName('A');
+        expect(result, equals('Nome deve ter pelo menos 2 caracteres.'));
+      });
+
+      test('returns error for name with numbers', () {
+        final result = ValidationHelper.validateName('João123');
+        expect(result, equals('Nome deve conter apenas letras e espaços.'));
+      });
+
+      test('returns error for name with special characters', () {
+        final result = ValidationHelper.validateName('João@Silva');
+        expect(result, equals('Nome deve conter apenas letras e espaços.'));
+      });
+
+      test('accepts name with exactly 2 characters', () {
+        final result = ValidationHelper.validateName('Jo');
+        expect(result, isNull);
+      });
+
+      test('accepts name with accented characters', () {
+        final result = ValidationHelper.validateName('José María');
+        expect(result, isNull);
+      });
+
+      test('accepts name with multiple spaces', () {
+        final result = ValidationHelper.validateName('Maria da Silva Santos');
+        expect(result, isNull);
+      });
+
+      test('trims leading and trailing spaces before validation', () {
+        final result = ValidationHelper.validateName('  João Silva  ');
+        expect(result, isNull);
+      });
+
+      test('returns consistent results for same input', () {
+        final name = 'João Silva';
+        final result1 = ValidationHelper.validateName(name);
+        final result2 = ValidationHelper.validateName(name);
+        final result3 = ValidationHelper.validateName(name);
+        
+        expect(result1, equals(result2));
+        expect(result2, equals(result3));
+      });
+
+      test('error message is in Portuguese', () {
+        final result = ValidationHelper.validateName('');
+        expect(result, contains('obrigatório'));
+      });
+
+      test('error message does not contain technical terms', () {
+        final result = ValidationHelper.validateName('');
+        final lowerResult = result?.toLowerCase() ?? '';
+        
+        expect(lowerResult, isNot(contains('null')));
+        expect(lowerResult, isNot(contains('error')));
+        expect(lowerResult, isNot(contains('exception')));
+      });
+    });
+
+    group('validateEmail', () {
+      test('returns null for valid email', () {
+        final result = ValidationHelper.validateEmail('user@example.com');
+        expect(result, isNull);
+      });
+
+      test('returns error for null value', () {
+        final result = ValidationHelper.validateEmail(null);
+        expect(result, equals('E-mail é obrigatório.'));
+      });
+
+      test('returns error for empty string', () {
+        final result = ValidationHelper.validateEmail('');
+        expect(result, equals('E-mail é obrigatório.'));
+      });
+
+      test('returns error for whitespace-only string', () {
+        final result = ValidationHelper.validateEmail('   ');
+        expect(result, equals('E-mail é obrigatório.'));
+      });
+
+      test('returns error for email without @', () {
+        final result = ValidationHelper.validateEmail('userexample.com');
+        expect(result, equals('Por favor, insira um e-mail válido.'));
+      });
+
+      test('returns error for email without domain', () {
+        final result = ValidationHelper.validateEmail('user@');
+        expect(result, equals('Por favor, insira um e-mail válido.'));
+      });
+
+      test('returns error for email without local part', () {
+        final result = ValidationHelper.validateEmail('@example.com');
+        expect(result, equals('Por favor, insira um e-mail válido.'));
+      });
+
+      test('returns error for email without TLD', () {
+        final result = ValidationHelper.validateEmail('user@example');
+        expect(result, equals('Por favor, insira um e-mail válido.'));
+      });
+
+      test('returns error for email with spaces', () {
+        final result = ValidationHelper.validateEmail('user name@example.com');
+        expect(result, equals('Por favor, insira um e-mail válido.'));
+      });
+
+      test('accepts email with dots in local part', () {
+        final result = ValidationHelper.validateEmail('user.name@example.com');
+        expect(result, isNull);
+      });
+
+      test('accepts email with plus sign', () {
+        final result = ValidationHelper.validateEmail('user+tag@example.com');
+        expect(result, isNull);
+      });
+
+      test('accepts email with numbers', () {
+        final result = ValidationHelper.validateEmail('user123@example.com');
+        expect(result, isNull);
+      });
+
+      test('accepts email with subdomain', () {
+        final result = ValidationHelper.validateEmail('user@mail.example.com');
+        expect(result, isNull);
+      });
+
+      test('accepts email with country TLD', () {
+        final result = ValidationHelper.validateEmail('user@example.co.uk');
+        expect(result, isNull);
+      });
+
+      test('trims leading and trailing spaces before validation', () {
+        final result = ValidationHelper.validateEmail('  user@example.com  ');
+        expect(result, isNull);
+      });
+
+      test('returns consistent results for same input', () {
+        final email = 'user@example.com';
+        final result1 = ValidationHelper.validateEmail(email);
+        final result2 = ValidationHelper.validateEmail(email);
+        final result3 = ValidationHelper.validateEmail(email);
+        
+        expect(result1, equals(result2));
+        expect(result2, equals(result3));
+      });
+
+      test('error messages are in Portuguese', () {
+        final result1 = ValidationHelper.validateEmail('');
+        final result2 = ValidationHelper.validateEmail('invalid');
+        
+        expect(result1, contains('obrigatório'));
+        expect(result2, contains('Por favor'));
+      });
+
+      test('error messages do not contain technical terms', () {
+        final result = ValidationHelper.validateEmail('invalid');
+        final lowerResult = result?.toLowerCase() ?? '';
+        
+        expect(lowerResult, isNot(contains('regex')));
+        expect(lowerResult, isNot(contains('pattern')));
+        expect(lowerResult, isNot(contains('error')));
+      });
+    });
+
+    group('validatePassword', () {
+      test('returns null for valid password', () {
+        final result = ValidationHelper.validatePassword('123456');
+        expect(result, isNull);
+      });
+
+      test('returns error for null value', () {
+        final result = ValidationHelper.validatePassword(null);
+        expect(result, equals('Senha é obrigatória.'));
+      });
+
+      test('returns error for empty string', () {
+        final result = ValidationHelper.validatePassword('');
+        expect(result, equals('Senha é obrigatória.'));
+      });
+
+      test('returns error for password with 1 character', () {
+        final result = ValidationHelper.validatePassword('1');
+        expect(result, equals('Senha deve ter pelo menos 6 caracteres.'));
+      });
+
+      test('returns error for password with 5 characters', () {
+        final result = ValidationHelper.validatePassword('12345');
+        expect(result, equals('Senha deve ter pelo menos 6 caracteres.'));
+      });
+
+      test('accepts password with exactly 6 characters', () {
+        final result = ValidationHelper.validatePassword('123456');
+        expect(result, isNull);
+      });
+
+      test('accepts password with 10 characters', () {
+        final result = ValidationHelper.validatePassword('1234567890');
+        expect(result, isNull);
+      });
+
+      test('accepts password with letters', () {
+        final result = ValidationHelper.validatePassword('abcdef');
+        expect(result, isNull);
+      });
+
+      test('accepts password with mixed case', () {
+        final result = ValidationHelper.validatePassword('Pass123');
+        expect(result, isNull);
+      });
+
+      test('accepts password with special characters', () {
+        final result = ValidationHelper.validatePassword('P@ss123!');
+        expect(result, isNull);
+      });
+
+      test('accepts password with spaces', () {
+        final result = ValidationHelper.validatePassword('abc def');
+        expect(result, isNull);
+      });
+
+      test('accepts very long password', () {
+        final result = ValidationHelper.validatePassword('a' * 100);
+        expect(result, isNull);
+      });
+
+      test('does NOT trim spaces (password validation)', () {
+        // Password validation should NOT trim spaces
+        // Spaces are valid password characters
+        final result = ValidationHelper.validatePassword('  abc  ');
+        expect(result, isNull); // 8 characters including spaces
+      });
+
+      test('returns consistent results for same input', () {
+        final password = 'Pass123';
+        final result1 = ValidationHelper.validatePassword(password);
+        final result2 = ValidationHelper.validatePassword(password);
+        final result3 = ValidationHelper.validatePassword(password);
+        
+        expect(result1, equals(result2));
+        expect(result2, equals(result3));
+      });
+
+      test('error messages are in Portuguese', () {
+        final result1 = ValidationHelper.validatePassword('');
+        final result2 = ValidationHelper.validatePassword('123');
+        
+        expect(result1, contains('obrigatória'));
+        expect(result2, contains('pelo menos'));
+      });
+
+      test('error messages do not contain technical terms', () {
+        final result = ValidationHelper.validatePassword('123');
+        final lowerResult = result?.toLowerCase() ?? '';
+        
+        expect(lowerResult, isNot(contains('length')));
+        expect(lowerResult, isNot(contains('error')));
+        expect(lowerResult, isNot(contains('invalid')));
+      });
+    });
+
+    group('Validation Integration', () {
+      test('all validators return null for valid inputs', () {
+        final nameResult = ValidationHelper.validateName('João Silva');
+        final emailResult = ValidationHelper.validateEmail('joao@example.com');
+        final passwordResult = ValidationHelper.validatePassword('Pass123');
+        
+        expect(nameResult, isNull);
+        expect(emailResult, isNull);
+        expect(passwordResult, isNull);
+      });
+
+      test('all validators return errors for invalid inputs', () {
+        final nameResult = ValidationHelper.validateName('');
+        final emailResult = ValidationHelper.validateEmail('');
+        final passwordResult = ValidationHelper.validatePassword('');
+        
+        expect(nameResult, isNotNull);
+        expect(emailResult, isNotNull);
+        expect(passwordResult, isNotNull);
+      });
+
+      test('validators are independent', () {
+        // Valid name, invalid email
+        final nameResult1 = ValidationHelper.validateName('João Silva');
+        final emailResult1 = ValidationHelper.validateEmail('invalid');
+        
+        expect(nameResult1, isNull);
+        expect(emailResult1, isNotNull);
+        
+        // Invalid name, valid email
+        final nameResult2 = ValidationHelper.validateName('');
+        final emailResult2 = ValidationHelper.validateEmail('user@example.com');
+        
+        expect(nameResult2, isNotNull);
+        expect(emailResult2, isNull);
+      });
+
+      test('validators can be called multiple times', () {
+        for (int i = 0; i < 10; i++) {
+          final result = ValidationHelper.validateName('João Silva');
+          expect(result, isNull);
+        }
+      });
+
+      test('validators handle edge cases consistently', () {
+        // Null inputs
+        expect(ValidationHelper.validateName(null), isNotNull);
+        expect(ValidationHelper.validateEmail(null), isNotNull);
+        expect(ValidationHelper.validatePassword(null), isNotNull);
+        
+        // Empty inputs
+        expect(ValidationHelper.validateName(''), isNotNull);
+        expect(ValidationHelper.validateEmail(''), isNotNull);
+        expect(ValidationHelper.validatePassword(''), isNotNull);
+        
+        // Whitespace inputs
+        expect(ValidationHelper.validateName('   '), isNotNull);
+        expect(ValidationHelper.validateEmail('   '), isNotNull);
+        // Password does not trim, so '   ' is valid (3 chars but < 6)
+        expect(ValidationHelper.validatePassword('   '), isNotNull);
+      });
+
+      test('all error messages end with period', () {
+        final nameError = ValidationHelper.validateName('');
+        final emailError = ValidationHelper.validateEmail('');
+        final passwordError = ValidationHelper.validatePassword('');
+        
+        expect(nameError?.endsWith('.'), isTrue);
+        expect(emailError?.endsWith('.'), isTrue);
+        expect(passwordError?.endsWith('.'), isTrue);
+      });
+
+      test('all error messages start with capital letter', () {
+        final nameError = ValidationHelper.validateName('');
+        final emailError = ValidationHelper.validateEmail('');
+        final passwordError = ValidationHelper.validatePassword('');
+        
+        expect(nameError?[0], equals(nameError?[0].toUpperCase()));
+        expect(emailError?[0], equals(emailError?[0].toUpperCase()));
+        expect(passwordError?[0], equals(passwordError?[0].toUpperCase()));
+      });
+
+      test('all error messages are user-friendly', () {
+        final nameError = ValidationHelper.validateName('');
+        final emailError = ValidationHelper.validateEmail('invalid');
+        final passwordError = ValidationHelper.validatePassword('123');
+        
+        // Check messages don't contain technical jargon
+        final allErrors = [nameError, emailError, passwordError];
+        final technicalTerms = ['null', 'error', 'exception', 'invalid', 'regex'];
+        
+        for (final error in allErrors) {
+          if (error != null) {
+            final lowerError = error.toLowerCase();
+            for (final term in technicalTerms) {
+              // 'invalid' is allowed in "e-mail válido" context
+              if (term == 'invalid' && error.contains('válido')) continue;
+              expect(lowerError, isNot(contains(term)),
+                  reason: 'Error "$error" should not contain technical term "$term"');
+            }
+          }
+        }
+      });
     });
   });
 

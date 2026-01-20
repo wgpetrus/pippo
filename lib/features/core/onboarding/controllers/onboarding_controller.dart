@@ -3,16 +3,15 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../shared/utils/validation_helper.dart';
 import '../navigation/onboarding_navigation.dart';
 
 /// Controller do fluxo de onboarding
 class OnboardingController extends GetxController {
-  // Flag estático para pular WelcomeView (setado antes da navegação)
-  static bool shouldSkipWelcome = false;
-
   // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
@@ -22,6 +21,9 @@ class OnboardingController extends GetxController {
   
   // Flag para pular WelcomeView (quando vem de login social)
   final skipWelcome = false.obs;
+  
+  // Provider de autenticação ('email' ou 'google')
+  final authProvider = ''.obs;
 
   // Navegação
   final nav = OnboardingNavigation();
@@ -44,12 +46,12 @@ class OnboardingController extends GetxController {
   final userEmail = ''.obs;
   final userPassword = ''.obs;
 
-  // OTP data (follows AuthController pattern)
-  final resendTimer = 0.obs; // Countdown timer for resend (60 seconds)
+  // Dados OTP
+  final resendTimer = 0.obs;
 
-  // Private state
-  String? _tempEmail; // Temporary email storage for OTP operations
-  Timer? _resendCountdownTimer; // Timer instance for countdown
+  // Estado privado
+  String? _tempEmail;
+  Timer? _resendCountdownTimer;
 
   // Lifecycle
   @override
@@ -62,33 +64,29 @@ class OnboardingController extends GetxController {
 
   /// Valida nome do usuário
   String? validateName(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Nome é obrigatório.';
-    }
-    return null;
+    return ValidationHelper.validateName(value);
   }
 
   /// Valida e-mail do usuário
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'E-mail é obrigatório.';
-    }
-    if (!GetUtils.isEmail(value)) {
-      return 'Por favor, insira um e-mail válido.';
-    }
-    return null;
+    return ValidationHelper.validateEmail(value);
   }
 
   /// Valida senha do usuário
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Senha é obrigatória.';
-    }
-    if (value.length < 6) {
-      return 'A senha deve ter pelo menos 6 caracteres.';
-    }
-    return null;
+    return ValidationHelper.validatePassword(value);
   }
+  
+  // Métodos de verificação de fluxo
+  
+  /// Verifica se deve pular tela de email (login social)
+  bool shouldSkipEmail() => authProvider.value == 'google';
+  
+  /// Verifica se deve pular tela de senha (login social)
+  bool shouldSkipPassword() => authProvider.value == 'google';
+  
+  /// Verifica se deve pular verificação OTP (login social)
+  bool shouldSkipVerifyCode() => authProvider.value == 'google';
 
   // Métodos públicos
 
@@ -98,8 +96,16 @@ class OnboardingController extends GetxController {
     errorMessage.value = '';
 
     try {
+      // Sanitize and validate name
+      final sanitizedName = ValidationHelper.sanitizeName(userName.value);
+      final nameError = validateName(sanitizedName);
+      if (nameError != null) {
+        errorMessage.value = nameError;
+        return;
+      }
+
       // Sanitize and validate email
-      final sanitizedEmail = userEmail.value.trim().toLowerCase();
+      final sanitizedEmail = ValidationHelper.sanitizeEmail(userEmail.value);
       final emailError = validateEmail(sanitizedEmail);
       if (emailError != null) {
         errorMessage.value = emailError;
@@ -113,7 +119,8 @@ class OnboardingController extends GetxController {
         return;
       }
 
-      // Update with sanitized email
+      // Update with sanitized values
+      userName.value = sanitizedName;
       userEmail.value = sanitizedEmail;
 
       // Criar usuário no Firebase Auth
@@ -139,10 +146,10 @@ class OnboardingController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Generate OTP code
+      // Gerar código OTP
       final code = _generateOTP();
 
-      // Store code in Firestore with expiration
+      // Salvar código no Firestore com expiração
       await _firestore.collection('emailVerifications').doc(userEmail.value).set({
         'code': code,
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
@@ -150,39 +157,41 @@ class OnboardingController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // ⚠️ CRITICAL - INCOMPLETE IMPLEMENTATION ⚠️
-      // TODO: [PRODUCTION REQUIRED] Implement email sending
+      // ⚠️ IMPLEMENTAÇÃO INCOMPLETA - ENVIO DE EMAIL ⚠️
+      // TODO: [PRODUÇÃO] Implementar envio de email
       // 
-      // CURRENT PROBLEM:
-      // - Code is generated and saved to Firestore ✅
-      // - BUT user does NOT receive email with code ❌
-      // - For testing now: access Firestore Console and copy code manually
+      // PROBLEMA ATUAL:
+      // - Código gerado e salvo no Firestore ✅
+      // - MAS usuário NÃO recebe email com código ❌
+      // - Para testes: acessar Firestore Console e copiar código manualmente
       // 
-      // PRODUCTION SOLUTION:
-      // Option 1 (Recommended): Cloud Function
-      //   1. Create Cloud Function that listens to new documents in 'emailVerifications'
-      //   2. Function sends email via SendGrid/Mailgun/AWS SES
-      //   3. Code never exposed in client (more secure)
+      // SOLUÇÃO PARA PRODUÇÃO:
+      // Opção 1 (Recomendada): Cloud Function
+      //   - Criar Cloud Function que escuta novos docs em 'emailVerifications'
+      //   - Function envia email via SendGrid/Mailgun/AWS SES
+      //   - Mais seguro (código nunca exposto no cliente)
       // 
-      // Option 2 (Alternative): Direct Email Service
-      //   1. Integrate email package (emailjs, sendgrid_mailer)
-      //   2. Send email directly from app
-      //   3. Less secure (API key in client)
+      // Opção 2: Serviço de Email Direto
+      //   - Integrar package de email (emailjs, sendgrid_mailer)
+      //   - Enviar email direto do app
+      //   - Menos seguro (API key no cliente)
       // 
-      // REFERENCES:
-      // - Firebase Cloud Functions: https://firebase.google.com/docs/functions
-      // - SendGrid: https://sendgrid.com/
-      // - Mailgun: https://www.mailgun.com/
-      // 
-      // ⚠️ DO NOT DEPLOY TO PRODUCTION WITHOUT IMPLEMENTING EMAIL SENDING ⚠️
+      // ⚠️ NÃO FAZER DEPLOY EM PRODUÇÃO SEM IMPLEMENTAR ENVIO DE EMAIL ⚠️
 
-      // Store email temporarily for resend
+      // Armazenar email temporariamente para reenvio
       _tempEmail = userEmail.value;
 
-      // Start 60-second resend timer
+      // Iniciar timer de 60 segundos
       _startResendTimer();
 
-      // Navigate to verification screen
+      // Log em modo debug
+      if (kDebugMode) {
+        debugPrint('🔓 DEBUG MODE: Código OTP salvo no Firestore');
+        debugPrint('📧 Email: ${userEmail.value}');
+        debugPrint('🔑 Código: $code (copie do Firestore Console)');
+      }
+
+      // Navegar para tela de verificação
       nav.goToVerifyCode();
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
@@ -193,7 +202,7 @@ class OnboardingController extends GetxController {
     }
   }
 
-  /// Reenvia código de verificação OTP (segue padrão do AuthController)
+  /// Reenvia código de verificação OTP
   Future<void> resendVerificationCode() async {
     if (_tempEmail == null) {
       errorMessage.value = 'Sessão expirada. Inicie o processo novamente.';
@@ -204,10 +213,10 @@ class OnboardingController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Generate new OTP code
+      // Gerar novo código OTP
       final code = _generateOTP();
 
-      // Store code in Firestore with expiration
+      // Salvar código no Firestore com expiração
       await _firestore.collection('emailVerifications').doc(_tempEmail!).set({
         'code': code,
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
@@ -215,15 +224,21 @@ class OnboardingController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // ⚠️ CRITICAL - SAME PROBLEM AS sendVerificationCode ⚠️
-      // TODO: [PRODUCTION REQUIRED] Implement email sending
-      // Code is generated but user does NOT receive email
-      // See detailed comments in sendVerificationCode()
+      // ⚠️ MESMO PROBLEMA DO sendVerificationCode ⚠️
+      // TODO: [PRODUÇÃO] Implementar envio de email
+      // Ver comentários detalhados em sendVerificationCode()
 
-      // Restart 60-second resend timer
+      // Reiniciar timer de 60 segundos
       _startResendTimer();
 
-      // Success feedback
+      // Log em modo debug
+      if (kDebugMode) {
+        debugPrint('🔓 DEBUG MODE: Novo código OTP salvo no Firestore');
+        debugPrint('📧 Email: $_tempEmail');
+        debugPrint('🔑 Código: $code (copie do Firestore Console)');
+      }
+
+      // Feedback de sucesso
       Get.snackbar(
         'Código reenviado',
         'Um novo código foi enviado para seu e-mail.',
@@ -239,18 +254,25 @@ class OnboardingController extends GetxController {
     }
   }
 
-  /// Verifica código OTP (segue padrão do AuthController)
+  /// Verifica código OTP com bypass em debug mode
   Future<void> verifyCode(String code) async {
-    // Sanitize code (remove spaces)
+    // Sanitizar código (remover espaços)
     final sanitizedCode = code.trim();
 
-    // Validate code is exactly 5 digits
+    // BYPASS EM DEBUG MODE
+    if (kDebugMode && sanitizedCode == '00000') {
+      debugPrint('🔓 DEBUG MODE: Bypass OTP com código $sanitizedCode');
+      await finalizeAccount();
+      return;
+    }
+
+    // Validar código tem exatamente 5 dígitos
     if (sanitizedCode.length != 5) {
       errorMessage.value = 'O código deve ter 5 dígitos.';
       return;
     }
 
-    // Validate code contains only numbers
+    // Validar código contém apenas números
     final digitRegex = RegExp(r'^\d{5}$');
     if (!digitRegex.hasMatch(sanitizedCode)) {
       errorMessage.value = 'O código deve conter apenas números.';
@@ -266,7 +288,7 @@ class OnboardingController extends GetxController {
         return;
       }
 
-      // Retrieve code from Firestore
+      // Buscar código no Firestore
       final doc = await _firestore.collection('emailVerifications').doc(_tempEmail!).get();
 
       if (!doc.exists) {
@@ -278,26 +300,26 @@ class OnboardingController extends GetxController {
       final storedCode = data['code'] as String;
       final expiresAt = (data['expiresAt'] as Timestamp).toDate();
 
-      // Check if code has expired (> 10 minutes)
+      // Verificar se código expirou (> 10 minutos)
       if (DateTime.now().isAfter(expiresAt)) {
         errorMessage.value = 'Código expirado. Solicite um novo código.';
         return;
       }
 
-      // Check if code matches
+      // Verificar se código corresponde
       if (sanitizedCode != storedCode) {
         errorMessage.value = 'Código inválido. Verifique e tente novamente.';
         return;
       }
 
-      // Code is valid - delete OTP document
+      // Código válido - deletar documento OTP
       await _firestore.collection('emailVerifications').doc(_tempEmail!).delete();
 
-      // Cancel resend timer
+      // Cancelar timer de reenvio
       _resendCountdownTimer?.cancel();
       resendTimer.value = 0;
 
-      // Proceed to account finalization
+      // Prosseguir para finalização da conta
       await finalizeAccount();
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
@@ -309,15 +331,14 @@ class OnboardingController extends GetxController {
   }
 
   /// Gera username único a partir do nome do usuário
-  /// Converte para lowercase, remove espaços, e adiciona número se necessário
   Future<String> generateUniqueUsername(String name) async {
     try {
-      // Sanitize name: convert to lowercase, remove spaces and special characters
+      // Sanitizar nome: lowercase, remover espaços e caracteres especiais
       String baseUsername = name
           .toLowerCase()
-          .replaceAll(RegExp(r'[^a-z0-9]'), ''); // Remove non-alphanumeric characters
+          .replaceAll(RegExp(r'[^a-z0-9]'), '');
       
-      // Ensure username is not empty after sanitization
+      // Garantir que username não está vazio após sanitização
       if (baseUsername.isEmpty) {
         baseUsername = 'user';
       }
@@ -327,25 +348,25 @@ class OnboardingController extends GetxController {
       const maxAttempts = 100;
 
       while (attempts < maxAttempts) {
-        // Query Firestore for existing username
+        // Buscar username existente no Firestore
         final querySnapshot = await _firestore
             .collection('users')
             .where('username', isEqualTo: username)
             .limit(1)
             .get();
 
-        // If username doesn't exist, return it
+        // Se username não existe, retornar
         if (querySnapshot.docs.isEmpty) {
           return username;
         }
 
-        // Username exists, append random number (1-9999)
+        // Username existe, adicionar número aleatório (1-9999)
         final random = Random().nextInt(9999) + 1;
         username = '$baseUsername$random';
         attempts++;
       }
 
-      // Max attempts reached
+      // Máximo de tentativas atingido
       throw Exception('Não foi possível gerar um nome de usuário único.');
     } on FirebaseException catch (e) {
       throw Exception(_handleFirestoreError(e));
@@ -358,8 +379,8 @@ class OnboardingController extends GetxController {
   Future<void> createUserDocument(String userId, String username) async {
     try {
       // Sanitize inputs before saving
-      final sanitizedEmail = userEmail.value.trim().toLowerCase();
-      final sanitizedName = userName.value.trim();
+      final sanitizedEmail = ValidationHelper.sanitizeEmail(userEmail.value);
+      final sanitizedName = ValidationHelper.sanitizeName(userName.value);
       
       await _firestore.collection('users').doc(userId).set({
         'id': userId,
@@ -381,18 +402,18 @@ class OnboardingController extends GetxController {
   /// Cria primeiro curso do usuário no Firestore
   Future<void> createFirstCourse(String userId) async {
     try {
-      // Validate studyTime is a valid integer
+      // Validar studyTime é um inteiro válido
       final studyTimeValue = int.tryParse(studyTime.value);
       if (studyTimeValue == null || studyTimeValue <= 0) {
         throw Exception('Tempo de estudo inválido.');
       }
       
-      // Generate course ID using Firestore auto-generated ID
+      // Gerar ID do curso usando Firestore auto-generated ID
       final courseRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
-          .doc(); // Auto-generated ID
+          .doc();
       
       final courseId = courseRef.id;
 
@@ -443,30 +464,74 @@ class OnboardingController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Get current Firebase Auth user ID
+      // Obter usuário autenticado do Firebase Auth
       final user = _auth.currentUser;
       if (user == null) {
         errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
         return;
       }
 
-      // Generate unique username from userName
+      // Sanitizar dados antes de validar
+      userName.value = ValidationHelper.sanitizeName(userName.value);
+      
+      // Sanitizar email apenas se não for login social
+      if (authProvider.value != 'google') {
+        userEmail.value = ValidationHelper.sanitizeEmail(userEmail.value);
+      }
+
+      // Validar todos os dados antes de salvar
+      final nameError = validateName(userName.value);
+      if (nameError != null) {
+        errorMessage.value = nameError;
+        return;
+      }
+
+      // Validar email e senha apenas se não for login social
+      if (authProvider.value != 'google') {
+        final emailError = validateEmail(userEmail.value);
+        if (emailError != null) {
+          errorMessage.value = emailError;
+          return;
+        }
+
+        final passwordError = validatePassword(userPassword.value);
+        if (passwordError != null) {
+          errorMessage.value = passwordError;
+          return;
+        }
+      }
+
+      // Validar outros campos
+      if (selectedLanguage.value.isEmpty) {
+        errorMessage.value = 'Selecione um idioma.';
+        return;
+      }
+      if (languageLevel.value.isEmpty) {
+        errorMessage.value = 'Selecione um nível.';
+        return;
+      }
+      if (studyTime.value.isEmpty) {
+        errorMessage.value = 'Selecione o tempo de estudo.';
+        return;
+      }
+
+      // Gerar username único a partir do userName (já sanitizado)
       final username = await generateUniqueUsername(userName.value);
 
-      // Create user document
+      // Criar documento do usuário
       await createUserDocument(user.uid, username);
 
-      // Create first course
+      // Criar primeiro curso
       await createFirstCourse(user.uid);
 
-      // Initialize gamification stats
+      // Inicializar estatísticas de gamificação
       await initializeGamificationStats(user.uid);
 
-      // Save isFirstAccess = false to SharedPreferences
+      // Salvar isFirstAccess = false no SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isFirstAccess', false);
 
-      // Navigate to conclusion screen
+      // Navegar para tela de conclusão
       nav.goToConclusion();
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
@@ -478,39 +543,37 @@ class OnboardingController extends GetxController {
   }
 
   /// Adiciona novo curso para usuário existente (modo add course)
-  /// Não modifica documento do usuário nem estatísticas de gamificação
   Future<void> addNewCourse() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // Verify user is authenticated
+      // Verificar se usuário está autenticado
       final user = _auth.currentUser;
       if (user == null) {
         errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
         return;
       }
 
-      // Get user ID from authenticated user
       final userId = user.uid;
 
-      // Validate studyTime is a valid integer
+      // Validar studyTime é um inteiro válido
       final studyTimeValue = int.tryParse(studyTime.value);
       if (studyTimeValue == null || studyTimeValue <= 0) {
         errorMessage.value = 'Tempo de estudo inválido.';
         return;
       }
 
-      // Generate course ID using Firestore auto-generated ID
+      // Gerar ID do curso usando Firestore auto-generated ID
       final courseRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
-          .doc(); // Auto-generated ID
+          .doc();
       
       final courseId = courseRef.id;
 
-      // Create course document at users/{userId}/courses/{courseId}
+      // Criar documento do curso em users/{userId}/courses/{courseId}
       await courseRef.set({
         'id': courseId,
         'language': selectedLanguage.value,
@@ -522,11 +585,11 @@ class OnboardingController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Do NOT modify user document
-      // Do NOT modify gamification stats
-      // Do NOT update SharedPreferences
+      // NÃO modificar documento do usuário
+      // NÃO modificar estatísticas de gamificação
+      // NÃO atualizar SharedPreferences
 
-      // Navigate to conclusion screen
+      // Navegar para tela de conclusão
       nav.goToConclusion();
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
@@ -538,26 +601,23 @@ class OnboardingController extends GetxController {
   }
 
   /// Completa o onboarding
-  /// Verifica o modo (add course ou novo usuário) e chama o método apropriado
   Future<void> completeOnboarding() async {
-    // Check isAddingCourse flag
+    // Verificar modo (add course ou novo usuário)
     if (isAddingCourse.value) {
-      // Add course mode: only create new course
+      // Modo add course: apenas criar novo curso
       await addNewCourse();
     } else {
-      // New user mode: create user document, first course, and stats
+      // Modo novo usuário: criar documento do usuário, primeiro curso e stats
       await finalizeAccount();
     }
 
-    // Navigate to /home using Get.offAllNamed in both cases
+    // Navegar para /home usando Get.offAllNamed em ambos os casos
     nav.finishOnboarding();
   }
 
   /// Calcula o progresso atual do onboarding
-  /// Retorna a posição atual e o total de telas (ex: {current: 1, total: 9})
-  /// Exclui telas de transição da contagem
   Map<String, int> calculateProgress(String currentScreen) {
-    // Define screen order for full onboarding (9 screens - excludes transitions)
+    // Definir ordem das telas para onboarding completo (9 telas - exclui transições)
     final fullOnboardingScreens = [
       'select_language',
       'language_level',
@@ -570,7 +630,7 @@ class OnboardingController extends GetxController {
       'verify_code',
     ];
 
-    // Define screen order for add course mode (4 screens)
+    // Definir ordem das telas para modo add course (4 telas)
     final addCourseScreens = [
       'select_language',
       'language_level',
@@ -578,11 +638,11 @@ class OnboardingController extends GetxController {
       'study_time',
     ];
 
-    // Select appropriate screen list based on mode
+    // Selecionar lista apropriada baseado no modo
     final screens = isAddingCourse.value ? addCourseScreens : fullOnboardingScreens;
     final total = screens.length;
 
-    // Find current position (1-indexed)
+    // Encontrar posição atual (1-indexed)
     final index = screens.indexOf(currentScreen);
     final current = index >= 0 ? index + 1 : 1;
 
@@ -607,14 +667,14 @@ class OnboardingController extends GetxController {
     return languageMap[code] ?? code;
   }
 
-  /// Gera código OTP de 5 dígitos (segue padrão do AuthController)
+  /// Gera código OTP de 5 dígitos
   String _generateOTP() {
     final random = Random();
     final code = (10000 + random.nextInt(90000)).toString();
     return code;
   }
 
-  /// Inicia timer de reenvio de 60 segundos (segue padrão do AuthController)
+  /// Inicia timer de reenvio de 60 segundos
   void _startResendTimer() {
     resendTimer.value = 60;
     _resendCountdownTimer?.cancel();

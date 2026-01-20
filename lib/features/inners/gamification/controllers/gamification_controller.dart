@@ -47,16 +47,22 @@ class GamificationController extends GetxController {
   String _lastDailyResetDate = '';
 
   // Computed properties
+  /// Verifica se energia ilimitada está ativa
   bool get hasUnlimitedEnergy =>
       _unlimitedEnergyUntil != null &&
       DateTime.now().isBefore(_unlimitedEnergyUntil!);
 
+  /// Verifica se XP booster está ativo
   bool get hasXpBooster =>
       _xpBoosterUntil != null && DateTime.now().isBefore(_xpBoosterUntil!);
 
+  /// Verifica se gem multiplier está ativo
   bool get hasGemMultiplier =>
       _gemMultiplierUntil != null &&
       DateTime.now().isBefore(_gemMultiplierUntil!);
+
+  /// Verifica se streak freeze está disponível para uso
+  bool get streakFreezeAvailable => _streakFreezeAvailable;
 
   // Lifecycle
   @override

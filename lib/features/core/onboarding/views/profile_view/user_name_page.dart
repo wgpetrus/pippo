@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
+import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
 import '../../widgets/onboarding_header.dart';
@@ -24,13 +25,14 @@ class _UserNamePageState extends State<UserNamePage> {
 
   // Estados
   bool _isFocused = false;
+  String? _errorMessage;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
     _controller = Get.find<OnboardingController>();
-    _nameController.addListener(() => setState(() {}));
+    _nameController.addListener(_validateInput);
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
   }
 
@@ -41,10 +43,18 @@ class _UserNamePageState extends State<UserNamePage> {
     super.dispose();
   }
 
+  // Métodos
+  void _validateInput() {
+    setState(() {
+      _errorMessage = ValidationHelper.validateName(_nameController.text);
+    });
+  }
+
   // Build
   @override
   Widget build(BuildContext context) {
     final hasText = _nameController.text.isNotEmpty;
+    final isValid = hasText && _errorMessage == null;
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -70,11 +80,12 @@ class _UserNamePageState extends State<UserNamePage> {
                 focusNode: _focusNode,
                 hint: 'digite seu nome',
                 isFocused: _isFocused,
+                errorText: _errorMessage,
               ),
               const Spacer(),
               AppButton(
                 text: 'Continuar',
-                onPressed: hasText
+                onPressed: isValid
                     ? () {
                         _controller.userName.value = _nameController.text.trim();
                         _controller.nav.goToUserAge();
