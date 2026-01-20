@@ -5,6 +5,8 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../controllers/lesson_controller.dart';
 import '../widgets/audio_word_button.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
@@ -20,6 +22,7 @@ class ImageExercisePage extends StatefulWidget {
 }
 
 class _ImageExercisePageState extends State<ImageExercisePage> {
+  late final LessonController _controller;
   int? _selectedIndex;
 
   // Dados mockados
@@ -32,38 +35,46 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<LessonController>();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: r.spacing16),
 
             // Header
-            ExerciseHeader(
-              progress: 0.1,
-              energy: 5,
-              onBack: () => Get.back(),
-            ),
+            Obx(() => ExerciseHeader(
+                  progress: _controller.progress,
+                  energy: Get.find<GamificationController>().currentEnergy.value,
+                  onBack: () => Get.back(),
+                )),
 
-            const SizedBox(height: 24),
+            SizedBox(height: r.spacing24),
 
             // Título
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: r.spacing20),
               child: Text(
                 'Selecione a imagem correta',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: r.spacing16),
 
             // Botão de áudio com palavra
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: r.spacing20),
               child: AudioWordButton(
                 word: 'le garçon',
                 onTap: () {
@@ -72,18 +83,18 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: r.spacing24),
 
             // Grid de opções
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: r.spacing20),
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: ResponsiveUtils.isLandscapeStatic ? 4 : 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                    crossAxisCount: r.isLandscape ? 4 : 2,
+                    crossAxisSpacing: r.spacing12,
+                    mainAxisSpacing: r.spacing12,
                     childAspectRatio: 0.85,
                   ),
                   itemCount: _options.length,
@@ -104,7 +115,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
 
             // Botão Check
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(r.spacing20),
               child: AppButton(
                 text: 'Verificar',
                 onPressed: _selectedIndex != null ? _onCheck : null,
@@ -129,6 +140,9 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
 
     final isCorrect = _selectedIndex == _correctIndex;
 
+    // Registra a resposta no controller
+    _controller.recordAnswer(isCorrect: isCorrect);
+
     FeedbackBottomSheet.show(
       context,
       type: isCorrect ? FeedbackType.correct : FeedbackType.wrong,
@@ -138,6 +152,8 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
   }
 
   void _onContinue() {
+    // Avança para o próximo exercício
+    _controller.nextExercise();
     Get.off(() => const TranslationExercisePage());
   }
 }

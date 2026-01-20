@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 
 /// Tipo de stat para definir cor
 enum StatType { flag, fire, gem, ray }
@@ -10,10 +12,6 @@ enum StatType { flag, fire, gem, ray }
 class HomeAppbar extends StatelessWidget {
   final String avatarAsset;
   final String flagAsset;
-  final int flagCount;
-  final int fireCount;
-  final int gemCount;
-  final int rayCount;
   final StatType? selectedStat;
   final VoidCallback? onAvatarTap;
   final ValueChanged<StatType>? onStatTap;
@@ -22,10 +20,6 @@ class HomeAppbar extends StatelessWidget {
     super.key,
     required this.avatarAsset,
     required this.flagAsset,
-    this.flagCount = 0,
-    this.fireCount = 0,
-    this.gemCount = 0,
-    this.rayCount = 0,
     this.selectedStat,
     this.onAvatarTap,
     this.onStatTap,
@@ -33,6 +27,9 @@ class HomeAppbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Obter GamificationController
+    final gamificationController = Get.find<GamificationController>();
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -78,10 +75,35 @@ class HomeAppbar extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Flexible(child: _buildStatChip(flagAsset, flagCount, StatType.flag)),
-                  Flexible(child: _buildStatChip(AppAssets.appbarFire, fireCount, StatType.fire)),
-                  Flexible(child: _buildStatChip(AppAssets.appbarGem, gemCount, StatType.gem)),
-                  Flexible(child: _buildStatChip(AppAssets.appbarRay, rayCount, StatType.ray)),
+                  // Flag (não reativo - mantém valor fixo)
+                  Flexible(child: _buildStatChip(flagAsset, 5, StatType.flag)),
+                  
+                  // Fire (Streak) - reativo
+                  Flexible(
+                    child: Obx(() => _buildStatChip(
+                      AppAssets.appbarFire,
+                      gamificationController.currentStreak.value,
+                      StatType.fire,
+                    )),
+                  ),
+                  
+                  // Gem (Gems) - reativo
+                  Flexible(
+                    child: Obx(() => _buildStatChip(
+                      AppAssets.appbarGem,
+                      gamificationController.gems.value,
+                      StatType.gem,
+                    )),
+                  ),
+                  
+                  // Ray (Energy) - reativo
+                  Flexible(
+                    child: Obx(() => _buildStatChip(
+                      AppAssets.appbarRay,
+                      gamificationController.currentEnergy.value,
+                      StatType.ray,
+                    )),
+                  ),
                 ],
               ),
             ),

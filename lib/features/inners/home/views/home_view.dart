@@ -218,16 +218,12 @@ class HomeView extends StatelessWidget {
 
         // AppBar
         Builder(
-          builder: (appBarContext) => Obx(() => HomeAppbar(
+          builder: (appBarContext) => HomeAppbar(
             avatarAsset: AppAssets.charDiogo,
             flagAsset: AppAssets.flagFrance,
-            flagCount: 5,
-            fireCount: 6,
-            gemCount: 8,
-            rayCount: 5,
             selectedStat: controller.selectedStat.value,
             onStatTap: (stat) => _onStatTap(appBarContext, controller, stat),
-          )),
+          ),
         ),
 
         // Unit Header

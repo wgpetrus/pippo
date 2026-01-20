@@ -77,9 +77,6 @@ class UserProfilePage extends StatelessWidget {
 
             // Overview
             OverviewSection(
-              xp: xp,
-              streak: 6,
-              level: 12,
               flagAsset: AppAssets.flagFrance,
             ),
             const SizedBox(height: 32),

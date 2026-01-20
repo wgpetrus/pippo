@@ -69,3 +69,7 @@ android/key.properties
 *.p12
 credentials.json
 service-account.json
+
+# Coverage
+coverage/
+*.lcov

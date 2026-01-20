@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 import '../widgets/change_avatar_modal.dart';
 import '../widgets/complete_profile_card.dart';
 import '../widgets/overview_section.dart';
@@ -16,6 +17,8 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final gamification = Get.find<GamificationController>();
+
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: CustomScrollView(
@@ -69,12 +72,9 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // Overview
+          // Overview - Reactive stats from GamificationController
           SliverToBoxAdapter(
             child: OverviewSection(
-              xp: 9120,
-              streak: 6,
-              level: 12,
               flagAsset: AppAssets.flagFrance,
             ),
           ),

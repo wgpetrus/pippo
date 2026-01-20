@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 
 /// Dados de um pack de gems
 class GemPackData {
@@ -29,83 +31,130 @@ class GemPackData {
 
 /// Modal de compra de Gems
 class GemsModal extends StatelessWidget {
-  final int currentGems;
-  final List<GemPackData> packs;
   final VoidCallback? onGoToShop;
-  final Function(GemPackData)? onPackTap;
 
   const GemsModal({
     super.key,
-    required this.currentGems,
-    required this.packs,
     this.onGoToShop,
-    this.onPackTap,
   });
 
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    final gamification = Get.find<GamificationController>();
+    
     // Calcular altura máxima disponível (80% da tela)
-    final maxHeight = ResponsiveUtils.screenHeight * 0.8;
+    final maxHeight = r.heightScreen * 0.8;
 
-    return Container(
-      width: double.infinity,
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
-        color: AppTheme.white,
-        borderRadius: BorderRadius.circular(24),
+    // Packs de gems (IAP placeholder)
+    final packs = [
+      GemPackData(
+        iconAsset: AppAssets.shopPoteGema,
+        gems: 100,
+        price: 'R\$ 4,99',
+        iconSize: r.value(mobile: 48, tablet: 56, desktop: 64),
       ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              _buildHeader(),
-              const SizedBox(height: 8),
+      GemPackData(
+        iconAsset: AppAssets.shopGemCar,
+        gems: 500,
+        price: 'R\$ 19,99',
+        oldPrice: 'R\$ 24,99',
+        badge: 'Mais popular',
+        isHighlighted: true,
+        iconSize: r.value(mobile: 56, tablet: 64, desktop: 72),
+      ),
+      GemPackData(
+        iconAsset: AppAssets.shopBauDourado,
+        gems: 1000,
+        price: 'R\$ 34,99',
+        oldPrice: 'R\$ 49,99',
+        badge: 'Melhor valor',
+        isHighlighted: true,
+        iconSize: r.value(mobile: 64, tablet: 72, desktop: 80),
+      ),
+    ];
 
-              // Subtítulo
-              Text(
-                'Invista em gemas, invista na diversão do aprendizado.',
-                style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
-              ),
-              const SizedBox(height: 20),
+    return Obx(() {
+      final currentGems = gamification.gems.value;
+      final totalGemsEarned = gamification.totalGemsEarned.value;
+      
+      return Container(
+        width: double.infinity,
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(r.value(mobile: 24, tablet: 28, desktop: 32)),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(r.spacing20, r.spacing24, r.spacing20, r.spacing24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                _buildHeader(currentGems, r),
+                SizedBox(height: r.spacing8),
 
-              // Packs de gems
-              ...packs.map((pack) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _GemPackCard(
-                  pack: pack,
-                  onTap: () => onPackTap?.call(pack),
+                // Total earned
+                Text(
+                  'Total ganho: $totalGemsEarned gemas',
+                  style: AppTheme.textSmMedium.copyWith(color: AppTheme.gray400),
                 ),
-              )),
-              const SizedBox(height: 8),
+                SizedBox(height: r.spacing4),
 
-              // Botão Go to shop
-              AppButton(
-                text: 'Ir para a loja',
-                isPrimary: false,
-                onPressed: onGoToShop,
-              ),
-            ],
+                // Subtítulo
+                Text(
+                  'Invista em gemas, invista na diversão do aprendizado.',
+                  style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
+                ),
+                SizedBox(height: r.spacing20),
+
+                // Packs de gems (IAP placeholder)
+                ...packs.map((pack) => Padding(
+                  padding: EdgeInsets.only(bottom: r.spacing12),
+                  child: _GemPackCard(
+                    pack: pack,
+                    onTap: () {
+                      // TODO: Implementar IAP (In-App Purchase)
+                      Get.snackbar(
+                        'Em breve',
+                        'Compras in-app serão implementadas em breve!',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppTheme.primary,
+                        colorText: AppTheme.white,
+                        margin: EdgeInsets.all(r.spacing16),
+                      );
+                    },
+                  ),
+                )),
+                SizedBox(height: r.spacing8),
+
+                // Botão Go to shop
+                AppButton(
+                  text: 'Ir para a loja',
+                  isPrimary: false,
+                  onPressed: onGoToShop,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   // Widgets
-  Widget _buildHeader() {
+  Widget _buildHeader(int currentGems, ResponsiveUtils r) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text('Gems', style: AppTheme.displayXsBold),
         Row(
           children: [
-            Image.asset(AppAssets.appbarGem, width: 28, height: 28),
-            const SizedBox(width: 6),
+            Image.asset(AppAssets.appbarGem, width: r.value(mobile: 28, tablet: 32, desktop: 36), height: r.value(mobile: 28, tablet: 32, desktop: 36)),
+            SizedBox(width: r.spacing6),
             Text(
               currentGems.toString(),
               style: AppTheme.textXlBold.copyWith(color: AppTheme.red),
@@ -119,11 +168,10 @@ class GemsModal extends StatelessWidget {
   // Métodos estáticos
   static void show(
     BuildContext context, {
-    required int currentGems,
-    required List<GemPackData> packs,
     VoidCallback? onGoToShop,
-    Function(GemPackData)? onPackTap,
   }) {
+    final r = ResponsiveUtils(context);
+    
     WoltModalSheet.show(
       context: context,
       pageListBuilder: (context) => [
@@ -133,17 +181,11 @@ class GemsModal extends StatelessWidget {
           hasSabGradient: false,
           hasTopBarLayer: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: r.spacing24),
             child: GemsModal(
-              currentGems: currentGems,
-              packs: packs,
               onGoToShop: () {
                 Navigator.of(context).pop();
                 onGoToShop?.call();
-              },
-              onPackTap: (pack) {
-                Navigator.of(context).pop();
-                onPackTap?.call(pack);
               },
             ),
           ),
@@ -165,6 +207,7 @@ class _GemPackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
     final bgColor = pack.isHighlighted ? AppTheme.pink100 : AppTheme.white;
     final borderColor = pack.isHighlighted ? AppTheme.pink : AppTheme.gray600;
 
@@ -176,10 +219,10 @@ class _GemPackCard extends StatelessWidget {
           // Card
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: r.spacing16, vertical: r.spacing12),
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(r.value(mobile: 20, tablet: 24, desktop: 28)),
               border: Border.all(color: borderColor, width: 2),
               boxShadow: [
                 BoxShadow(
@@ -198,7 +241,7 @@ class _GemPackCard extends StatelessWidget {
                   height: pack.iconSize,
                   fit: BoxFit.contain,
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: r.spacing16),
 
                 // Quantidade
                 Text(
@@ -208,7 +251,7 @@ class _GemPackCard extends StatelessWidget {
                 const Spacer(),
 
                 // Preço
-                _buildPrice(),
+                _buildPrice(r),
               ],
             ),
           ),
@@ -217,9 +260,9 @@ class _GemPackCard extends StatelessWidget {
           if (pack.badge != null)
             Positioned(
               top: -8,
-              right: 16,
+              right: r.spacing16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: EdgeInsets.symmetric(horizontal: r.spacing12, vertical: r.spacing6),
                 decoration: BoxDecoration(
                   color: AppTheme.pink,
                   borderRadius: BorderRadius.circular(8),
@@ -235,7 +278,7 @@ class _GemPackCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPrice() {
+  Widget _buildPrice(ResponsiveUtils r) {
     if (pack.oldPrice != null) {
       return Row(
         children: [
@@ -243,7 +286,7 @@ class _GemPackCard extends StatelessWidget {
             pack.price,
             style: AppTheme.textXlBold.copyWith(color: AppTheme.red),
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: r.spacing6),
           Text(
             pack.oldPrice!,
             style: AppTheme.textMdMedium.copyWith(

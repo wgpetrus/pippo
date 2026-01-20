@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../gamification/controllers/gamification_controller.dart';
 import '../widgets/boost_item.dart';
 import '../widgets/collectible_item.dart';
 import '../widgets/section_title.dart';
@@ -15,6 +16,7 @@ class ShopPage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
+    final gamification = Get.find<GamificationController>();
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppBar(
@@ -27,20 +29,19 @@ class ShopPage extends StatelessWidget {
         centerTitle: false,
         actions: [
           // Contador de gems
-          // TODO: Substituir valor hardcoded por controller.gems.value
-          Padding(
+          Obx(() => Padding(
             padding: const EdgeInsets.only(right: 20),
             child: Row(
               children: [
                 Image.asset(AppAssets.appbarGem, width: 24, height: 24),
                 const SizedBox(width: 6),
                 Text(
-                  '650',
+                  '${gamification.gems.value}',
                   style: AppTheme.textLgBold.copyWith(color: AppTheme.red),
                 ),
               ],
             ),
-          ),
+          )),
         ],
       ),
       body: SingleChildScrollView(
@@ -144,6 +145,8 @@ class ShopPage extends StatelessWidget {
   }
 
   Widget _buildLearningBoosts() {
+    final gamification = Get.find<GamificationController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -157,21 +160,45 @@ class ShopPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             children: [
+              // Recarga de Energia - 100 gems
+              BoostItem(
+                iconAsset: AppAssets.bottomBarRay,
+                title: 'Recarga de Energia',
+                description: 'Recarregue 5 energias instantaneamente!',
+                price: 100,
+                onTap: () => _purchaseEnergyRefill(gamification),
+              ),
+              const SizedBox(height: 12),
+              
+              // XP Booster - 150 gems
               BoostItem(
                 iconAsset: AppAssets.shopElixirXp,
                 title: 'Boost de XP',
-                description: 'Ganhe 2× gemas nas lições!',
-                price: 420,
-                oldPrice: 20,
+                description: 'Ganhe 2× XP nas lições por 1 hora!',
+                price: 150,
+                onTap: () => _purchaseXpBooster(gamification),
               ),
               const SizedBox(height: 12),
+              
+              // Gem Multiplier - 200 gems
               BoostItem(
                 iconAsset: AppAssets.shopElixir2x,
                 title: 'Multiplicador de Gemas',
-                description: 'Ganhe 2× gemas nas lições!',
-                price: 50,
+                description: 'Ganhe 2× gemas nas lições por 1 hora!',
+                price: 200,
                 badge: 'POPULAR',
                 badgeColor: AppTheme.orange,
+                onTap: () => _purchaseGemMultiplier(gamification),
+              ),
+              const SizedBox(height: 12),
+              
+              // Streak Freeze - 200 gems
+              BoostItem(
+                iconAsset: AppAssets.appbarFire,
+                title: 'Proteção de Streak',
+                description: 'Proteja seu streak por 1 dia!',
+                price: 200,
+                onTap: () => _purchaseStreakFreeze(gamification),
               ),
             ],
           ),
@@ -214,5 +241,122 @@ class ShopPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  // Métodos de compra
+  /// Compra recarga de energia (100 gems)
+  Future<void> _purchaseEnergyRefill(GamificationController gamification) async {
+    await gamification.purchaseEnergyRefill();
+
+    if (gamification.errorMessage.value.isNotEmpty) {
+      // Mostrar erro
+      Get.snackbar(
+        'Erro',
+        gamification.errorMessage.value,
+        backgroundColor: AppTheme.red,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      // Mostrar sucesso
+      Get.snackbar(
+        'Sucesso!',
+        'Energia recarregada! Você agora tem ${gamification.currentEnergy.value} energias.',
+        backgroundColor: AppTheme.green,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  /// Compra XP booster (150 gems, 1 hora)
+  Future<void> _purchaseXpBooster(GamificationController gamification) async {
+    await gamification.purchaseXpBooster();
+
+    if (gamification.errorMessage.value.isNotEmpty) {
+      // Mostrar erro
+      Get.snackbar(
+        'Erro',
+        gamification.errorMessage.value,
+        backgroundColor: AppTheme.red,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      // Mostrar sucesso
+      Get.snackbar(
+        'Sucesso!',
+        'XP Booster ativado! Ganhe 2× XP por 1 hora.',
+        backgroundColor: AppTheme.green,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  /// Compra gem multiplier (200 gems, 1 hora)
+  Future<void> _purchaseGemMultiplier(GamificationController gamification) async {
+    await gamification.purchaseGemMultiplier();
+
+    if (gamification.errorMessage.value.isNotEmpty) {
+      // Mostrar erro
+      Get.snackbar(
+        'Erro',
+        gamification.errorMessage.value,
+        backgroundColor: AppTheme.red,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      // Mostrar sucesso
+      Get.snackbar(
+        'Sucesso!',
+        'Multiplicador de Gemas ativado! Ganhe 2× gemas por 1 hora.',
+        backgroundColor: AppTheme.green,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  /// Compra streak freeze (200 gems)
+  Future<void> _purchaseStreakFreeze(GamificationController gamification) async {
+    await gamification.purchaseStreakFreeze();
+
+    if (gamification.errorMessage.value.isNotEmpty) {
+      // Mostrar erro
+      Get.snackbar(
+        'Erro',
+        gamification.errorMessage.value,
+        backgroundColor: AppTheme.red,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      // Mostrar sucesso
+      Get.snackbar(
+        'Sucesso!',
+        'Proteção de Streak ativada! Seu streak está protegido por 1 dia.',
+        backgroundColor: AppTheme.green,
+        colorText: AppTheme.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      );
+    }
   }
 }

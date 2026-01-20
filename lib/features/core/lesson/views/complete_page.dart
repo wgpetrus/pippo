@@ -6,21 +6,90 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../controllers/lesson_controller.dart';
 
 /// Página de conclusão da lição
-class CompletePage extends StatelessWidget {
+class CompletePage extends StatefulWidget {
   const CompletePage({super.key});
 
   @override
+  State<CompletePage> createState() => _CompletePageState();
+}
+
+class _CompletePageState extends State<CompletePage> {
+  late final LessonController _controller;
+  bool _rewardsClaimed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<LessonController>();
+  }
+
+  Future<void> _claimRewards() async {
+    if (_rewardsClaimed) return;
+
+    setState(() {
+      _rewardsClaimed = true;
+    });
+
+    // Completa a lição e resgata recompensas
+    await _controller.completeLesson();
+
+    if (_controller.errorMessage.value.isEmpty) {
+      // Navega de volta para home ou sections
+      Get.back();
+    } else {
+      // Mostra erro se houver
+      Get.snackbar(
+        'Erro',
+        _controller.errorMessage.value,
+        backgroundColor: AppTheme.red,
+        colorText: AppTheme.white,
+      );
+      setState(() {
+        _rewardsClaimed = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
+    // Calcula estatísticas
+    final accuracy = (_controller.accuracy * 100).toStringAsFixed(0);
+    final duration = DateTime.now().difference(_controller.lessonStartTime.value);
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    final timeString = '$minutes:${seconds.toString().padLeft(2, '0')}';
+
+    // Calcula XP e gems que serão ganhos (preview)
+    final baseXp = _controller.accuracy >= 0.9
+        ? 15
+        : _controller.accuracy >= 0.7
+            ? 13
+            : _controller.accuracy >= 0.5
+                ? 11
+                : 10;
+    final baseGems = _controller.accuracy >= 0.9
+        ? 3
+        : _controller.accuracy >= 0.7
+            ? 2
+            : 1;
+
+    // Adiciona bônus se perfeito ou primeira lição do dia
+    var totalXp = baseXp;
+    if (_controller.isPerfect) totalXp += 5;
+
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: Column(
             children: [
-              const SizedBox(height: 40),
+              SizedBox(height: r.spacing32),
 
               // Título
               Text(
@@ -38,30 +107,30 @@ class CompletePage extends StatelessWidget {
                   // Mascote
                   Image.asset(
                     AppAssets.lessonMascotComplete,
-                    width: ResponsiveUtils.width(300, min: 200, max: 350),
-                    height: ResponsiveUtils.width(300, min: 200, max: 350),
+                    width: r.wp(60),
+                    height: r.wp(60),
                     fit: BoxFit.contain,
                   ),
 
                   // Estrela esquerda (rosa)
                   Positioned(
-                    left: 20,
-                    top: 20,
+                    left: r.spacing16,
+                    top: r.spacing16,
                     child: Image.asset(
                       AppAssets.starsPink,
-                      width: 40,
-                      height: 40,
+                      width: r.spacing32,
+                      height: r.spacing32,
                     ),
                   ),
 
                   // Estrela direita (azul)
                   Positioned(
-                    right: 20,
-                    top: 60,
+                    right: r.spacing16,
+                    top: r.spacing48,
                     child: Image.asset(
                       AppAssets.starsBlue,
-                      width: 50,
-                      height: 50,
+                      width: r.spacing48,
+                      height: r.spacing48,
                     ),
                   ),
                 ],
@@ -70,43 +139,44 @@ class CompletePage extends StatelessWidget {
               const Spacer(),
 
               // Cards de estatísticas
-              // TODO: [etapa 8] substituir valores mockados por dados do controller
-              // Em landscape: exibir em uma única linha
-              // Em portrait: exibir em duas linhas
-              ResponsiveUtils.isLandscapeStatic
+              r.isLandscape
                   ? Row(
                       children: [
                         Expanded(
                           child: _buildStatCard(
+                            context: context,
                             icon: AppAssets.treasureXpCoin,
-                            value: '25',
+                            value: totalXp.toString(),
                             label: 'XP Total',
                             color: AppTheme.gold,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: r.spacing12),
                         Expanded(
                           child: _buildStatCard(
+                            context: context,
                             icon: AppAssets.treasureTarget,
-                            value: '98%',
-                            label: 'Excelente',
+                            value: '$accuracy%',
+                            label: _controller.isPerfect ? 'Perfeito!' : 'Excelente',
                             color: AppTheme.pink,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: r.spacing12),
                         Expanded(
                           child: _buildStatCard(
+                            context: context,
                             icon: AppAssets.lessonClock,
-                            value: '2:40',
+                            value: timeString,
                             label: 'Tempo',
                             color: AppTheme.orange,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: r.spacing12),
                         Expanded(
                           child: _buildStatCard(
+                            context: context,
                             icon: AppAssets.appbarGem,
-                            value: '5',
+                            value: baseGems.toString(),
                             label: 'Gemas',
                             color: AppTheme.red,
                           ),
@@ -119,39 +189,43 @@ class CompletePage extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _buildStatCard(
+                                context: context,
                                 icon: AppAssets.treasureXpCoin,
-                                value: '25',
+                                value: totalXp.toString(),
                                 label: 'XP Total',
                                 color: AppTheme.gold,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: r.spacing12),
                             Expanded(
                               child: _buildStatCard(
+                                context: context,
                                 icon: AppAssets.treasureTarget,
-                                value: '98%',
-                                label: 'Excelente',
+                                value: '$accuracy%',
+                                label: _controller.isPerfect ? 'Perfeito!' : 'Excelente',
                                 color: AppTheme.pink,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: r.spacing12),
                         Row(
                           children: [
                             Expanded(
                               child: _buildStatCard(
+                                context: context,
                                 icon: AppAssets.lessonClock,
-                                value: '2:40',
+                                value: timeString,
                                 label: 'Tempo',
                                 color: AppTheme.orange,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: r.spacing12),
                             Expanded(
                               child: _buildStatCard(
+                                context: context,
                                 icon: AppAssets.appbarGem,
-                                value: '5',
+                                value: baseGems.toString(),
                                 label: 'Gemas',
                                 color: AppTheme.red,
                               ),
@@ -161,15 +235,18 @@ class CompletePage extends StatelessWidget {
                       ],
                     ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: r.spacing24),
 
               // Botão resgatar recompensa
-              AppButton(
-                text: 'Resgatar Recompensa',
-                onPressed: () => Get.back(),
-              ),
+              Obx(() => AppButton(
+                    text: 'Resgatar Recompensa',
+                    isLoading: _controller.isLoading.value,
+                    onPressed: _controller.isLoading.value || _rewardsClaimed
+                        ? null
+                        : _claimRewards,
+                  )),
 
-              const SizedBox(height: 20),
+              SizedBox(height: r.spacing16),
             ],
           ),
         ),
@@ -179,16 +256,13 @@ class CompletePage extends StatelessWidget {
 
   // Widget de card de estatística
   Widget _buildStatCard({
+    required BuildContext context,
     required String icon,
     required String value,
     required String label,
     required Color color,
   }) {
-    // Padding responsivo
-    final verticalPadding = ResponsiveUtils.height(20, min: 16, max: 24);
-    final horizontalPadding = ResponsiveUtils.width(12, min: 8, max: 16);
-    final iconSize = ResponsiveUtils.width(32, min: 24, max: 36);
-    final bottomPadding = ResponsiveUtils.height(12, min: 10, max: 14);
+    final r = ResponsiveUtils(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -202,8 +276,8 @@ class CompletePage extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(
-              vertical: verticalPadding,
-              horizontal: horizontalPadding,
+              vertical: r.spacing16,
+              horizontal: r.spacing12,
             ),
             decoration: const BoxDecoration(
               color: AppTheme.white,
@@ -215,8 +289,8 @@ class CompletePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(icon, width: iconSize, height: iconSize),
-                    const SizedBox(width: 8),
+                    Image.asset(icon, width: r.spacing24, height: r.spacing24),
+                    SizedBox(width: r.spacing8),
                     Flexible(
                       child: Text(
                         value,
@@ -248,7 +322,7 @@ class CompletePage extends StatelessWidget {
           // Parte inferior (colorida)
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: bottomPadding),
+            padding: EdgeInsets.symmetric(vertical: r.spacing12),
             decoration: BoxDecoration(
               color: color,
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),

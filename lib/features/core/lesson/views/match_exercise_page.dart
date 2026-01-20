@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../controllers/lesson_controller.dart';
 import '../widgets/audio_card.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
@@ -18,6 +20,7 @@ class MatchExercisePage extends StatefulWidget {
 }
 
 class _MatchExercisePageState extends State<MatchExercisePage> {
+  late final LessonController _controller;
   int? _selectedAudioIndex;
   int? _selectedTextIndex;
   final Set<int> _matchedPairs = {};
@@ -31,6 +34,12 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<LessonController>();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -41,11 +50,11 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
             const SizedBox(height: 16),
 
             // Header
-            ExerciseHeader(
-              progress: 0.9,
-              energy: 5,
-              onBack: () => Get.back(),
-            ),
+            Obx(() => ExerciseHeader(
+                  progress: _controller.progress,
+                  energy: Get.find<GamificationController>().currentEnergy.value,
+                  onBack: () => Get.back(),
+                )),
 
             const SizedBox(height: 24),
 
@@ -183,6 +192,9 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
   void _onCheck() {
     // Todos os pares foram combinados corretamente
+    // Registra como resposta correta
+    _controller.recordAnswer(isCorrect: true);
+
     FeedbackBottomSheet.show(
       context,
       type: FeedbackType.correct,
@@ -191,6 +203,8 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   }
 
   void _onContinue() {
+    // Avança para o próximo exercício (último da lição)
+    _controller.nextExercise();
     Get.off(() => const CompletePage());
   }
 }

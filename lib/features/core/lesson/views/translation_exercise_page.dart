@@ -4,11 +4,12 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../controllers/lesson_controller.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/image_with_label.dart';
 import '../widgets/lesson_option_card.dart';
-import '../widgets/low_energy_modal.dart';
 import 'word_exercise_page.dart';
 
 /// Página de exercício de seleção de tradução
@@ -20,8 +21,8 @@ class TranslationExercisePage extends StatefulWidget {
 }
 
 class _TranslationExercisePageState extends State<TranslationExercisePage> {
+  late final LessonController _controller;
   int? _selectedIndex;
-  bool _hasShownEnergyModal = false;
 
   // Dados mockados
   final _correctIndex = 1; // garçon
@@ -30,13 +31,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
   @override
   void initState() {
     super.initState();
-    // Mostra o modal após o build inicial
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_hasShownEnergyModal) {
-        _hasShownEnergyModal = true;
-        LowEnergyModal.show(context, currentEnergy: 5);
-      }
-    });
+    _controller = Get.find<LessonController>();
   }
 
   @override
@@ -50,11 +45,11 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
             const SizedBox(height: 16),
 
             // Header
-            ExerciseHeader(
-              progress: 0.5,
-              energy: 5,
-              onBack: () => Get.back(),
-            ),
+            Obx(() => ExerciseHeader(
+                  progress: _controller.progress,
+                  energy: Get.find<GamificationController>().currentEnergy.value,
+                  onBack: () => Get.back(),
+                )),
 
             const SizedBox(height: 24),
 
@@ -128,6 +123,9 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
 
     final isCorrect = _selectedIndex == _correctIndex;
 
+    // Registra a resposta no controller
+    _controller.recordAnswer(isCorrect: isCorrect);
+
     FeedbackBottomSheet.show(
       context,
       type: isCorrect ? FeedbackType.correct : FeedbackType.wrong,
@@ -137,6 +135,8 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
   }
 
   void _onContinue() {
+    // Avança para o próximo exercício
+    _controller.nextExercise();
     Get.off(() => const WordExercisePage());
   }
 }

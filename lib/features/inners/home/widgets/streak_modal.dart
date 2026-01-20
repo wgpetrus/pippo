@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 
 /// Níveis de streak
 enum StreakLevel { zero, one, two, four, seven }
 
 /// Modal de informações do Streak
 class StreakModal extends StatelessWidget {
-  final int streakDays;
   final VoidCallback? onSeeMore;
 
   const StreakModal({
     super.key,
-    required this.streakDays,
     this.onSeeMore,
   });
 
   // Getters
-  StreakLevel get _level {
+  StreakLevel _getLevel(int streakDays) {
     if (streakDays == 0) return StreakLevel.zero;
     if (streakDays == 1) return StreakLevel.one;
     if (streakDays <= 3) return StreakLevel.two;
@@ -28,8 +29,8 @@ class StreakModal extends StatelessWidget {
     return StreakLevel.seven;
   }
 
-  Color get _bgColor {
-    switch (_level) {
+  Color _getBgColor(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
         return AppTheme.gray300;
       case StreakLevel.one:
@@ -43,8 +44,8 @@ class StreakModal extends StatelessWidget {
     }
   }
 
-  Color get _borderColor {
-    switch (_level) {
+  Color _getBorderColor(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
         return AppTheme.white;
       case StreakLevel.one:
@@ -58,8 +59,8 @@ class StreakModal extends StatelessWidget {
     }
   }
 
-  Color get _textColor {
-    switch (_level) {
+  Color _getTextColor(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
       case StreakLevel.two:
       case StreakLevel.four:
@@ -70,8 +71,8 @@ class StreakModal extends StatelessWidget {
     }
   }
 
-  Color get _titleColor {
-    switch (_level) {
+  Color _getTitleColor(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
       case StreakLevel.two:
       case StreakLevel.four:
@@ -82,8 +83,8 @@ class StreakModal extends StatelessWidget {
     }
   }
 
-  Color get _numberColor {
-    switch (_level) {
+  Color _getNumberColor(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
       case StreakLevel.two:
       case StreakLevel.seven:
@@ -95,8 +96,8 @@ class StreakModal extends StatelessWidget {
     }
   }
 
-  String get _mascotAsset {
-    switch (_level) {
+  String _getMascotAsset(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
         return AppAssets.profileMascot0;
       case StreakLevel.one:
@@ -114,50 +115,78 @@ class StreakModal extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _bgColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _borderColor, width: 4),
-      ),
-      child: Stack(
-        children: [
-          // Decoração de fundo
-          ..._buildDecoration(),
+    final gamification = Get.find<GamificationController>();
+    
+    return Obx(() {
+      final streakDays = gamification.currentStreak.value;
+      final longestStreak = gamification.longestStreak.value;
+      final level = _getLevel(streakDays);
+      final bgColor = _getBgColor(level);
+      final borderColor = _getBorderColor(level);
+      final titleColor = _getTitleColor(level);
+      final textColor = _getTextColor(level);
+      final numberColor = _getNumberColor(level);
+      final mascotAsset = _getMascotAsset(level);
+      
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor, width: 4),
+        ),
+        child: Stack(
+          children: [
+            // Decoração de fundo
+            ..._buildDecoration(level),
 
-          // Conteúdo
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Título
-                Text(
-                  'Sequência de Fogo',
-                  style: AppTheme.textXlBold.copyWith(color: _titleColor),
-                ),
-                const SizedBox(height: 12),
+            // Conteúdo
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Título
+                  Text(
+                    'Sequência de Fogo',
+                    style: AppTheme.textXlBold.copyWith(color: titleColor),
+                  ),
+                  const SizedBox(height: 12),
 
-                // Conteúdo principal
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(child: _buildLeftContent()),
-                    Image.asset(_mascotAsset, width: 150, fit: BoxFit.contain),
-                  ],
-                ),
-              ],
+                  // Conteúdo principal
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: _buildLeftContent(
+                          streakDays,
+                          longestStreak,
+                          numberColor,
+                          textColor,
+                          gamification,
+                        ),
+                      ),
+                      Image.asset(mascotAsset, width: 150, fit: BoxFit.contain),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   // Widgets
-  Widget _buildLeftContent() {
+  Widget _buildLeftContent(
+    int streakDays,
+    int longestStreak,
+    Color numberColor,
+    Color textColor,
+    GamificationController gamification,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -166,7 +195,7 @@ class StreakModal extends StatelessWidget {
           streakDays.toString(),
           style: AppTheme.displayLgBold.copyWith(
             fontSize: 72,
-            color: _numberColor,
+            color: numberColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -174,9 +203,58 @@ class StreakModal extends StatelessWidget {
         // Texto
         Text(
           'Dias de sequência',
-          style: AppTheme.textMdMedium.copyWith(color: _textColor),
+          style: AppTheme.textMdMedium.copyWith(color: textColor),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
+
+        // Longest streak
+        Text(
+          'Recorde: $longestStreak dias',
+          style: AppTheme.textSmMedium.copyWith(color: textColor),
+        ),
+        const SizedBox(height: 12),
+
+        // Streak freeze purchase option
+        if (gamification.gems.value >= 200 && !gamification.streakFreezeAvailable)
+          GestureDetector(
+            onTap: () async {
+              await gamification.purchaseStreakFreeze();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: textColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: textColor, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Proteção 200',
+                    style: AppTheme.textSmBold.copyWith(color: textColor),
+                  ),
+                  const SizedBox(width: 4),
+                  Image.asset(AppAssets.appbarGem, width: 16, height: 16),
+                ],
+              ),
+            ),
+          ),
+        
+        if (gamification.streakFreezeAvailable)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: textColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '🛡️ Proteção ativa',
+              style: AppTheme.textSmBold.copyWith(color: textColor),
+            ),
+          ),
+        
+        const SizedBox(height: 12),
 
         // See more
         GestureDetector(
@@ -186,10 +264,10 @@ class StreakModal extends StatelessWidget {
             children: [
               Text(
                 'Ver mais',
-                style: AppTheme.textMdBold.copyWith(color: _textColor),
+                style: AppTheme.textMdBold.copyWith(color: textColor),
               ),
               const SizedBox(height: 2),
-              Container(height: 2, width: 72, color: _textColor),
+              Container(height: 2, width: 72, color: textColor),
             ],
           ),
         ),
@@ -197,8 +275,8 @@ class StreakModal extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildDecoration() {
-    switch (_level) {
+  List<Widget> _buildDecoration(StreakLevel level) {
+    switch (level) {
       case StreakLevel.zero:
         return _buildCircleDecoration();
       case StreakLevel.one:
@@ -302,7 +380,6 @@ class StreakModal extends StatelessWidget {
   // Métodos estáticos
   static void show(
     BuildContext context, {
-    required int streakDays,
     VoidCallback? onSeeMore,
   }) {
     WoltModalSheet.show(
@@ -316,7 +393,6 @@ class StreakModal extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: StreakModal(
-              streakDays: streakDays,
               onSeeMore: () {
                 Navigator.of(context).pop();
                 onSeeMore?.call();

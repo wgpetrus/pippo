@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../controllers/lesson_controller.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/mascot_bubble.dart';
@@ -21,6 +23,8 @@ class WordExercisePage extends StatefulWidget {
 }
 
 class _WordExercisePageState extends State<WordExercisePage> {
+  late final LessonController _controller;
+  
   // Palavras selecionadas (resposta)
   final List<String> _selectedWords = [];
 
@@ -28,6 +32,12 @@ class _WordExercisePageState extends State<WordExercisePage> {
   final _sentence = "J'apprends une.";
   final _correctAnswer = ['Eu', 'estou', 'aprendendo', 'uma'];
   final _availableWords = ['língua', 'velho', 'estudar', 'novo', 'Eu', 'estou', 'aprendendo', 'uma'];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<LessonController>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +50,11 @@ class _WordExercisePageState extends State<WordExercisePage> {
             const SizedBox(height: 16),
 
             // Header
-            ExerciseHeader(
-              progress: 0.7,
-              energy: 5,
-              onBack: () => Get.back(),
-            ),
+            Obx(() => ExerciseHeader(
+                  progress: _controller.progress,
+                  energy: Get.find<GamificationController>().currentEnergy.value,
+                  onBack: () => Get.back(),
+                )),
 
             const SizedBox(height: 24),
 
@@ -142,6 +152,9 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
     final isCorrect = listEquals(_selectedWords, _correctAnswer);
 
+    // Registra a resposta no controller
+    _controller.recordAnswer(isCorrect: isCorrect);
+
     FeedbackBottomSheet.show(
       context,
       type: isCorrect ? FeedbackType.correct : FeedbackType.wrong,
@@ -151,6 +164,8 @@ class _WordExercisePageState extends State<WordExercisePage> {
   }
 
   void _onContinue() {
+    // Avança para o próximo exercício
+    _controller.nextExercise();
     Get.off(() => const MatchExercisePage());
   }
 }
