@@ -21,6 +21,9 @@ import '../views/profile_view/user_email_page.dart';
 import '../views/profile_view/user_password_page.dart';
 import '../views/profile_view/verify_code_page.dart';
 
+// Controller
+import '../controllers/onboarding_controller.dart';
+
 /// Navegação do onboarding
 class OnboardingNavigation {
   // Transitions
@@ -40,9 +43,39 @@ class OnboardingNavigation {
   // Profile
   void goToUserName() => Get.to(() => const UserNamePage());
   void goToUserAge() => Get.to(() => const UserAgePage());
-  void goToUserEmail() => Get.to(() => const UserEmailPage());
-  void goToUserPassword() => Get.to(() => const UserPasswordPage());
-  void goToVerifyCode() => Get.to(() => const VerifyCodePage());
+  
+  void goToUserEmail() {
+    // Skip if social login
+    final controller = Get.find<OnboardingController>();
+    if (controller.shouldSkipEmail()) {
+      goToConclusion();
+      return;
+    }
+    
+    Get.to(() => const UserEmailPage());
+  }
+  
+  void goToUserPassword() {
+    // Skip if social login
+    final controller = Get.find<OnboardingController>();
+    if (controller.shouldSkipPassword()) {
+      goToConclusion();
+      return;
+    }
+    
+    Get.to(() => const UserPasswordPage());
+  }
+  
+  void goToVerifyCode() {
+    // Skip if social login
+    final controller = Get.find<OnboardingController>();
+    if (controller.shouldSkipVerifyCode()) {
+      goToConclusion();
+      return;
+    }
+    
+    Get.to(() => const VerifyCodePage());
+  }
 
   // Finalização
   void finishOnboarding() => Get.offAllNamed('/home');

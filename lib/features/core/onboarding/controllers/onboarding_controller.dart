@@ -18,12 +18,12 @@ class OnboardingController extends GetxController {
   
   // Estados adicionais
   final isAddingCourse = false.obs;
-  
-  // Flag para pular WelcomeView (quando vem de login social)
   final skipWelcome = false.obs;
-  
-  // Provider de autenticação ('email' ou 'google')
   final authProvider = ''.obs;
+  
+  // Estados de retry (task 8.2)
+  final retryAttempt = 0.obs;
+  final retryMessage = ''.obs;
 
   // Navegação
   final nav = OnboardingNavigation();
@@ -44,14 +44,15 @@ class OnboardingController extends GetxController {
   final userName = ''.obs;
   final userAge = ''.obs;
   final userEmail = ''.obs;
-  final userPassword = ''.obs;
 
   // Dados OTP
   final resendTimer = 0.obs;
 
   // Estado privado
   String? _tempEmail;
+  String? _tempPassword; // Armazenado temporariamente apenas para criação da conta
   Timer? _resendCountdownTimer;
+  bool _retryCancelled = false; // Flag simples para cancelamento de retry
 
   // Lifecycle
   @override
@@ -78,8 +79,6 @@ class OnboardingController extends GetxController {
   }
   
   // Métodos de verificação de fluxo
-  
-  /// Verifica se deve pular tela de email (login social)
   bool shouldSkipEmail() => authProvider.value == 'google';
   
   /// Verifica se deve pular tela de senha (login social)
@@ -88,7 +87,12 @@ class OnboardingController extends GetxController {
   /// Verifica se deve pular verificação OTP (login social)
   bool shouldSkipVerifyCode() => authProvider.value == 'google';
 
-  // Métodos públicos
+  // Métodos públicos - Criação de conta
+
+  /// Define a senha temporariamente (chamado pela view antes de createAccount)
+  void setPassword(String password) {
+    _tempPassword = password;
+  }
 
   /// Cria conta no Firebase Auth e envia código OTP
   Future<void> createAccount() async {
@@ -112,8 +116,14 @@ class OnboardingController extends GetxController {
         return;
       }
 
-      // Validate password
-      final passwordError = validatePassword(userPassword.value);
+      // Validate password (recebida como parâmetro, não armazenada)
+      // SEGURANÇA: Senha nunca é armazenada em memória após criação da conta
+      if (_tempPassword == null || _tempPassword!.isEmpty) {
+        errorMessage.value = 'Senha é obrigatória.';
+        return;
+      }
+
+      final passwordError = validatePassword(_tempPassword);
       if (passwordError != null) {
         errorMessage.value = passwordError;
         return;
@@ -123,22 +133,33 @@ class OnboardingController extends GetxController {
       userName.value = sanitizedName;
       userEmail.value = sanitizedEmail;
 
-      // Criar usuário no Firebase Auth
-      await _auth.createUserWithEmailAndPassword(
-        email: sanitizedEmail,
-        password: userPassword.value,
-      );
+      // Criar usuário no Firebase Auth com retry
+      await _retryWithBackoff(() async {
+        await _auth.createUserWithEmailAndPassword(
+          email: sanitizedEmail,
+          password: _tempPassword!,
+        );
+      });
+
+      // Limpar senha da memória imediatamente após uso
+      _tempPassword = null;
 
       // Gerar e enviar código OTP
       await sendVerificationCode();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseAuthError(e);
+      // Limpar senha em caso de erro também
+      _tempPassword = null;
     } catch (e) {
       errorMessage.value = 'Não foi possível criar sua conta. Tente novamente.';
+      // Limpar senha em caso de erro também
+      _tempPassword = null;
     } finally {
       isLoading.value = false;
     }
   }
+
+  // Métodos públicos - Verificação OTP
 
   /// Envia código de verificação OTP
   Future<void> sendVerificationCode() async {
@@ -149,12 +170,14 @@ class OnboardingController extends GetxController {
       // Gerar código OTP
       final code = _generateOTP();
 
-      // Salvar código no Firestore com expiração
-      await _firestore.collection('emailVerifications').doc(userEmail.value).set({
-        'code': code,
-        'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
-        'attempts': 0,
-        'createdAt': FieldValue.serverTimestamp(),
+      // Salvar código no Firestore com expiração (com retry)
+      await _retryWithBackoff(() async {
+        await _firestore.collection('emailVerifications').doc(userEmail.value).set({
+          'code': code,
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
+          'attempts': 0,
+          'createdAt': FieldValue.serverTimestamp(),
+        }).timeout(const Duration(seconds: 30));
       });
 
       // ⚠️ IMPLEMENTAÇÃO INCOMPLETA - ENVIO DE EMAIL ⚠️
@@ -193,6 +216,8 @@ class OnboardingController extends GetxController {
 
       // Navegar para tela de verificação
       nav.goToVerifyCode();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -222,7 +247,7 @@ class OnboardingController extends GetxController {
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
         'attempts': 0,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
 
       // ⚠️ MESMO PROBLEMA DO sendVerificationCode ⚠️
       // TODO: [PRODUÇÃO] Implementar envio de email
@@ -245,6 +270,8 @@ class OnboardingController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
       );
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -289,7 +316,8 @@ class OnboardingController extends GetxController {
       }
 
       // Buscar código no Firestore
-      final doc = await _firestore.collection('emailVerifications').doc(_tempEmail!).get();
+      final doc = await _firestore.collection('emailVerifications').doc(_tempEmail!).get()
+          .timeout(const Duration(seconds: 30));
 
       if (!doc.exists) {
         errorMessage.value = 'Código não encontrado. Solicite um novo código.';
@@ -313,14 +341,20 @@ class OnboardingController extends GetxController {
       }
 
       // Código válido - deletar documento OTP
-      await _firestore.collection('emailVerifications').doc(_tempEmail!).delete();
+      await _firestore.collection('emailVerifications').doc(_tempEmail!).delete()
+          .timeout(const Duration(seconds: 30));
 
       // Cancelar timer de reenvio
       _resendCountdownTimer?.cancel();
       resendTimer.value = 0;
+      
+      // Limpar email temporário (não mais necessário)
+      _tempEmail = null;
 
       // Prosseguir para finalização da conta
       await finalizeAccount();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -330,8 +364,10 @@ class OnboardingController extends GetxController {
     }
   }
 
+  // Métodos privados - Helpers
+
   /// Gera username único a partir do nome do usuário
-  Future<String> generateUniqueUsername(String name) async {
+  Future<String> _generateUniqueUsername(String name) async {
     try {
       // Sanitizar nome: lowercase, remover espaços e caracteres especiais
       String baseUsername = name
@@ -353,7 +389,8 @@ class OnboardingController extends GetxController {
             .collection('users')
             .where('username', isEqualTo: username)
             .limit(1)
-            .get();
+            .get()
+            .timeout(const Duration(seconds: 30));
 
         // Se username não existe, retornar
         if (querySnapshot.docs.isEmpty) {
@@ -368,6 +405,8 @@ class OnboardingController extends GetxController {
 
       // Máximo de tentativas atingido
       throw Exception('Não foi possível gerar um nome de usuário único.');
+    } on TimeoutException {
+      throw Exception('Tempo de espera esgotado. Verifique sua conexão e tente novamente.');
     } on FirebaseException catch (e) {
       throw Exception(_handleFirestoreError(e));
     } catch (e) {
@@ -375,88 +414,7 @@ class OnboardingController extends GetxController {
     }
   }
 
-  /// Cria documento do usuário no Firestore
-  Future<void> createUserDocument(String userId, String username) async {
-    try {
-      // Sanitize inputs before saving
-      final sanitizedEmail = ValidationHelper.sanitizeEmail(userEmail.value);
-      final sanitizedName = ValidationHelper.sanitizeName(userName.value);
-      
-      await _firestore.collection('users').doc(userId).set({
-        'id': userId,
-        'email': sanitizedEmail,
-        'name': sanitizedName,
-        'username': username,
-        'age': userAge.value,
-        'onboardingCompleted': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      throw Exception(_handleFirestoreError(e));
-    } catch (e) {
-      throw Exception('Erro ao criar documento do usuário. Tente novamente.');
-    }
-  }
-
-  /// Cria primeiro curso do usuário no Firestore
-  Future<void> createFirstCourse(String userId) async {
-    try {
-      // Validar studyTime é um inteiro válido
-      final studyTimeValue = int.tryParse(studyTime.value);
-      if (studyTimeValue == null || studyTimeValue <= 0) {
-        throw Exception('Tempo de estudo inválido.');
-      }
-      
-      // Gerar ID do curso usando Firestore auto-generated ID
-      final courseRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('courses')
-          .doc();
-      
-      final courseId = courseRef.id;
-
-      await courseRef.set({
-        'id': courseId,
-        'language': selectedLanguage.value,
-        'languageName': _getLanguageName(selectedLanguage.value),
-        'level': languageLevel.value,
-        'reason': learningReason.value,
-        'studyTime': studyTimeValue,
-        'isActive': true,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      throw Exception(_handleFirestoreError(e));
-    } catch (e) {
-      throw Exception('Erro ao criar curso. Tente novamente.');
-    }
-  }
-
-  /// Inicializa estatísticas de gamificação do usuário
-  Future<void> initializeGamificationStats(String userId) async {
-    try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('stats')
-          .doc('gamification')
-          .set({
-        'xp': 0,
-        'level': 1,
-        'streak': 0,
-        'energy': 5,
-        'gems': 0,
-        'hearts': 5,
-        'lastActiveAt': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      throw Exception(_handleFirestoreError(e));
-    } catch (e) {
-      throw Exception('Erro ao inicializar estatísticas. Tente novamente.');
-    }
-  }
+  // Métodos públicos - Finalização de conta
 
   /// Finaliza a criação da conta (cria documentos no Firestore)
   Future<void> finalizeAccount() async {
@@ -494,11 +452,8 @@ class OnboardingController extends GetxController {
           return;
         }
 
-        final passwordError = validatePassword(userPassword.value);
-        if (passwordError != null) {
-          errorMessage.value = passwordError;
-          return;
-        }
+        // Senha já foi validada e limpa após createAccount
+        // Não precisa validar novamente aqui
       }
 
       // Validar outros campos
@@ -515,17 +470,62 @@ class OnboardingController extends GetxController {
         return;
       }
 
+      // Validar studyTime é um inteiro válido
+      final studyTimeValue = int.tryParse(studyTime.value);
+      if (studyTimeValue == null || studyTimeValue <= 0) {
+        errorMessage.value = 'Tempo de estudo inválido.';
+        return;
+      }
+
       // Gerar username único a partir do userName (já sanitizado)
-      final username = await generateUniqueUsername(userName.value);
+      final username = await _generateUniqueUsername(userName.value);
 
-      // Criar documento do usuário
-      await createUserDocument(user.uid, username);
+      // BATCH WRITE - Operação atômica (tudo ou nada) com retry
+      await _retryWithBackoff(() async {
+        final batch = _firestore.batch();
 
-      // Criar primeiro curso
-      await createFirstCourse(user.uid);
+        // 1. Documento do usuário
+        final userRef = _firestore.collection('users').doc(user.uid);
+        batch.set(userRef, {
+          'id': user.uid,
+          'email': userEmail.value,
+          'name': userName.value,
+          'username': username,
+          'age': userAge.value,
+          'authProvider': authProvider.value.isEmpty ? 'email' : authProvider.value,
+          'onboardingCompleted': true,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
 
-      // Inicializar estatísticas de gamificação
-      await initializeGamificationStats(user.uid);
+        // 2. Documento do curso
+        final courseRef = userRef.collection('courses').doc();
+        batch.set(courseRef, {
+          'id': courseRef.id,
+          'language': selectedLanguage.value,
+          'languageName': _getLanguageName(selectedLanguage.value),
+          'level': languageLevel.value,
+          'reason': learningReason.value,
+          'studyTime': studyTimeValue,
+          'isActive': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // 3. Estatísticas de gamificação
+        final statsRef = userRef.collection('stats').doc('gamification');
+        batch.set(statsRef, {
+          'xp': 0,
+          'level': 1,
+          'streak': 0,
+          'energy': 5,
+          'gems': 0,
+          'hearts': 5,
+          'lastActiveAt': FieldValue.serverTimestamp(),
+        });
+
+        // Commit batch - se qualquer operação falhar, nenhuma é aplicada
+        await batch.commit().timeout(const Duration(seconds: 30));
+      });
 
       // Salvar isFirstAccess = false no SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -533,10 +533,15 @@ class OnboardingController extends GetxController {
 
       // Navegar para tela de conclusão
       nav.goToConclusion();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      // Dados permanecem em memória (userName, userEmail, etc.) para retry
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
+      // Dados permanecem em memória (userName, userEmail, etc.) para retry
     } catch (e) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      // Dados permanecem em memória para retry
     } finally {
       isLoading.value = false;
     }
@@ -583,7 +588,7 @@ class OnboardingController extends GetxController {
         'studyTime': studyTimeValue,
         'isActive': true,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
 
       // NÃO modificar documento do usuário
       // NÃO modificar estatísticas de gamificação
@@ -591,6 +596,8 @@ class OnboardingController extends GetxController {
 
       // Navegar para tela de conclusão
       nav.goToConclusion();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -649,7 +656,131 @@ class OnboardingController extends GetxController {
     return {'current': current, 'total': total};
   }
 
+  /// Cancela o retry em andamento
+  void cancelRetry() {
+    _retryCancelled = true;
+    retryMessage.value = 'Operação cancelada.';
+    
+    if (kDebugMode) {
+      debugPrint('🚫 Retry cancelado pelo usuário');
+    }
+  }
+
   // Métodos privados
+
+  /// Wrapper de retry com exponential backoff
+  /// 
+  /// Executa [operation] até 3 vezes com backoff exponencial:
+  /// - Tentativa 1: imediata
+  /// - Tentativa 2: após 2 segundos
+  /// - Tentativa 3: após 4 segundos
+  /// 
+  /// Retorna o resultado da operação se bem-sucedida.
+  /// Lança a última exceção se todas as tentativas falharem.
+  Future<T> _retryWithBackoff<T>(
+    Future<T> Function() operation, {
+    int maxAttempts = 3,
+  }) async {
+    int attempt = 0;
+    Exception? lastException;
+    
+    // Resetar flag de cancelamento no início
+    _retryCancelled = false;
+
+    while (attempt < maxAttempts) {
+      // Verificar se retry foi cancelado
+      if (_retryCancelled) {
+        if (kDebugMode) {
+          debugPrint('🚫 Retry cancelado na tentativa $attempt');
+        }
+        
+        // Limpar estado de retry
+        retryAttempt.value = 0;
+        retryMessage.value = '';
+        
+        throw Exception('Operação cancelada pelo usuário.');
+      }
+      
+      try {
+        attempt++;
+        
+        // Atualizar estado de retry para feedback visual
+        retryAttempt.value = attempt;
+        if (attempt > 1) {
+          retryMessage.value = 'Tentativa $attempt de $maxAttempts...';
+        }
+        
+        if (kDebugMode) {
+          debugPrint('🔄 Tentativa $attempt de $maxAttempts');
+        }
+
+        // Executar operação
+        final result = await operation();
+        
+        // Limpar estado de retry após sucesso
+        retryAttempt.value = 0;
+        retryMessage.value = '';
+        _retryCancelled = false;
+        
+        if (kDebugMode && attempt > 1) {
+          debugPrint('✅ Operação bem-sucedida na tentativa $attempt');
+        }
+        
+        return result;
+      } catch (e) {
+        lastException = e is Exception ? e : Exception(e.toString());
+        
+        if (kDebugMode) {
+          debugPrint('❌ Tentativa $attempt falhou: ${e.toString()}');
+        }
+
+        // Se não é a última tentativa, aguardar antes de tentar novamente
+        if (attempt < maxAttempts) {
+          // Exponential backoff: 2^(attempt-1) segundos
+          // Tentativa 1 → 0s (imediata)
+          // Tentativa 2 → 2s
+          // Tentativa 3 → 4s
+          final delaySeconds = attempt == 1 ? 0 : pow(2, attempt - 1).toInt();
+          
+          if (delaySeconds > 0) {
+            retryMessage.value = 'Aguardando ${delaySeconds}s antes da próxima tentativa...';
+            
+            if (kDebugMode) {
+              debugPrint('⏳ Aguardando ${delaySeconds}s antes da próxima tentativa...');
+            }
+            
+            // Aguardar com verificação de cancelamento a cada 100ms
+            for (int i = 0; i < delaySeconds * 10; i++) {
+              if (_retryCancelled) {
+                if (kDebugMode) {
+                  debugPrint('🚫 Retry cancelado durante aguardo');
+                }
+                
+                // Limpar estado de retry
+                retryAttempt.value = 0;
+                retryMessage.value = '';
+                
+                throw Exception('Operação cancelada pelo usuário.');
+              }
+              await Future.delayed(const Duration(milliseconds: 100));
+            }
+          }
+        }
+      }
+    }
+
+    // Todas as tentativas falharam - limpar estado de retry
+    retryAttempt.value = 0;
+    retryMessage.value = '';
+    _retryCancelled = false;
+    
+    // Todas as tentativas falharam
+    if (kDebugMode) {
+      debugPrint('💥 Todas as $maxAttempts tentativas falharam');
+    }
+    
+    throw lastException!;
+  }
 
   /// Retorna o nome do idioma a partir do código
   String _getLanguageName(String code) {

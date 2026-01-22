@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -47,6 +48,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   // Build
   @override
   Widget build(BuildContext context) {
+    ResponsiveUtils.init(context);
     final r = ResponsiveUtils(context);
     final isKeyboardVisible = r.isKeyboardOpen;
 
@@ -59,6 +61,27 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Debug banner
+            if (kDebugMode)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(r.spacing16),
+                color: AppTheme.orange100,
+                child: Column(
+                  children: [
+                    Text(
+                      '🔓 DEBUG MODE',
+                      style: AppTheme.textSmBold.copyWith(color: AppTheme.orange),
+                    ),
+                    SizedBox(height: r.spacing4),
+                    Text(
+                      'Use test code 00000 to skip verification',
+                      style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
+                    ),
+                  ],
+                ),
+              ),
+            
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(r.spacing24),
@@ -83,6 +106,47 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                             child: Text(
                               _controller.errorMessage.value,
                               style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+                    
+                    // Exibir mensagem de retry se houver
+                    Obx(() => _controller.retryMessage.value.isNotEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(bottom: r.spacing16),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                    SizedBox(width: r.spacing8),
+                                    Expanded(
+                                      child: Text(
+                                        _controller.retryMessage.value,
+                                        style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: r.spacing8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton(
+                                    onPressed: () => _controller.cancelRetry(),
+                                    child: Text(
+                                      'Cancelar',
+                                      style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           )
                         : const SizedBox.shrink()),

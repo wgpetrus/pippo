@@ -12,6 +12,8 @@ class CountrySelectorModal {
     required String currentCode,
     required Function(String code, String flag) onSelect,
   }) {
+    // Static list of available countries/regions with phone codes
+    // This is configuration data, not mock data
     final countries = [
       {'name': 'USA', 'code': '+1', 'flag': AppAssets.flagUsa},
       {'name': 'German', 'code': '+12', 'flag': AppAssets.flagGermany},

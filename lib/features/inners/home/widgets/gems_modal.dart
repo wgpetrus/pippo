@@ -47,7 +47,8 @@ class GemsModal extends StatelessWidget {
     // Calcular altura máxima disponível (80% da tela)
     final maxHeight = r.heightScreen * 0.8;
 
-    // Packs de gems (IAP placeholder)
+    // TODO: Replace with real IAP (In-App Purchase) data from ShopController
+    // MOCK DATA: Placeholder gem packs for UI testing
     final packs = [
       GemPackData(
         iconAsset: AppAssets.shopGemPot,

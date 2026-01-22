@@ -46,44 +46,97 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
     
-    return PopScope(
-      canPop: false, // Prevent back navigation
+    return WillPopScope(
+      onWillPop: () async => false, // Prevent back navigation
       child: Scaffold(
-      backgroundColor: AppTheme.white,
-      body: Column(
-        children: [
-          Expanded(child: _buildMascot()),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: r.spacing24),
-              child: Column(
-                children: [
-                  Text(
-                    'Estava te esperando! Vamos nos divertir.',
-                    style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: r.spacing12),
-                  Text(
-                    'Seu curso está pronto e esperando — a apenas um clique.',
-                    style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: r.spacing24),
-                  Obx(() => AppButton(
-                    text: 'Vamos Aprender',
-                    isLoading: _controller.isLoading.value,
-                    onPressed: _controller.isLoading.value ? null : _onButtonPressed,
-                  )),
-                  SizedBox(height: r.spacing32),
-                ],
+        backgroundColor: AppTheme.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(child: _buildMascot()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: r.spacing24),
+                child: Column(
+                  children: [
+                    Text(
+                      'Estava te esperando! Vamos nos divertir.',
+                      style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: r.spacing12),
+                    Text(
+                      'Seu curso está pronto e esperando — a apenas um clique.',
+                      style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: r.spacing24),
+                    
+                    // Exibir erro se houver
+                    Obx(() => _controller.errorMessage.value.isNotEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(bottom: r.spacing16),
+                            child: Text(
+                              _controller.errorMessage.value,
+                              style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+                    
+                    // Exibir mensagem de retry se houver
+                    Obx(() => _controller.retryMessage.value.isNotEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(bottom: r.spacing16),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                    SizedBox(width: r.spacing8),
+                                    Flexible(
+                                      child: Text(
+                                        _controller.retryMessage.value,
+                                        style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: r.spacing8),
+                                TextButton(
+                                  onPressed: () => _controller.cancelRetry(),
+                                  child: Text(
+                                    'Cancelar',
+                                    style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+                    
+                    Obx(() => AppButton(
+                      text: 'Vamos Aprender',
+                      isLoading: _controller.isLoading.value,
+                      onPressed: _controller.isLoading.value ? null : _onButtonPressed,
+                    )),
+                    SizedBox(height: r.spacing32),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
-    ));
+    );
   }
 
   // Widgets

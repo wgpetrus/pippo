@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -19,7 +20,8 @@ class FriendsView extends StatefulWidget {
 class _FriendsViewState extends State<FriendsView> {
   late bool _isFollowing;
 
-  // Mock data
+  // TODO: Replace with real Firestore data from FriendsController
+  // MOCK DATA: Placeholder friends data for UI testing
   final _friends = [
     {'name': 'Haruto', 'xp': 45204, 'avatar': AppAssets.charMara, 'isFollowed': true},
     {'name': 'Sam', 'xp': 1204, 'avatar': AppAssets.charDiogo, 'isFollowed': false},
@@ -57,7 +59,37 @@ class _FriendsViewState extends State<FriendsView> {
               onToggle: (value) => setState(() => _isFollowing = value),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+
+          // Banner de dados de teste
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.orange100,
+              border: Border.all(color: AppTheme.orange.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.flask,
+                  size: 18,
+                  color: AppTheme.orange,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '🧪 Test data - Real friends data will be loaded from Firestore',
+                    style: AppTheme.textSmMedium.copyWith(
+                      color: AppTheme.gray700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Contador
           Padding(
@@ -82,6 +114,7 @@ class _FriendsViewState extends State<FriendsView> {
                   avatar: friend['avatar'] as String,
                   isFollowed: friend['isFollowed'] as bool,
                   showFollowAction: !_isFollowing,
+                  isMockData: true, // Indica que são dados de teste
                   onTap: () => Get.to(() => UserProfilePage(
                         name: friend['name'] as String,
                         username: (friend['name'] as String).toLowerCase(),

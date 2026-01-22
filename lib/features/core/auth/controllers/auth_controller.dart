@@ -78,7 +78,8 @@ class AuthController extends GetxController {
       final userDoc = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 30));
 
       if (!userDoc.exists) {
         errorMessage.value = 'Dados do usuário não encontrados.';
@@ -98,10 +99,12 @@ class AuthController extends GetxController {
             .doc(userCredential.user!.uid)
             .update({
           'lastActiveAt': FieldValue.serverTimestamp(),
-        });
+        }).timeout(const Duration(seconds: 30));
 
         Get.offAllNamed('/home');
       }
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseLoginError(e);
     } catch (e) {
@@ -154,7 +157,8 @@ class AuthController extends GetxController {
       final userDoc = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 30));
 
       if (!userDoc.exists) {
         // Criar novo documento de usuário
@@ -170,10 +174,15 @@ class AuthController extends GetxController {
           'onboardingCompleted': false,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        }).timeout(const Duration(seconds: 30));
 
-        // Setar flag para pular WelcomeView (já está autenticado)
-        OnboardingController.shouldSkipWelcome = true;
+        // Configurar OnboardingController para fluxo Google
+        final onboardingController = Get.find<OnboardingController>();
+        onboardingController.skipWelcome.value = true;
+        onboardingController.authProvider.value = 'google';
+        onboardingController.userEmail.value = userCredential.user!.email ?? '';
+        onboardingController.userName.value = userCredential.user!.displayName ?? '';
+        
         Get.offAllNamed('/onboarding');
       } else {
         // Usuário existente - verificar onboarding
@@ -181,8 +190,13 @@ class AuthController extends GetxController {
         final onboardingCompleted = userData['onboardingCompleted'] ?? false;
 
         if (!onboardingCompleted) {
-          // Setar flag para pular WelcomeView (já está autenticado)
-          OnboardingController.shouldSkipWelcome = true;
+          // Configurar OnboardingController para fluxo Google
+          final onboardingController = Get.find<OnboardingController>();
+          onboardingController.skipWelcome.value = true;
+          onboardingController.authProvider.value = 'google';
+          onboardingController.userEmail.value = userCredential.user!.email ?? '';
+          onboardingController.userName.value = userCredential.user!.displayName ?? '';
+          
           Get.offAllNamed('/onboarding');
         } else {
           // Onboarding completo - atualizar lastActiveAt e navegar para home
@@ -191,11 +205,13 @@ class AuthController extends GetxController {
               .doc(userCredential.user!.uid)
               .update({
             'lastActiveAt': FieldValue.serverTimestamp(),
-          });
+          }).timeout(const Duration(seconds: 30));
 
           Get.offAllNamed('/home');
         }
       }
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on PlatformException catch (e) {
       errorMessage.value = _handleGoogleSignInError(e);
     } on FirebaseAuthException catch (e) {
@@ -278,33 +294,11 @@ class AuthController extends GetxController {
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
         'attempts': 0,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
 
-      // ⚠️ CRÍTICO - IMPLEMENTAÇÃO INCOMPLETA ⚠️
-      // TODO: [PRODUÇÃO OBRIGATÓRIO] Implementar envio de email
-      // 
-      // PROBLEMA ATUAL:
-      // - O código é gerado e salvo no Firestore ✅
-      // - MAS o usuário NÃO recebe email com o código ❌
-      // - Para testar agora: acessar Firestore Console e copiar o código manualmente
-      // 
-      // SOLUÇÃO PARA PRODUÇÃO:
-      // Opção 1 (Recomendada): Cloud Function
-      //   1. Criar Cloud Function que escuta novos documentos em 'passwordResets'
-      //   2. Função envia email via SendGrid/Mailgun/AWS SES
-      //   3. Código nunca é exposto no cliente (mais seguro)
-      // 
-      // Opção 2 (Alternativa): Serviço de Email Direto
-      //   1. Integrar package de email (emailjs, sendgrid_mailer)
-      //   2. Enviar email diretamente do app
-      //   3. Menos seguro (API key no cliente)
-      // 
-      // REFERÊNCIAS:
-      // - Firebase Cloud Functions: https://firebase.google.com/docs/functions
-      // - SendGrid: https://sendgrid.com/
-      // - Mailgun: https://www.mailgun.com/
-      // 
-      // ⚠️ NÃO FAZER DEPLOY EM PRODUÇÃO SEM IMPLEMENTAR ENVIO DE EMAIL ⚠️
+      // TODO: [PRODUÇÃO] Implementar envio de email via Cloud Function
+      // Atualmente o código é salvo no Firestore mas não é enviado por email
+      // Para testar: acessar Firebase Console > Firestore > passwordResets > copiar código
 
       // Armazenar email temporariamente para reenvio
       _tempEmail = sanitizedEmail;
@@ -314,6 +308,8 @@ class AuthController extends GetxController {
 
       // Navegar para tela de verificação
       goToVerifyCode();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
     } on FirebaseException catch (e) {
@@ -345,12 +341,9 @@ class AuthController extends GetxController {
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
         'attempts': 0,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
 
-      // ⚠️ CRÍTICO - MESMO PROBLEMA DO sendPasswordResetCode ⚠️
-      // TODO: [PRODUÇÃO OBRIGATÓRIO] Implementar envio de email
-      // O código é gerado mas o usuário NÃO recebe email
-      // Ver comentários detalhados em sendPasswordResetCode()
+      // TODO: [PRODUÇÃO] Implementar envio de email (ver sendPasswordResetCode)
 
       // Reiniciar timer de reenvio (60 segundos)
       _startResendTimer();
@@ -362,6 +355,8 @@ class AuthController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
       );
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
     } on FirebaseException catch (e) {
@@ -398,7 +393,7 @@ class AuthController extends GetxController {
     }
 
     // Validar que o código contém apenas números
-    final digitRegex = RegExp(r'^\d{5}$');
+    final digitRegex = RegExp(r'^\d{5}$$');
     if (!digitRegex.hasMatch(sanitizedCode)) {
       errorMessage.value = 'O código deve conter apenas números.';
       return;
@@ -414,7 +409,8 @@ class AuthController extends GetxController {
       }
 
       // Recuperar código do Firestore
-      final doc = await _firestore.collection('passwordResets').doc(_tempEmail!).get();
+      final doc = await _firestore.collection('passwordResets').doc(_tempEmail!).get()
+          .timeout(const Duration(seconds: 30));
 
       if (!doc.exists) {
         errorMessage.value = 'Código não encontrado. Solicite um novo código.';
@@ -439,6 +435,8 @@ class AuthController extends GetxController {
 
       // Código válido - navegar para tela de nova senha
       goToNewPassword();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -466,39 +464,15 @@ class AuthController extends GetxController {
         return;
       }
 
-      // ⚠️ LIMITAÇÃO DO FIREBASE AUTH ⚠️
-      // O Firebase Auth não permite alterar senha de outro usuário diretamente
-      // A única forma segura é enviar um link de reset por email
-      // 
-      // FLUXO ATUAL (Funcional mas não ideal):
-      // 1. Usuário verifica código OTP ✅
-      // 2. Usuário digita nova senha ✅
-      // 3. App envia link de reset por email ⚠️
-      // 4. Usuário precisa clicar no link E digitar senha novamente ❌
-      // 
-      // ALTERNATIVAS PARA MELHORAR:
-      // 
-      // Opção 1 (Recomendada): Cloud Function Admin SDK
-      //   - Criar Cloud Function com Firebase Admin SDK
-      //   - Admin SDK pode alterar senha diretamente
-      //   - Mais seguro e melhor UX
-      // 
-      // Opção 2: Autenticação temporária
-      //   - Criar token customizado via Cloud Function
-      //   - Fazer signIn com token
-      //   - Alterar senha com updatePassword()
-      //   - Fazer logout
-      // 
-      // Opção 3: Manter fluxo atual
-      //   - Enviar link de reset
-      //   - Usuário clica e define senha
-      //   - Simples mas UX não ideal
+      // TODO: [MELHORIA] Implementar reset direto via Cloud Function com Admin SDK
+      // Atualmente usa sendPasswordResetEmail (usuário precisa clicar no link)
 
       // Enviar link de reset via Firebase Auth
       await _auth.sendPasswordResetEmail(email: _tempEmail!);
 
       // Limpar documento do Firestore
-      await _firestore.collection('passwordResets').doc(_tempEmail!).delete();
+      await _firestore.collection('passwordResets').doc(_tempEmail!).delete()
+          .timeout(const Duration(seconds: 30));
 
       // Limpar email temporário
       _tempEmail = null;
@@ -512,6 +486,8 @@ class AuthController extends GetxController {
       );
 
       backToSignin();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
     } on FirebaseException catch (e) {
@@ -611,6 +587,7 @@ class AuthController extends GetxController {
   }
 
   // Navegação
+
   void goToForgotPassword() => Get.to(() => const ForgotPasswordView());
   void goToVerifyCode() => Get.to(() => const VerifyCodeView());
   void goToNewPassword() => Get.to(() => const NewPasswordView());

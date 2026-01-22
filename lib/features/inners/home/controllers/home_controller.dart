@@ -35,4 +35,8 @@ class HomeController extends GetxController {
     onboardingController.isAddingCourse.value = true;
     onboardingController.nav.goToSelectLanguage();
   }
+
+  void goToShop() {
+    currentNavIndex.value = 2; // Tab 2 = Shop
+  }
 }

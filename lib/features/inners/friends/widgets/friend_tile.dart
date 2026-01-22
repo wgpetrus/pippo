@@ -12,6 +12,7 @@ class FriendTile extends StatelessWidget {
   final bool isFollowed;
   final bool showFollowAction;
   final VoidCallback? onTap;
+  final bool isMockData;
 
   const FriendTile({
     super.key,
@@ -21,6 +22,7 @@ class FriendTile extends StatelessWidget {
     required this.isFollowed,
     this.showFollowAction = false,
     this.onTap,
+    this.isMockData = false,
   });
 
   @override
@@ -35,16 +37,42 @@ class FriendTile extends StatelessWidget {
             Builder(
               builder: (context) {
                 final avatarSize = ResponsiveUtils.width(48, min: 40, max: 56);
-                return Container(
-                  width: avatarSize,
-                  height: avatarSize,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppTheme.pink100,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(avatar, fit: BoxFit.cover),
-                  ),
+                return Stack(
+                  children: [
+                    Container(
+                      width: avatarSize,
+                      height: avatarSize,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.pink100,
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(avatar, fit: BoxFit.cover),
+                      ),
+                    ),
+                    // Placeholder icon for mock data
+                    if (isMockData)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: avatarSize * 0.35,
+                          height: avatarSize * 0.35,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.orange,
+                            border: Border.all(color: AppTheme.white, width: 2),
+                          ),
+                          child: Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.flask,
+                              color: AppTheme.white,
+                              size: avatarSize * 0.18,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 );
               },
             ),

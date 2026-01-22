@@ -1,11 +1,10 @@
 import 'package:get/get.dart';
 
-import '../controllers/auth_controller.dart';
-
 /// Binding de autenticação
 class AuthBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<AuthController>(() => AuthController());
+    // AuthController is already registered globally in main.dart
+    // No additional controllers needed for this binding
   }
 }

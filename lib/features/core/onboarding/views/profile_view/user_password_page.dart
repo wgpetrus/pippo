@@ -46,7 +46,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
     _confirmFocus.addListener(() => setState(() => _confirmFocused = _confirmFocus.hasFocus));
   }
 
-  // Validação
+  // Validadores
   void _validatePassword() {
     setState(() {
       _passwordError = ValidationHelper.validatePassword(_passwordController.text);
@@ -87,7 +87,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
       _passwordError == null &&
       _confirmError == null;
 
-  // Build
+  // Widgets
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
@@ -116,6 +116,47 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                       child: Text(
                         _controller.errorMessage.value,
                         style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+              
+              // Exibir mensagem de retry se houver
+              Obx(() => _controller.retryMessage.value.isNotEmpty
+                  ? Padding(
+                      padding: EdgeInsets.only(bottom: r.spacing16),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                              SizedBox(width: r.spacing8),
+                              Expanded(
+                                child: Text(
+                                  _controller.retryMessage.value,
+                                  style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: r.spacing8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              onPressed: () => _controller.cancelRetry(),
+                              child: Text(
+                                'Cancelar',
+                                style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     )
                   : const SizedBox.shrink()),
@@ -176,7 +217,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                           return;
                         }
                         
-                        _controller.userPassword.value = _passwordController.text;
+                        _controller.setPassword(_passwordController.text);
                         _controller.createAccount();
                       }
                     : null,

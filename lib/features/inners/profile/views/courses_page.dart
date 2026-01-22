@@ -15,7 +15,8 @@ class CoursesPage extends StatefulWidget {
 }
 
 class _CoursesPageState extends State<CoursesPage> {
-  // Lista de cursos (mock)
+  // TODO: Replace with real Firestore data from CoursesController
+  // MOCK DATA: Placeholder courses data for UI testing
   final List<Map<String, String>> _courses = [
     {'flag': AppAssets.flagUsa, 'name': 'Spanish'},
     {'flag': AppAssets.flagGermany, 'name': 'German'},

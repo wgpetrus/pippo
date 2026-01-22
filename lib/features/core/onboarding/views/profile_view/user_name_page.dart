@@ -32,6 +32,12 @@ class _UserNamePageState extends State<UserNamePage> {
   void initState() {
     super.initState();
     _controller = Get.find<OnboardingController>();
+    
+    // Pre-fill with Google displayName if available
+    if (_controller.userName.value.isNotEmpty) {
+      _nameController.text = _controller.userName.value;
+    }
+    
     _nameController.addListener(_validateInput);
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
   }

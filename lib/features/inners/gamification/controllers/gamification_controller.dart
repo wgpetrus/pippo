@@ -91,7 +91,8 @@ class GamificationController extends GetxController {
           .doc(userId)
           .collection('stats')
           .doc('gamification')
-          .get());
+          .get()
+          .timeout(const Duration(seconds: 30)));
 
       if (!doc.exists) {
         // Criar documento inicial com valores padrão
@@ -140,6 +141,8 @@ class GamificationController extends GetxController {
 
       // Calcular regeneração de energia após carregar
       _calculateEnergyRegeneration();
+    } on TimeoutException {
+      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -194,7 +197,8 @@ class GamificationController extends GetxController {
                 : null,
           },
           'lastUpdated': FieldValue.serverTimestamp(),
-        }));
+        })
+        .timeout(const Duration(seconds: 30)));
   }
 
   /// Cria estatísticas iniciais para novo usuário
@@ -236,7 +240,8 @@ class GamificationController extends GetxController {
             'gemMultiplierUntil': null,
           },
           'lastUpdated': FieldValue.serverTimestamp(),
-        }));
+        })
+        .timeout(const Duration(seconds: 30)));
 
     // Recarregar após criar
     await loadStats();
@@ -473,7 +478,7 @@ class GamificationController extends GetxController {
         'xpEarned': xpEarned,
         'gemsEarned': gemsEarned,
         'timestamp': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
     } catch (e) {
       // Não propagar erro - histórico é opcional
       debugPrint('Erro ao registrar histórico de lição: $e');
@@ -499,7 +504,7 @@ class GamificationController extends GetxController {
         'date': today,
         'milestone': milestone,
         'timestamp': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
     } catch (e) {
       // Não propagar erro - histórico é opcional
       debugPrint('Erro ao registrar milestone de streak: $e');
@@ -525,7 +530,7 @@ class GamificationController extends GetxController {
         'date': today,
         'newLevel': newLevel,
         'timestamp': FieldValue.serverTimestamp(),
-      });
+      }).timeout(const Duration(seconds: 30));
     } catch (e) {
       // Não propagar erro - histórico é opcional
       debugPrint('Erro ao registrar level up: $e');
@@ -565,7 +570,8 @@ class GamificationController extends GetxController {
           .where('date', isGreaterThanOrEqualTo: startDateStr)
           .where('date', isLessThanOrEqualTo: endDateStr)
           .orderBy('date', descending: true)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 30));
 
       // Converter para lista de mapas
       return querySnapshot.docs

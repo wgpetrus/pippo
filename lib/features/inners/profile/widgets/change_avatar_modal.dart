@@ -8,7 +8,8 @@ import '../../../../shared/widgets/app_button.dart';
 
 /// Modal para trocar avatar
 class ChangeAvatarModal {
-  // Lista de avatares disponíveis (avatars + characters)
+  // Static list of available avatars (avatars + characters)
+  // This is configuration data, not mock data
   static final List<String> _avatars = [
     // Avatars
     AppAssets.avatarMascot1,

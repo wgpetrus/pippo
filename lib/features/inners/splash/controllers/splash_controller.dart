@@ -19,6 +19,7 @@ class SplashController extends GetxController {
   final showRetryButton = false.obs;
 
   // Lifecycle
+
   @override
   void onInit() {
     super.onInit();
@@ -26,7 +27,7 @@ class SplashController extends GetxController {
   }
 
   // Métodos públicos
-  
+
   /// Método público para retry
   void retry() {
     _navigate();
@@ -93,7 +94,7 @@ class SplashController extends GetxController {
   }
 
   // Verificações
-  
+
   /// Verifica se há um usuário autenticado no Firebase Auth
   bool _isAuthenticated() {
     return _auth.currentUser != null;
@@ -109,12 +110,12 @@ class SplashController extends GetxController {
   /// Verifica se o usuário completou o onboarding no Firestore
   Future<bool> _isOnboardingCompleted(String userId) async {
     try {
-      // Aplicar timeout de 5 segundos
+      // Aplicar timeout de 30 segundos
       final docSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .get()
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 30));
 
       if (!docSnapshot.exists) {
         return false;
@@ -133,7 +134,7 @@ class SplashController extends GetxController {
   }
 
   // Navegação auxiliar
-  
+
   /// Navega para a tela de onboarding
   void _navigateToOnboarding() {
     Get.offAllNamed('/onboarding');
@@ -150,7 +151,7 @@ class SplashController extends GetxController {
   }
 
   // Handlers de erro
-  
+
   /// Verifica se o erro do Firebase é relacionado à rede
   bool _isNetworkError(FirebaseException e) {
     return e.code == 'unavailable' || 

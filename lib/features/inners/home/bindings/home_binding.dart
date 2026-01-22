@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../core/auth/controllers/auth_controller.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
-import '../../gamification/controllers/gamification_controller.dart';
 import '../controllers/home_controller.dart';
 
 /// Binding da home
@@ -15,10 +14,9 @@ class HomeBinding extends Bindings {
       Get.lazyPut<AuthController>(() => AuthController());
     }
 
-    // Instanciar GamificationController após AuthController
-    Get.lazyPut<GamificationController>(() => GamificationController());
+    // GamificationController is already registered globally in main.dart
 
-    // Instanciar LessonController após GamificationController
+    // Instanciar LessonController
     Get.lazyPut<LessonController>(() => LessonController());
 
     // Instanciar outros controllers

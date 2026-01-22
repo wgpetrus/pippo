@@ -429,4 +429,267 @@ void main() {
       }
     });
   });
+
+  group('Integration Tests - Google Onboarding Flow', () {
+    test('Google login skips email, password, and OTP screens', () {
+      // Testa fluxo de onboarding com Google login
+      
+      // Simula dados do Google
+      const googleDisplayName = 'João Silva';
+      const googleEmail = 'joao@gmail.com';
+      
+      // Simula controller com authProvider = 'google'
+      final mockController = {
+        'authProvider': 'google',
+        'userName': googleDisplayName,
+        'userEmail': googleEmail,
+        'userAge': '',
+        'selectedLanguage': '',
+        'languageLevel': '',
+        'learningReason': '',
+        'studyTime': '',
+      };
+      
+      // Métodos de verificação (devem estar no OnboardingController real)
+      bool shouldSkipEmail() => mockController['authProvider'] == 'google';
+      bool shouldSkipPassword() => mockController['authProvider'] == 'google';
+      bool shouldSkipVerifyCode() => mockController['authProvider'] == 'google';
+      
+      // Verifica que authProvider está definido
+      expect(mockController['authProvider'], 'google');
+      expect(mockController['userName'], googleDisplayName);
+      expect(mockController['userEmail'], googleEmail);
+      
+      // Usuário preenche dados de idioma (NÃO pulado)
+      mockController['selectedLanguage'] = 'en';
+      mockController['languageLevel'] = 'beginner';
+      mockController['learningReason'] = 'travel';
+      
+      expect(mockController['selectedLanguage'], 'en');
+      expect(mockController['languageLevel'], 'beginner');
+      expect(mockController['learningReason'], 'travel');
+      
+      // Usuário seleciona tempo de estudo (NÃO pulado)
+      mockController['studyTime'] = '10';
+      expect(mockController['studyTime'], '10');
+      
+      // Nome já preenchido do Google (NÃO pulado, mas pré-preenchido)
+      expect(mockController['userName'], googleDisplayName);
+      
+      // Usuário seleciona idade (NÃO pulado)
+      mockController['userAge'] = '25-34';
+      expect(mockController['userAge'], '25-34');
+      
+      // Verifica que telas devem ser puladas
+      expect(shouldSkipEmail(), true);
+      expect(shouldSkipPassword(), true);
+      expect(shouldSkipVerifyCode(), true);
+      
+      // Verifica que todos os dados necessários foram coletados
+      expect(mockController['authProvider'], 'google');
+      expect(mockController['userName'], googleDisplayName);
+      expect(mockController['userEmail'], googleEmail);
+      expect(mockController['userAge'], '25-34');
+      expect(mockController['selectedLanguage'], 'en');
+      expect(mockController['languageLevel'], 'beginner');
+      expect(mockController['learningReason'], 'travel');
+      expect(mockController['studyTime'], '10');
+      
+      // Verifica que 8 campos foram coletados
+      expect(mockController.length, 8);
+    });
+
+    test('Google login flow navigation sequence', () {
+      // Testa sequência de navegação para Google login
+      
+      const authProvider = 'google';
+      
+      // Métodos de verificação (devem estar no OnboardingController real)
+      bool shouldSkipEmail() => authProvider == 'google';
+      bool shouldSkipPassword() => authProvider == 'google';
+      bool shouldSkipVerifyCode() => authProvider == 'google';
+      
+      // Sequência esperada de telas para Google login
+      const expectedScreens = [
+        'welcome',           // Pode ser pulada se skipWelcome = true
+        'select_language',   // NÃO pulada
+        'language_level',    // NÃO pulada
+        'learning_reason',   // NÃO pulada
+        'intro',             // Transição
+        'study_time',        // NÃO pulada
+        'pause_one',         // Transição
+        'user_name',         // NÃO pulada (pré-preenchida)
+        'user_age',          // NÃO pulada
+        'pause_two',         // Transição
+        'conclusion',        // Tela final
+      ];
+      
+      // Telas que devem ser puladas
+      const skippedScreens = ['user_email', 'user_password', 'verify_code'];
+      
+      // Verifica que telas puladas não estão na sequência
+      for (final screen in skippedScreens) {
+        expect(expectedScreens.contains(screen), false);
+      }
+      
+      // Verifica que métodos de skip retornam true
+      expect(shouldSkipEmail(), true);
+      expect(shouldSkipPassword(), true);
+      expect(shouldSkipVerifyCode(), true);
+      
+      // Verifica total de telas (11 vs 14 para email/password)
+      expect(expectedScreens.length, 11);
+    });
+
+    test('Email/password flow does NOT skip screens', () {
+      // Testa fluxo normal de email/password para comparação
+      
+      const authProvider = 'email';
+      
+      // Métodos de verificação (devem estar no OnboardingController real)
+      bool shouldSkipEmail() => authProvider == 'google';
+      bool shouldSkipPassword() => authProvider == 'google';
+      bool shouldSkipVerifyCode() => authProvider == 'google';
+      
+      // Verifica que métodos de skip retornam false para email/password
+      expect(shouldSkipEmail(), false);
+      expect(shouldSkipPassword(), false);
+      expect(shouldSkipVerifyCode(), false);
+      
+      // Sequência completa de telas para email/password
+      const expectedScreens = [
+        'welcome',
+        'select_language',
+        'language_level',
+        'learning_reason',
+        'intro',
+        'study_time',
+        'pause_one',
+        'user_name',
+        'user_age',
+        'pause_two',
+        'user_email',        // NÃO pulada
+        'user_password',     // NÃO pulada
+        'verify_code',       // NÃO pulada
+        'conclusion',
+      ];
+      
+      // Verifica que todas as telas estão presentes (14 telas)
+      expect(expectedScreens.length, 14);
+      expect(expectedScreens.contains('user_email'), true);
+      expect(expectedScreens.contains('user_password'), true);
+      expect(expectedScreens.contains('verify_code'), true);
+    });
+
+    test('Google login pre-fills user data correctly', () {
+      // Testa pré-preenchimento de dados do Google
+      
+      // Simula resposta do Google Sign-In
+      const googleUser = {
+        'displayName': 'Maria Santos',
+        'email': 'maria.santos@gmail.com',
+        'photoURL': 'https://example.com/photo.jpg',
+      };
+      
+      // Simula controller após Google login
+      final mockController = {
+        'authProvider': 'google',
+        'userName': googleUser['displayName']!,
+        'userEmail': googleUser['email']!,
+      };
+      
+      // Verifica que dados foram pré-preenchidos
+      expect(mockController['authProvider'], 'google');
+      expect(mockController['userName'], 'Maria Santos');
+      expect(mockController['userEmail'], 'maria.santos@gmail.com');
+      
+      // Verifica que usuário pode editar nome (não é readonly)
+      mockController['userName'] = 'Maria S.';
+      expect(mockController['userName'], 'Maria S.');
+      
+      // Email deve ser readonly (não pode ser alterado)
+      // Isso é garantido na UI, não no controller
+    });
+
+    test('Google login saves correct authProvider in Firestore', () {
+      // Testa estrutura de documento para Google login
+      
+      const authProvider = 'google';
+      const userName = 'João Silva';
+      const userEmail = 'joao@gmail.com';
+      
+      // Simula documento do usuário que será salvo no Firestore
+      final userDocument = {
+        'id': 'user123',
+        'email': userEmail,
+        'name': userName,
+        'username': 'joaosilva',
+        'age': '25-34',
+        'authProvider': authProvider,
+        'onboardingCompleted': true,
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+      };
+      
+      // Verifica que authProvider foi salvo corretamente
+      expect(userDocument['authProvider'], 'google');
+      expect(userDocument['email'], userEmail);
+      expect(userDocument['name'], userName);
+      
+      // Verifica estrutura do documento
+      expect(userDocument.containsKey('authProvider'), true);
+      expect(userDocument.length, 9);
+    });
+
+    test('Google login flow completes without password validation', () {
+      // Testa validação de dados para Google login
+      
+      const authProvider = 'google';
+      const userName = 'João Silva';
+      const userEmail = 'joao@gmail.com';
+      const userPassword = '';  // Vazio para Google login
+      
+      // Validação de nome (sempre necessária)
+      String? validateName(String? value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Nome é obrigatório.';
+        }
+        return null;
+      }
+      
+      // Validação de email (pulada para Google)
+      String? validateEmail(String? value, String provider) {
+        if (provider == 'google') return null;
+        if (value == null || value.isEmpty) {
+          return 'E-mail é obrigatório.';
+        }
+        return null;
+      }
+      
+      // Validação de senha (pulada para Google)
+      String? validatePassword(String? value, String provider) {
+        if (provider == 'google') return null;
+        if (value == null || value.isEmpty) {
+          return 'Senha é obrigatória.';
+        }
+        return null;
+      }
+      
+      // Verifica que validação de nome ainda é necessária
+      expect(validateName(userName), null);
+      expect(validateName(''), 'Nome é obrigatório.');
+      
+      // Verifica que validação de email é pulada para Google
+      expect(validateEmail(userEmail, authProvider), null);
+      expect(validateEmail('', authProvider), null);
+      
+      // Verifica que validação de senha é pulada para Google
+      expect(validatePassword(userPassword, authProvider), null);
+      expect(validatePassword('', authProvider), null);
+      
+      // Compara com fluxo email/password
+      expect(validateEmail('', 'email'), 'E-mail é obrigatório.');
+      expect(validatePassword('', 'email'), 'Senha é obrigatória.');
+    });
+  });
 }

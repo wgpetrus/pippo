@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -11,7 +12,8 @@ import '../widgets/status_modal.dart';
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
 
-  // Dados mockados
+  // TODO: Replace with real Firestore data from LeaderboardController
+  // MOCK DATA: Placeholder leaderboard data for UI testing
   static const _players = [
     {'avatar': AppAssets.charMara, 'name': 'Sami', 'xp': 49, 'status': null},
     {'avatar': AppAssets.charFrancilene, 'name': 'Eu', 'xp': 49, 'status': '🎭', 'isMe': true},
@@ -50,6 +52,37 @@ class LeaderboardPage extends StatelessWidget {
               AppAssets.shield6,
             ],
             currentLevel: 2,
+          ),
+
+          // Banner de dados de teste
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.orange100,
+                border: Border.all(color: AppTheme.orange.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.flask,
+                    size: 18,
+                    color: AppTheme.orange,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '🧪 Test data - Real leaderboard data will be loaded from Firestore',
+                      style: AppTheme.textSmMedium.copyWith(
+                        color: AppTheme.gray700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
 
           // Info da liga
@@ -101,7 +134,7 @@ class LeaderboardPage extends StatelessWidget {
                       currentAvatar: player['avatar'] as String,
                       currentStatus: player['status'] as String?,
                       onStatusSelected: (status) {
-                        // TODO: Salvar status selecionado
+                        // TODO: [etapa 8] conectar com controller.updateStatus()
                       },
                     )
                 : null,

@@ -99,11 +99,11 @@ class HomeView extends StatelessWidget {
       body: IndexedStack(
         index: controller.currentNavIndex.value,
         children: [
-          _buildCoursesPage(context, controller),
-          const ShopPage(),
-          const LeaderboardPage(),
-          const TreasurePage(),
-          const ProfilePage(),
+          _buildCoursesPage(context, controller),  // Tab 0
+          const LeaderboardPage(),                 // Tab 1
+          const ShopPage(),                        // Tab 2
+          const TreasurePage(),                    // Tab 3
+          const ProfilePage(),                     // Tab 4
         ],
       ),
       bottomNavigationBar: _buildBottomBar(controller),
@@ -389,7 +389,7 @@ class HomeView extends StatelessWidget {
     GemsModal.show(
       context,
       onGoToShop: () {
-        controller.onNavTap(2); // Navegar para shop tab
+        controller.goToShop();
       },
     );
   }
