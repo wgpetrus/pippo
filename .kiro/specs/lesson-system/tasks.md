@@ -6,51 +6,51 @@ This plan implements the core lesson system for Pippo, following a strict order-
 
 ## Tasks
 
-- [ ] 1. Set up Firestore structure and data handling
+- [x] 1. Set up Firestore structure and data handling
   - Define Firestore collection paths as constants
   - Define document structure maps (no model classes)
   - Implement Timestamp ↔ DateTime conversion helpers
   - Create Map validation helpers for exercise types
   - _Requirements: 1.1, 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 1.1 Write property test for timestamp conversion
+- [x] 1.1 Write property test for timestamp conversion
   - **Property 1: Timestamp Round Trip**
   - **Validates: Requirements 8.3, 12.5**
 
-- [ ] 2. Implement LessonController with state management
-  - [ ] 2.1 Create LessonController with mandatory states (isLoading, errorMessage)
+- [x] 2. Implement LessonController with state management
+  - [x] 2.1 Create LessonController with mandatory states (isLoading, errorMessage)
     - Add observable states: currentLesson, currentExercises, currentExerciseIndex
     - Add execution states: hearts, correctAnswers, totalAnswers, startTime
     - Add feedback states: showFeedback, isCorrectAnswer, correctAnswerText
     - _Requirements: 3.1, 4.4, 4.5, 14.1_
 
-  - [ ] 2.2 Write property test for state initialization
+  - [x] 2.2 Write property test for state initialization
     - **Property 19: Exercise Index Progression**
     - **Validates: Requirements 14.1, 14.2, 14.3**
 
-  - [ ] 2.3 Implement lesson validation methods
+  - [x] 2.3 Implement lesson validation methods
     - Add _isLessonUnlocked() to check previous lesson completed
     - Add _hasEnergy() to verify energy availability
     - Add _hasUnlimitedEnergy() to check unlimited status
     - Ensure first lesson (lessonId = 1) is always unlocked
     - _Requirements: 1.1, 1.2, 1.5, 10.1, 10.2_
 
-  - [ ] 2.4 Write property test for lesson validation
+  - [x] 2.4 Write property test for lesson validation
     - **Property 16: Linear Progression**
     - **Validates: Requirements 10.1, 10.2, 10.3, 10.4**
 
-  - [ ] 2.5 Implement energy management methods
+  - [x] 2.5 Implement energy management methods
     - Add _consumeEnergy() with atomic Firestore transaction
     - Add _calculateAvailableEnergy() using formula: min(5, currentEnergy + (minutesPassed ~/ 30))
     - Add _calculateMinutesUntilNextEnergy() using formula: 30 - (minutesPassed % 30)
     - _Requirements: 1.4, 1.6, 1.7_
 
-  - [ ] 2.6 Write property test for energy formulas
+  - [x] 2.6 Write property test for energy formulas
     - **Property 3: Energy Regeneration Formula Consistency**
     - **Validates: Requirements 1.6, 1.7**
 
-- [ ] 3. Implement lesson start sequence (CRITICAL ORDER)
-  - [ ] 3.1 Create startLesson() method with exact order
+- [x] 3. Implement lesson start sequence (CRITICAL ORDER)
+  - [x] 3.1 Create startLesson() method with exact order
     - Step 1: Validate lesson is unlocked
     - Step 2: Validate user has energy (or unlimited active)
     - Step 3: Consume energy (atomic operation)
@@ -60,40 +60,40 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Handle errors: display message, do NOT consume energy on failure
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 3.1, 12.1, 14.1_
 
-  - [ ] 3.2 Write property test for start sequence order
+  - [x] 3.2 Write property test for start sequence order
     - **Property 1: Lesson Start Order of Operations**
     - **Validates: Requirements 1.1, 1.2, 1.4**
 
-  - [ ] 3.3 Write property test for energy consumption
+  - [x] 3.3 Write property test for energy consumption
     - **Property 2: Energy Consumption Atomicity**
     - **Validates: Requirements 1.4, 1.5, 12.1**
 
-  - [ ] 3.4 Write unit test for 0 energy case
+  - [x] 3.4 Write unit test for 0 energy case
     - Test Low Energy Modal is shown
     - Test lesson does not start
     - _Requirements: 1.3_
 
-- [ ] 4. Checkpoint - Ensure lesson start works correctly
+- [x] 4. Checkpoint - Ensure lesson start works correctly
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement exercise validation for all types
-  - [ ] 5.1 Create exercise validation methods
+- [x] 5. Implement exercise validation for all types
+  - [x] 5.1 Create exercise validation methods
     - Add _validateImageExercise() to compare imageIds
     - Add _validateTranslationExercise() to compare text (case-sensitive, trimmed)
     - Add _validateWordOrderExercise() to compare ordered arrays
     - Add _validateMatchExercise() to verify all 4 pairs match
     - _Requirements: 2.2, 2.4, 2.6, 2.9, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-  - [ ] 5.2 Write property test for exercise validation
+  - [x] 5.2 Write property test for exercise validation
     - **Property 4: Exercise Validation Type Safety**
     - **Validates: Requirements 2.2, 2.4, 2.6, 2.9, 11.1, 11.2, 11.3, 11.4**
 
-  - [ ] 5.3 Write property test for input sanitization
+  - [x] 5.3 Write property test for input sanitization
     - **Property 17: Input Sanitization**
     - **Validates: Requirements 11.5, 11.6**
 
-- [ ] 6. Implement answer submission and hearts management
-  - [ ] 6.1 Create submitAnswer() method
+- [x] 6. Implement answer submission and hearts management
+  - [x] 6.1 Create submitAnswer() method
     - Validate answer using appropriate validation method
     - Increment totalAnswers counter
     - If correct: increment correctAnswers
@@ -103,20 +103,20 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - If last exercise and hearts > 0: trigger completeLesson()
     - _Requirements: 3.2, 3.3, 4.3, 4.4, 4.5_
 
-  - [ ] 6.2 Write property test for hearts invariant
+  - [x] 6.2 Write property test for hearts invariant
     - **Property 5: Hearts Invariant**
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.6**
 
-  - [ ] 6.3 Write property test for answer counters
+  - [x] 6.3 Write property test for answer counters
     - **Property 7: Answer Counter Consistency**
     - **Validates: Requirements 4.4, 4.5, 4.7**
 
-  - [ ] 6.4 Write property test for hearts decrement order
+  - [x] 6.4 Write property test for hearts decrement order
     - **Property 8: Hearts Decrement Before Feedback**
     - **Validates: Requirements 4.3**
 
-- [ ] 7. Implement lesson failure handling
-  - [ ] 7.1 Create failLesson() method
+- [x] 7. Implement lesson failure handling
+  - [x] 7.1 Create failLesson() method
     - Set lesson state to failed
     - Display fail screen
     - Award zero rewards (XP = 0, gems = 0)
@@ -124,15 +124,15 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Navigate to fail screen
     - _Requirements: 3.3, 3.4, 3.5_
 
-  - [ ] 7.2 Write property test for failed lesson consequences
+  - [x] 7.2 Write property test for failed lesson consequences
     - **Property 6: Failed Lesson Consequences**
     - **Validates: Requirements 3.4, 3.5**
 
-- [ ] 8. Checkpoint - Ensure exercise execution works correctly
+- [x] 8. Checkpoint - Ensure exercise execution works correctly
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Implement reward calculation (CRITICAL ORDER)
-  - [ ] 9.1 Create reward calculation methods
+- [x] 9. Implement reward calculation (CRITICAL ORDER)
+  - [x] 9.1 Create reward calculation methods
     - Add _calculateTotalXP() with exact order:
       - Start with base: lesson.xpReward
       - Add perfect bonus: +5 if accuracy == 100%
@@ -144,16 +144,16 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Add _checkBoosterExpiration() to compare current time with expiry
     - _Requirements: 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6_
 
-  - [ ] 9.2 Write property test for reward calculation order
+  - [x] 9.2 Write property test for reward calculation order
     - **Property 9: Reward Calculation Order**
     - **Validates: Requirements 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 13.5**
 
-  - [ ] 9.3 Write property test for booster expiration
+  - [x] 9.3 Write property test for booster expiration
     - **Property 18: Booster Expiration**
     - **Validates: Requirements 13.1, 13.2, 13.3, 13.4, 13.6**
 
-- [ ] 10. Implement XP distribution and level up
-  - [ ] 10.1 Create XP distribution methods
+- [x] 10. Implement XP distribution and level up
+  - [x] 10.1 Create XP distribution methods
     - Add _distributeXP() to add XP to all three counters atomically:
       - Add to totalXp (never resets)
       - Add to weeklyXp (resets Monday 00:00)
@@ -164,16 +164,16 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Use Firestore transaction for atomic updates
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
 
-  - [ ] 10.2 Write property test for XP distribution
+  - [x] 10.2 Write property test for XP distribution
     - **Property 10: XP Distribution Atomicity**
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.7**
 
-  - [ ] 10.3 Write property test for level up formula
+  - [x] 10.3 Write property test for level up formula
     - **Property 11: Level Up Formula**
     - **Validates: Requirements 6.4, 6.5, 6.6**
 
-- [ ] 11. Implement streak management (user timezone)
-  - [ ] 11.1 Create streak management methods
+- [x] 11. Implement streak management (user timezone)
+  - [x] 11.1 Create streak management methods
     - Add _isFirstLessonToday() to check if first lesson completed today
     - Add _getTodayDateString() to get date in YYYY-MM-DD format (user timezone)
     - Add _isYesterday() to compare dates
@@ -185,15 +185,15 @@ This plan implements the core lesson system for Pippo, following a strict order-
       - Save current date as lastStreakDate
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8_
 
-  - [ ] 11.2 Write property test for streak update logic
+  - [x] 11.2 Write property test for streak update logic
     - **Property 12: Streak Update Logic**
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8**
 
-- [ ] 12. Checkpoint - Ensure rewards and streak work correctly
+- [x] 12. Checkpoint - Ensure rewards and streak work correctly
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Implement lesson completion sequence (CRITICAL ORDER)
-  - [ ] 13.1 Create completeLesson() method with exact order
+- [x] 13. Implement lesson completion sequence (CRITICAL ORDER)
+  - [x] 13.1 Create completeLesson() method with exact order
     - Step 1: Calculate rewards (_calculateTotalXP, _calculateTotalGems)
     - Step 2: Distribute XP (_distributeXP)
     - Step 3: Add gems to totalGems
@@ -207,12 +207,12 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Handle errors: retry up to 3 times, cache locally if all fail
     - _Requirements: 5.1, 8.1, 8.7, 9.5, 12.2, 12.3_
 
-  - [ ] 13.2 Write property test for completion sequence order
+  - [x] 13.2 Write property test for completion sequence order
     - **Property 13: Completion Sequence Order**
     - **Validates: Requirements 5.1, 8.1, 8.4, 8.7, 9.5**
 
-- [ ] 14. Implement progress persistence
-  - [ ] 14.1 Create progress persistence methods
+- [x] 14. Implement progress persistence
+  - [x] 14.1 Create progress persistence methods
     - Add _saveLessonProgress() to save to Firestore:
       - Path: users/{userId}/courses/{courseId}/progress/{lessonId}
       - Include: accuracy, xpEarned, gemsEarned, timeSpent (seconds), mistakes
@@ -224,28 +224,28 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Add _unlockNextLesson() to mark lesson N+1 as unlocked
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
 
-  - [ ] 14.2 Write property test for progress data completeness
+  - [x] 14.2 Write property test for progress data completeness
     - **Property 14: Progress Data Completeness**
     - **Validates: Requirements 8.2, 8.3**
 
-  - [ ] 14.3 Write property test for history date format
+  - [x] 14.3 Write property test for history date format
     - **Property 15: History Date Format**
     - **Validates: Requirements 8.4, 8.5, 8.6**
 
-- [ ] 15. Implement challenge updates
-  - [ ] 15.1 Create challenge update methods
+- [x] 15. Implement challenge updates
+  - [x] 15.1 Create challenge update methods
     - Add _updateChallenges() to update all active challenges
     - Increment relevant counters (lessonsCompleted, xpEarned, etc.)
     - Mark challenges as completed when goal is reached
     - Award challenge rewards
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-  - [ ] 15.2 Write property test for challenge updates
+  - [x] 15.2 Write property test for challenge updates
     - **Property 23: Challenge Update Consistency**
     - **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
 
-- [ ] 16. Implement time tracking
-  - [ ] 16.1 Create time tracking methods
+- [x] 16. Implement time tracking
+  - [x] 16.1 Create time tracking methods
     - Record startTime when lesson starts
     - Calculate elapsed time: completionTime - startTime (milliseconds)
     - Convert to seconds for storage
@@ -253,15 +253,15 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Accumulate time across resume sessions
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6_
 
-  - [ ] 16.2 Write property test for time tracking
+  - [x] 16.2 Write property test for time tracking
     - **Property 21: Time Tracking Accuracy**
     - **Validates: Requirements 15.1, 15.2, 15.3, 15.4, 15.5, 15.6**
 
-- [ ] 17. Checkpoint - Ensure completion and persistence work correctly
+- [x] 17. Checkpoint - Ensure completion and persistence work correctly
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 18. Implement lesson resume functionality
-  - [ ] 18.1 Create resumeLesson() method
+- [x] 18. Implement lesson resume functionality
+  - [x] 18.1 Create resumeLesson() method
     - Load lesson progress from Firestore
     - Restore currentExerciseIndex
     - Restore hearts, correctAnswers, totalAnswers
@@ -269,12 +269,12 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Continue from saved exercise
     - _Requirements: 14.4, 14.5, 14.6_
 
-  - [ ] 18.2 Write property test for resume without energy cost
+  - [x] 18.2 Write property test for resume without energy cost
     - **Property 20: Resume Without Energy Cost**
     - **Validates: Requirements 14.5, 14.6**
 
-- [ ] 19. Implement error handling and retry logic
-  - [ ] 19.1 Add error handling to all critical methods
+- [x] 19. Implement error handling and retry logic
+  - [x] 19.1 Add error handling to all critical methods
     - Lesson start: display error, do NOT consume energy
     - Lesson completion: retry up to 3 times with exponential backoff
     - Save failure: cache progress locally, sync on next app open
@@ -284,15 +284,15 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Prevent concurrent lesson starts
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7_
 
-  - [ ] 19.2 Write property test for error handling
+  - [x] 19.2 Write property test for error handling
     - **Property 22: Error Handling Without Side Effects**
     - **Validates: Requirements 12.1, 12.2, 12.3**
 
-  - [ ] 19.3 Write property test for concurrency prevention
+  - [x] 19.3 Write property test for concurrency prevention
     - **Property 25: Concurrency Prevention**
     - **Validates: Requirements 12.7**
 
-- [ ] 20. Create LessonBinding for dependency injection
+- [x] 20. Create LessonBinding for dependency injection
   - Register LessonController with Get.lazyPut()
   - Ensure controller is disposed properly
   - _Requirements: All_

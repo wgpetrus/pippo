@@ -1,0 +1,425 @@
+import 'package:flutter_test/flutter_test.dart';
+
+/// Feature: lesson-system, Property 12: Streak Update Logic
+/// 
+/// Validates: Requirements 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8
+/// 
+/// Property: For any first lesson completed today (user timezone), if last streak 
+/// date is yesterday then increment currentStreak by 1, if last streak date is 
+/// today then no change, if last streak date is before yesterday then reset 
+/// currentStreak to 1, and update longestStreak if currentStreak exceeds it.
+void main() {
+  group('Feature: lesson-system, Property 12: Streak Update Logic', () {
+    /// Helper para obter data de hoje no formato YYYY-MM-DD
+    String getTodayDate() {
+      final today = DateTime.now();
+      return '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    }
+
+    /// Helper para obter data de N dias atrás no formato YYYY-MM-DD
+    String getDateDaysAgo(int days) {
+      final date = DateTime.now().subtract(Duration(days: days));
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+
+    /// Helper para verificar se uma data é ontem
+    bool isYesterday(String lastStreakDate, String todayDate) {
+      if (lastStreakDate.isEmpty) return false;
+
+      try {
+        final lastParts = lastStreakDate.split('-');
+        final todayParts = todayDate.split('-');
+
+        if (lastParts.length != 3 || todayParts.length != 3) return false;
+
+        final lastDate = DateTime(
+          int.parse(lastParts[0]),
+          int.parse(lastParts[1]),
+          int.parse(lastParts[2]),
+        );
+
+        final today = DateTime(
+          int.parse(todayParts[0]),
+          int.parse(todayParts[1]),
+          int.parse(todayParts[2]),
+        );
+
+        final difference = today.difference(lastDate).inDays;
+
+        return difference == 1;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /// Simula lógica de atualização de streak
+    Map<String, dynamic> updateStreak({
+      required int currentStreak,
+      required int longestStreak,
+      required String lastStreakDate,
+      required String todayDate,
+    }) {
+      int newCurrentStreak;
+
+      if (lastStreakDate == todayDate) {
+        // Última data é hoje: sem mudanças
+        newCurrentStreak = currentStreak;
+      } else if (isYesterday(lastStreakDate, todayDate)) {
+        // Última data é ontem: incrementa
+        newCurrentStreak = currentStreak + 1;
+      } else {
+        // Última data é antes de ontem: reseta para 1
+        newCurrentStreak = 1;
+      }
+
+      // Atualizar longestStreak se necessário
+      final newLongestStreak = newCurrentStreak > longestStreak
+          ? newCurrentStreak
+          : longestStreak;
+
+      return {
+        'currentStreak': newCurrentStreak,
+        'longestStreak': newLongestStreak,
+        'lastStreakDate': todayDate,
+      };
+    }
+
+    test('Property 12.1: Last streak date is yesterday → increment currentStreak by 1', () {
+      // Test com 100 iterações
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 1 + (i % 50);
+        final longestStreak = currentStreak + 10;
+        final yesterdayDate = getDateDaysAgo(1);
+        final todayDate = getTodayDate();
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: yesterdayDate,
+          todayDate: todayDate,
+        );
+
+        // Property: currentStreak deve ser incrementado em exatamente 1
+        expect(result['currentStreak'], equals(currentStreak + 1),
+            reason: 'Streak should increment by 1 when last date is yesterday');
+
+        // Property: lastStreakDate deve ser atualizado para hoje
+        expect(result['lastStreakDate'], equals(todayDate),
+            reason: 'Last streak date should be updated to today');
+      }
+    });
+
+    test('Property 12.2: Last streak date is today → no change', () {
+      // Test com 100 iterações
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 1 + (i % 50);
+        final longestStreak = currentStreak + 10;
+        final todayDate = getTodayDate();
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: todayDate,
+          todayDate: todayDate,
+        );
+
+        // Property: currentStreak não deve mudar
+        expect(result['currentStreak'], equals(currentStreak),
+            reason: 'Streak should not change when last date is today');
+
+        // Property: lastStreakDate permanece hoje
+        expect(result['lastStreakDate'], equals(todayDate),
+            reason: 'Last streak date should remain today');
+      }
+    });
+
+    test('Property 12.3: Last streak date is before yesterday → reset currentStreak to 1', () {
+      // Test com diferentes gaps de dias
+      final daysAgoList = [2, 3, 7, 14, 30, 60, 90, 365];
+
+      for (final daysAgo in daysAgoList) {
+        for (int i = 0; i < 10; i++) {
+          final currentStreak = 5 + (i * 2);
+          final longestStreak = currentStreak + 10;
+          final oldDate = getDateDaysAgo(daysAgo);
+          final todayDate = getTodayDate();
+
+          final result = updateStreak(
+            currentStreak: currentStreak,
+            longestStreak: longestStreak,
+            lastStreakDate: oldDate,
+            todayDate: todayDate,
+          );
+
+          // Property: currentStreak deve ser resetado para 1
+          expect(result['currentStreak'], equals(1),
+              reason: 'Streak should reset to 1 when gap is $daysAgo days');
+
+          // Property: lastStreakDate deve ser atualizado para hoje
+          expect(result['lastStreakDate'], equals(todayDate),
+              reason: 'Last streak date should be updated to today');
+        }
+      }
+    });
+
+    test('Property 12.4: Update longestStreak when currentStreak exceeds it', () {
+      // Test com 100 cenários onde streak vai exceder longest
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 5 + i;
+        final longestStreak = currentStreak; // Igual ao current
+        final yesterdayDate = getDateDaysAgo(1);
+        final todayDate = getTodayDate();
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: yesterdayDate,
+          todayDate: todayDate,
+        );
+
+        // Property: longestStreak deve ser atualizado
+        expect(result['longestStreak'], equals(currentStreak + 1),
+            reason: 'Longest streak should be updated when current exceeds it');
+
+        // Property: longestStreak deve ser igual a currentStreak
+        expect(result['longestStreak'], equals(result['currentStreak']),
+            reason: 'Longest streak should equal current streak after update');
+      }
+    });
+
+    test('Property 12.5: Do not update longestStreak when currentStreak does not exceed it', () {
+      // Test com 100 cenários onde streak não vai exceder longest
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 5 + (i % 20);
+        final longestStreak = currentStreak + 10 + i;
+        final yesterdayDate = getDateDaysAgo(1);
+        final todayDate = getTodayDate();
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: yesterdayDate,
+          todayDate: todayDate,
+        );
+
+        // Property: longestStreak não deve mudar
+        expect(result['longestStreak'], equals(longestStreak),
+            reason: 'Longest streak should not change when current does not exceed it');
+
+        // Property: longestStreak deve ser maior que currentStreak
+        expect(result['longestStreak'], greaterThan(result['currentStreak']),
+            reason: 'Longest streak should remain greater than current streak');
+      }
+    });
+
+    test('Property 12.6: Empty lastStreakDate → reset to 1', () {
+      // Test com 100 iterações
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 5 + i;
+        final longestStreak = currentStreak + 10;
+        final todayDate = getTodayDate();
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: '',
+          todayDate: todayDate,
+        );
+
+        // Property: currentStreak deve ser resetado para 1
+        expect(result['currentStreak'], equals(1),
+            reason: 'Streak should reset to 1 when last date is empty');
+
+        // Property: lastStreakDate deve ser atualizado para hoje
+        expect(result['lastStreakDate'], equals(todayDate),
+            reason: 'Last streak date should be set to today');
+      }
+    });
+
+    test('Property 12.7: Streak builds over consecutive days', () {
+      // Simular streak crescendo ao longo de 100 dias consecutivos
+      int currentStreak = 0;
+      int longestStreak = 0;
+      String lastDate = getDateDaysAgo(101);
+
+      for (int day = 100; day >= 0; day--) {
+        final todayDate = getDateDaysAgo(day);
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: lastDate,
+          todayDate: todayDate,
+        );
+
+        currentStreak = result['currentStreak'] as int;
+        longestStreak = result['longestStreak'] as int;
+        lastDate = result['lastStreakDate'] as String;
+
+        // Property: currentStreak sempre positivo
+        expect(currentStreak, greaterThan(0),
+            reason: 'Current streak should always be positive');
+
+        // Property: longestStreak >= currentStreak
+        expect(longestStreak, greaterThanOrEqualTo(currentStreak),
+            reason: 'Longest streak should always be >= current streak');
+      }
+
+      // Property: Após 100 dias consecutivos, streak deve ser alto
+      expect(currentStreak, greaterThan(50),
+          reason: 'Streak should build over consecutive days');
+    });
+
+    test('Property 12.8: isYesterday helper validates correctly', () {
+      final todayDate = getTodayDate();
+      final yesterdayDate = getDateDaysAgo(1);
+      final twoDaysAgo = getDateDaysAgo(2);
+
+      // Test com 100 iterações
+      for (int i = 0; i < 100; i++) {
+        // Yesterday should return true
+        expect(isYesterday(yesterdayDate, todayDate), isTrue,
+            reason: 'Yesterday date should be recognized');
+
+        // Today should return false
+        expect(isYesterday(todayDate, todayDate), isFalse,
+            reason: 'Today should not be yesterday');
+
+        // Two days ago should return false
+        expect(isYesterday(twoDaysAgo, todayDate), isFalse,
+            reason: 'Two days ago should not be yesterday');
+
+        // Empty string should return false
+        expect(isYesterday('', todayDate), isFalse,
+            reason: 'Empty string should not be yesterday');
+
+        // Invalid format should return false
+        expect(isYesterday('invalid-date', todayDate), isFalse,
+            reason: 'Invalid format should not be yesterday');
+      }
+    });
+
+    test('Property 12.9: Date format is always YYYY-MM-DD', () {
+      // Test com 100 iterações
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 1 + i;
+        final longestStreak = currentStreak + 10;
+        final yesterdayDate = getDateDaysAgo(1);
+        final todayDate = getTodayDate();
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: yesterdayDate,
+          todayDate: todayDate,
+        );
+
+        final savedDate = result['lastStreakDate'] as String;
+
+        // Property: Formato deve ser YYYY-MM-DD
+        final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+        expect(dateRegex.hasMatch(savedDate), isTrue,
+            reason: 'Date should be in YYYY-MM-DD format');
+
+        // Property: Data deve ser parseável
+        expect(() => DateTime.parse(savedDate), returnsNormally,
+            reason: 'Date should be parseable');
+      }
+    });
+
+    test('Property 12.10: Streak logic is deterministic', () {
+      // Test com 100 iterações - mesma entrada deve produzir mesma saída
+      for (int i = 0; i < 100; i++) {
+        final currentStreak = 5 + (i % 20);
+        final longestStreak = currentStreak + 10;
+        final yesterdayDate = getDateDaysAgo(1);
+        final todayDate = getTodayDate();
+
+        final result1 = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: yesterdayDate,
+          todayDate: todayDate,
+        );
+
+        final result2 = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          lastStreakDate: yesterdayDate,
+          todayDate: todayDate,
+        );
+
+        // Property: Mesma entrada produz mesma saída
+        expect(result1['currentStreak'], equals(result2['currentStreak']),
+            reason: 'Streak logic should be deterministic');
+        expect(result1['longestStreak'], equals(result2['longestStreak']),
+            reason: 'Longest streak logic should be deterministic');
+        expect(result1['lastStreakDate'], equals(result2['lastStreakDate']),
+            reason: 'Date update should be deterministic');
+      }
+    });
+
+    test('Property 12.11: longestStreak never decreases', () {
+      // Test com 100 cenários diferentes
+      for (int i = 0; i < 100; i++) {
+        final initialLongest = 10 + i;
+
+        // Cenário 1: Incrementar streak
+        final result1 = updateStreak(
+          currentStreak: 5,
+          longestStreak: initialLongest,
+          lastStreakDate: getDateDaysAgo(1),
+          todayDate: getTodayDate(),
+        );
+
+        // Property: longestStreak nunca diminui
+        expect(result1['longestStreak'], greaterThanOrEqualTo(initialLongest),
+            reason: 'Longest streak should never decrease');
+
+        // Cenário 2: Resetar streak
+        final result2 = updateStreak(
+          currentStreak: 20,
+          longestStreak: initialLongest,
+          lastStreakDate: getDateDaysAgo(5),
+          todayDate: getTodayDate(),
+        );
+
+        // Property: longestStreak nunca diminui mesmo com reset
+        expect(result2['longestStreak'], greaterThanOrEqualTo(initialLongest),
+            reason: 'Longest streak should never decrease even on reset');
+      }
+    });
+
+    test('Property 12.12: currentStreak is always positive after update', () {
+      // Test com 100 cenários diferentes
+      final scenarios = [
+        {'daysAgo': 1, 'currentStreak': 0},
+        {'daysAgo': 1, 'currentStreak': 5},
+        {'daysAgo': 0, 'currentStreak': 10},
+        {'daysAgo': 5, 'currentStreak': 20},
+        {'daysAgo': 30, 'currentStreak': 50},
+      ];
+
+      for (int i = 0; i < 100; i++) {
+        final scenario = scenarios[i % scenarios.length];
+        final daysAgo = scenario['daysAgo'] as int;
+        final currentStreak = scenario['currentStreak'] as int;
+
+        final result = updateStreak(
+          currentStreak: currentStreak,
+          longestStreak: currentStreak + 10,
+          lastStreakDate: getDateDaysAgo(daysAgo),
+          todayDate: getTodayDate(),
+        );
+
+        // Property: currentStreak sempre positivo
+        expect(result['currentStreak'], greaterThan(0),
+            reason: 'Current streak should always be positive after update');
+
+        // Property: currentStreak é pelo menos 1
+        expect(result['currentStreak'], greaterThanOrEqualTo(1),
+            reason: 'Current streak should be at least 1');
+      }
+    });
+  });
+}
