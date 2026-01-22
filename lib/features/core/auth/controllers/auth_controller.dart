@@ -1,17 +1,23 @@
+// Dart SDK
 import 'dart:async';
 import 'dart:math';
 
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Flutter
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+// Packages externos
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+// Imports locais
 import '../views/forgot_password_view.dart';
 import '../views/new_password_view.dart';
 import '../views/verify_code_view.dart';
-import '../../onboarding/controllers/onboarding_controller.dart';
 
 /// Controller de autenticação
 class AuthController extends GetxController {
@@ -21,6 +27,9 @@ class AuthController extends GetxController {
 
   // Estados para recuperação de senha
   final resendTimer = 0.obs;
+
+  // Estado para mostrar botão de login (erro account-exists-with-different-credential)
+  final showLoginButton = false.obs;
 
   // Email temporário para reenvio de código
   String? _tempEmail;
@@ -66,6 +75,7 @@ class AuthController extends GetxController {
   Future<void> login(String email, String password) async {
     isLoading.value = true;
     errorMessage.value = '';
+    showLoginButton.value = false; // Resetar estado
 
     try {
       // Autenticar via Firebase Auth
@@ -82,7 +92,21 @@ class AuthController extends GetxController {
           .timeout(const Duration(seconds: 30));
 
       if (!userDoc.exists) {
-        errorMessage.value = 'Dados do usuário não encontrados.';
+        // Documento não existe - criar documento básico e redirecionar para onboarding
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'id': userCredential.user!.uid,
+          'email': userCredential.user!.email,
+          'authProvider': 'email',
+          'onboardingCompleted': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }).timeout(const Duration(seconds: 30));
+        
+        // Navegar para onboarding com argumento skipWelcome
+        Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
         return;
       }
 
@@ -90,8 +114,8 @@ class AuthController extends GetxController {
       final onboardingCompleted = userData['onboardingCompleted'] ?? false;
 
       if (!onboardingCompleted) {
-        // Onboarding incompleto - navegar para onboarding
-        Get.offAllNamed('/onboarding');
+        // Onboarding incompleto - navegar com argumento skipWelcome
+        Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
       } else {
         // Onboarding completo - atualizar lastActiveAt e navegar para home
         await _firestore
@@ -130,15 +154,31 @@ class AuthController extends GetxController {
   Future<void> signInWithGoogle() async {
     isLoading.value = true;
     errorMessage.value = '';
+    showLoginButton.value = false; // Resetar estado
 
     try {
+      // Forçar seleção de conta (não usar conta em cache)
+      // Isso garante que o usuário sempre veja a tela de seleção de contas
+      await _googleSignIn.signOut();
+      
+      if (kDebugMode) {
+        debugPrint('🔐 Iniciando login com Google');
+      }
+      
       // Iniciar fluxo de autenticação do Google
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       // Se o usuário cancelou o login, retornar silenciosamente
       if (googleUser == null) {
+        if (kDebugMode) {
+          debugPrint('❌ Login com Google cancelado pelo usuário');
+        }
         isLoading.value = false;
         return;
+      }
+      
+      if (kDebugMode) {
+        debugPrint('✅ Usuário Google selecionado: ${googleUser.email}');
       }
 
       // Obter credenciais de autenticação
@@ -161,6 +201,22 @@ class AuthController extends GetxController {
           .timeout(const Duration(seconds: 30));
 
       if (!userDoc.exists) {
+        // Verificar se email já existe no Firestore (outro método de auth)
+        final emailQuery = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: userCredential.user!.email)
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 30));
+        
+        if (emailQuery.docs.isNotEmpty) {
+          // Email já existe com outro método de autenticação
+          await userCredential.user!.delete();
+          errorMessage.value = 'Este e-mail já tem uma conta. Faça login com e-mail e senha.';
+          showLoginButton.value = true;
+          return;
+        }
+        
         // Criar novo documento de usuário
         await _firestore
             .collection('users')
@@ -176,28 +232,16 @@ class AuthController extends GetxController {
           'updatedAt': FieldValue.serverTimestamp(),
         }).timeout(const Duration(seconds: 30));
 
-        // Configurar OnboardingController para fluxo Google
-        final onboardingController = Get.find<OnboardingController>();
-        onboardingController.skipWelcome.value = true;
-        onboardingController.authProvider.value = 'google';
-        onboardingController.userEmail.value = userCredential.user!.email ?? '';
-        onboardingController.userName.value = userCredential.user!.displayName ?? '';
-        
-        Get.offAllNamed('/onboarding');
+        // Navegar para onboarding com argumento skipWelcome
+        Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
       } else {
         // Usuário existente - verificar onboarding
         final userData = userDoc.data()!;
         final onboardingCompleted = userData['onboardingCompleted'] ?? false;
 
         if (!onboardingCompleted) {
-          // Configurar OnboardingController para fluxo Google
-          final onboardingController = Get.find<OnboardingController>();
-          onboardingController.skipWelcome.value = true;
-          onboardingController.authProvider.value = 'google';
-          onboardingController.userEmail.value = userCredential.user!.email ?? '';
-          onboardingController.userName.value = userCredential.user!.displayName ?? '';
-          
-          Get.offAllNamed('/onboarding');
+          // Navegar para onboarding com argumento skipWelcome
+          Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
         } else {
           // Onboarding completo - atualizar lastActiveAt e navegar para home
           await _firestore
@@ -255,7 +299,28 @@ class AuthController extends GetxController {
 
   // Métodos de recuperação de senha
 
-  /// Envia código de recuperação de senha por email
+  /// Cancela o processo de recuperação de senha
+  /// Limpa dados temporários e volta para tela de login
+  void cancelPasswordReset() {
+    // Limpar dados temporários
+    _tempEmail = null;
+    
+    // Cancelar timer de reenvio
+    _resendCountdownTimer?.cancel();
+    resendTimer.value = 0;
+    
+    // Limpar estados de erro
+    errorMessage.value = '';
+    
+    // Voltar para tela de login
+    backToSignin();
+  }
+
+  /// Envia código OTP para recuperação de senha
+  /// 
+  /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
+  /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
+  /// Para produção: implementar envio de email via Cloud Function ou serviço de email
   Future<void> sendPasswordResetCode(String email) async {
     // Sanitizar e validar email
     final sanitizedEmail = email.trim().toLowerCase();
@@ -269,22 +334,6 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Verificar se usuário existe tentando fazer login com senha temporária
-      // (fetchSignInMethodsForEmail foi deprecado)
-      try {
-        await _auth.signInWithEmailAndPassword(
-          email: sanitizedEmail,
-          password: 'temporary_check_${DateTime.now().millisecondsSinceEpoch}',
-        );
-      } on FirebaseAuthException catch (e) {
-        // Se o erro for user-not-found, o email não existe
-        if (e.code == 'user-not-found') {
-          errorMessage.value = 'Não encontramos uma conta com este e-mail.';
-          return;
-        }
-        // Qualquer outro erro (wrong-password, etc) significa que o usuário existe
-      }
-
       // Gerar código OTP
       final code = _generateOTP();
 
@@ -296,12 +345,14 @@ class AuthController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }).timeout(const Duration(seconds: 30));
 
-      // TODO: [PRODUÇÃO] Implementar envio de email via Cloud Function
-      // Atualmente o código é salvo no Firestore mas não é enviado por email
-      // Para testar: acessar Firebase Console > Firestore > passwordResets > copiar código
-
-      // Armazenar email temporariamente para reenvio
+      // Armazenar email temporário para uso posterior
       _tempEmail = sanitizedEmail;
+
+      // TODO: [PRODUÇÃO] Implementar envio de email
+      // Opções:
+      // 1. Cloud Function que escuta a collection passwordResets e envia email
+      // 2. Serviço de email (SendGrid, AWS SES, etc)
+      // 3. Firebase Extensions (Trigger Email)
 
       // Iniciar timer de reenvio (60 segundos)
       _startResendTimer();
@@ -310,12 +361,50 @@ class AuthController extends GetxController {
       goToVerifyCode();
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-    } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleFirebaseResetPasswordError(e);
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível enviar o código. Tente novamente.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Envia link de recuperação de senha por email (método alternativo)
+  /// 
+  /// Este método usa o sistema nativo do Firebase Auth para enviar um link
+  /// de reset de senha por email. O usuário clica no link e é redirecionado
+  /// para uma página web do Firebase onde pode redefinir a senha.
+  Future<void> sendPasswordResetLink(String email) async {
+    // Sanitizar e validar email
+    final sanitizedEmail = email.trim().toLowerCase();
+    final emailError = validateEmail(sanitizedEmail);
+    if (emailError != null) {
+      errorMessage.value = emailError;
+      return;
+    }
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      // Enviar link de reset via Firebase Auth
+      await _auth.sendPasswordResetEmail(email: sanitizedEmail);
+
+      // Mostrar mensagem de sucesso
+      Get.snackbar(
+        'Link Enviado',
+        'Um link para redefinir sua senha foi enviado para $sanitizedEmail',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 4),
+      );
+
+      // Voltar para tela de login
+      backToSignin();
+    } on FirebaseAuthException catch (e) {
+      errorMessage.value = _handleFirebaseResetPasswordError(e);
+    } catch (e) {
+      errorMessage.value = 'Não foi possível enviar o link. Tente novamente.';
     } finally {
       isLoading.value = false;
     }
@@ -446,7 +535,15 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Redefine senha do usuário
+  /// Redefine senha do usuário após verificação do código OTP
+  /// 
+  /// ⚠️ LIMITAÇÃO ATUAL: Este método envia um link de reset por email
+  /// ao invés de redefinir a senha diretamente. Isso ocorre porque o Firebase Auth
+  /// não permite reset direto de senha sem reautenticação ou Admin SDK.
+  /// 
+  /// TODO: [MELHORIA] Implementar reset direto via Cloud Function com Admin SDK
+  /// Isso permitiria redefinir a senha diretamente após validação do OTP,
+  /// sem necessidade de enviar outro email.
   Future<void> resetPassword(String newPassword) async {
     // Validar senha
     final passwordError = validatePassword(newPassword);
@@ -572,7 +669,9 @@ class AuthController extends GetxController {
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'account-exists-with-different-credential':
-          return 'Este e-mail já está vinculado a outra conta. Tente fazer login de outra forma.';
+          // Mostrar botão de login para este erro específico
+          showLoginButton.value = true;
+          return 'Este e-mail já tem uma conta. Faça login com e-mail e senha.';
         case 'invalid-credential':
           return 'Credenciais inválidas. Tente novamente.';
         case 'operation-not-allowed':
@@ -595,7 +694,7 @@ class AuthController extends GetxController {
 
   // Logout
 
-  /// Realiza logout do usuário mantendo isFirstAccess = false
+  /// Realiza logout do usuário e reseta flag de primeiro acesso
   Future<void> logout() async {
     try {
       // Limpar dados sensíveis do FlutterSecureStorage
@@ -604,12 +703,12 @@ class AuthController extends GetxController {
       // Logout do Firebase Auth
       await _auth.signOut();
 
-      // IMPORTANTE: NÃO resetar isFirstAccess para true
-      // O usuário já passou pelo onboarding, então isFirstAccess deve permanecer false
-      // Apenas limpar outros dados se necessário
+      // Resetar isFirstAccess para true para que o usuário volte ao welcome
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isFirstAccess', true);
 
-      // Navegar para tela de autenticação
-      Get.offAllNamed('/auth');
+      // Navegar para onboarding (welcome)
+      Get.offAllNamed('/onboarding');
     } catch (e) {
       errorMessage.value = 'Erro ao fazer logout. Tente novamente.';
     }

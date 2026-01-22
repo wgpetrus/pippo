@@ -129,13 +129,25 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
             // Botão verificar (desabilitado até 5 dígitos serem digitados)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: Obx(() => AppButton(
-                text: 'Verificar',
-                isLoading: _controller.isLoading.value,
-                onPressed: _controller.isLoading.value
-                    ? null
-                    : (_isComplete ? _verifyCode : null),
-              )),
+              child: Column(
+                children: [
+                  Obx(() => AppButton(
+                    text: 'Verificar',
+                    isLoading: _controller.isLoading.value,
+                    onPressed: _controller.isLoading.value
+                        ? null
+                        : (_isComplete ? _verifyCode : null),
+                  )),
+                  const SizedBox(height: 12),
+                  AppButton(
+                    text: 'Cancelar',
+                    isPrimary: false,
+                    onPressed: _controller.isLoading.value
+                        ? null
+                        : _controller.cancelPasswordReset,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

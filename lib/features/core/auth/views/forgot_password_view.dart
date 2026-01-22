@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -39,6 +40,8 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: const AppAppbar(title: 'Esqueci minha senha'),
@@ -54,7 +57,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 
                 // Texto explicativo
                 Text(
-                  'Digite seu e-mail para receber um código de verificação e redefinir sua senha.',
+                  'Digite seu e-mail para receber um link de recuperação de senha.',
                   style: AppTheme.textMd.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -89,20 +92,40 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                   );
                 }),
                 
-                // Botão enviar código
+                // Botão enviar link
                 Obx(() => AppButton(
-                  text: 'Enviar código',
+                  text: 'Enviar link',
                   isLoading: _controller.isLoading.value,
                   onPressed: _controller.isLoading.value
                       ? null
                       : () {
                           if (_formKey.currentState!.validate()) {
-                            _controller.sendPasswordResetCode(
+                            _controller.sendPasswordResetLink(
                               _emailController.text.trim(),
                             );
                           }
                         },
                 )),
+                
+                SizedBox(height: r.spacing16),
+                
+                // Link "Lembrei minha senha"
+                Center(
+                  child: Obx(() => GestureDetector(
+                    onTap: _controller.isLoading.value ? null : _controller.backToSignin,
+                    child: Opacity(
+                      opacity: _controller.isLoading.value ? 0.5 : 1.0,
+                      child: Text(
+                        'Lembrei minha senha',
+                        style: AppTheme.textMdSemibold.copyWith(
+                          color: AppTheme.primary,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                  )),
+                ),
               ],
             ),
           ),

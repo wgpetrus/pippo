@@ -20,23 +20,27 @@ class _WelcomeViewState extends State<WelcomeView> {
   late final OnboardingController _controller;
 
   // Lifecycle
-
+  
   @override
   void initState() {
     super.initState();
     _controller = Get.find<OnboardingController>();
-    _checkSkipWelcome();
-  }
-
-  // Métodos privados
-
-  void _checkSkipWelcome() {
-    if (OnboardingController.shouldSkipWelcome) {
-      OnboardingController.shouldSkipWelcome = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _controller.nav.goToSelectLanguage();
-      });
+    
+    // Verificar se veio com argumentos (login com onboarding incompleto)
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null && args['skipWelcome'] == true) {
+      _controller.skipWelcome.value = true;
+      
+      // Configurar dados do usuário autenticado (lógica no controller)
+      _controller.configureAuthenticatedUser();
     }
+    
+    // Se skipWelcome = true, pular direto para próxima tela
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_controller.skipWelcome.value) {
+        _controller.nav.goToSelectLanguage();
+      }
+    });
   }
 
   // Build

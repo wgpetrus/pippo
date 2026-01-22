@@ -98,10 +98,11 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
         currentScreen: 'user_password',
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(r.spacing24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Crie sua senha mágica',
@@ -204,7 +205,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                   onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                 ),
               ),
-              const Spacer(),
+              SizedBox(height: r.keyboardHeight > 0 ? r.spacing16 : r.spacing48),
               Obx(() => AppButton(
                 text: 'Continuar',
                 isLoading: _controller.isLoading.value,
@@ -222,6 +223,19 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                       }
                     : null,
               )),
+              
+              // Botão "Já tenho uma conta" quando email já existe
+              Obx(() => _controller.showLoginOption.value
+                  ? Padding(
+                      padding: EdgeInsets.only(top: r.spacing12),
+                      child: AppButton(
+                        text: 'Já tenho uma conta',
+                        isPrimary: false,
+                        onPressed: () => _controller.nav.goToAuth(),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+              
               SizedBox(height: r.spacing16),
             ],
           ),

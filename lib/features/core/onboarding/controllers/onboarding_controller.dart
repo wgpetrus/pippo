@@ -20,6 +20,7 @@ class OnboardingController extends GetxController {
   final isAddingCourse = false.obs;
   final skipWelcome = false.obs;
   final authProvider = ''.obs;
+  final showLoginOption = false.obs;
   
   // Estados de retry (task 8.2)
   final retryAttempt = 0.obs;
@@ -87,7 +88,96 @@ class OnboardingController extends GetxController {
   /// Verifica se deve pular verificação OTP (login social)
   bool shouldSkipVerifyCode() => authProvider.value == 'google';
 
+  /// Configura dados do usuário autenticado (login com onboarding incompleto)
+  void configureAuthenticatedUser() {
+    final user = _auth.currentUser;
+    if (user != null) {
+      userEmail.value = user.email ?? '';
+      userName.value = user.displayName ?? '';
+      
+      // Detectar provider
+      final providers = user.providerData.map((p) => p.providerId).toList();
+      if (providers.contains('google.com')) {
+        authProvider.value = 'google';
+      } else {
+        authProvider.value = 'email';
+      }
+    }
+  }
+
   // Métodos públicos - Criação de conta
+
+  /// Sai do fluxo de onboarding
+  /// Deleta usuário do Firebase Auth e volta para tela de boas-vindas
+  Future<void> exitOnboarding() async {
+    try {
+      // Obter usuário atual
+      final user = _auth.currentUser;
+      
+      if (user != null) {
+        if (kDebugMode) {
+          debugPrint('🚪 Saindo do onboarding - deletando usuário: ${user.uid}');
+        }
+        
+        // Deletar usuário do Firebase Auth
+        await user.delete();
+        
+        if (kDebugMode) {
+          debugPrint('✅ Usuário deletado com sucesso');
+        }
+      }
+      
+      // Limpar dados temporários (SEGURANÇA: limpar senha da memória)
+      _tempEmail = null;
+      _tempPassword = null;
+      
+      // Cancelar timer de reenvio
+      _resendCountdownTimer?.cancel();
+      resendTimer.value = 0;
+      
+      // Limpar todos os estados
+      errorMessage.value = '';
+      showLoginOption.value = false;
+      retryMessage.value = '';
+      retryAttempt.value = 0;
+      
+      // Limpar dados do onboarding
+      selectedLanguage.value = '';
+      languageLevel.value = '';
+      learningReason.value = '';
+      studyTime.value = '';
+      userName.value = '';
+      userAge.value = '';
+      userEmail.value = '';
+      
+      // Voltar para tela de boas-vindas (limpa stack de navegação)
+      Get.offAllNamed('/onboarding');
+      
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro Firebase ao sair do onboarding: ${e.code}');
+      }
+      
+      // Limpar dados mesmo com erro
+      _tempEmail = null;
+      _tempPassword = null;
+      
+      // Mesmo com erro, voltar para welcome
+      // Usuário pode ter sido deletado ou não estar mais autenticado
+      Get.offAllNamed('/onboarding');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro ao sair do onboarding: $e');
+      }
+      
+      // Limpar dados mesmo com erro
+      _tempEmail = null;
+      _tempPassword = null;
+      
+      // Mesmo com erro, voltar para welcome
+      Get.offAllNamed('/onboarding');
+    }
+  }
 
   /// Define a senha temporariamente (chamado pela view antes de createAccount)
   void setPassword(String password) {
@@ -98,6 +188,7 @@ class OnboardingController extends GetxController {
   Future<void> createAccount() async {
     isLoading.value = true;
     errorMessage.value = '';
+    showLoginOption.value = false; // Resetar estado
 
     try {
       // Sanitize and validate name
@@ -133,12 +224,46 @@ class OnboardingController extends GetxController {
       userName.value = sanitizedName;
       userEmail.value = sanitizedEmail;
 
+      // Verificar se email já existe no Firestore (outro método de auth)
+      if (kDebugMode) {
+        debugPrint('🔍 Verificando se email já existe no Firestore');
+      }
+      
+      try {
+        final emailQuery = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: sanitizedEmail)
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 30));
+        
+        if (emailQuery.docs.isNotEmpty) {
+          errorMessage.value = 'Este e-mail já está sendo usado por outra conta.';
+          showLoginOption.value = true;
+          return;
+        }
+      } on TimeoutException {
+        errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+        return;
+      } on FirebaseException catch (e) {
+        errorMessage.value = _handleFirestoreError(e);
+        return;
+      }
+
       // Criar usuário no Firebase Auth com retry
       await _retryWithBackoff(() async {
+        if (kDebugMode) {
+          debugPrint('📝 Tentando criar usuário');
+        }
+        
         await _auth.createUserWithEmailAndPassword(
           email: sanitizedEmail,
           password: _tempPassword!,
         );
+        
+        if (kDebugMode) {
+          debugPrint('✅ Usuário criado com sucesso');
+        }
       });
 
       // Limpar senha da memória imediatamente após uso
@@ -147,7 +272,13 @@ class OnboardingController extends GetxController {
       // Gerar e enviar código OTP
       await sendVerificationCode();
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleFirebaseAuthError(e);
+      // Detectar erro de email já existente
+      if (e.code == 'email-already-in-use') {
+        errorMessage.value = 'Este e-mail já está sendo usado por outra conta.';
+        showLoginOption.value = true; // Mostrar opção de ir para login
+      } else {
+        errorMessage.value = _handleFirebaseAuthError(e);
+      }
       // Limpar senha em caso de erro também
       _tempPassword = null;
     } catch (e) {
@@ -160,6 +291,67 @@ class OnboardingController extends GetxController {
   }
 
   // Métodos públicos - Verificação OTP
+
+  /// Cancela o processo de verificação
+  /// Deleta o usuário criado no Firebase Auth e volta para tela anterior
+  Future<void> cancelVerification() async {
+    try {
+      // Obter usuário atual
+      final user = _auth.currentUser;
+      
+      if (user != null) {
+        if (kDebugMode) {
+          debugPrint('🗑️ Deletando usuário criado: ${user.uid}');
+        }
+        
+        // Deletar usuário do Firebase Auth
+        await user.delete();
+        
+        if (kDebugMode) {
+          debugPrint('✅ Usuário deletado com sucesso');
+        }
+      }
+      
+      // Limpar dados temporários (SEGURANÇA: limpar senha da memória)
+      _tempEmail = null;
+      _tempPassword = null;
+      
+      // Cancelar timer de reenvio
+      _resendCountdownTimer?.cancel();
+      resendTimer.value = 0;
+      
+      // Limpar estados de erro
+      errorMessage.value = '';
+      showLoginOption.value = false;
+      
+      // Voltar para tela anterior (user_password)
+      Get.back();
+      
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro Firebase ao cancelar verificação: ${e.code}');
+      }
+      
+      // Limpar dados mesmo com erro
+      _tempEmail = null;
+      _tempPassword = null;
+      
+      // Mesmo com erro, voltar para tela anterior
+      // Usuário pode ter sido deletado ou não estar mais autenticado
+      Get.back();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro ao cancelar verificação: $e');
+      }
+      
+      // Limpar dados mesmo com erro
+      _tempEmail = null;
+      _tempPassword = null;
+      
+      // Mesmo com erro, voltar para tela anterior
+      Get.back();
+    }
+  }
 
   /// Envia código de verificação OTP
   Future<void> sendVerificationCode() async {
@@ -465,16 +657,33 @@ class OnboardingController extends GetxController {
         errorMessage.value = 'Selecione um nível.';
         return;
       }
+      if (learningReason.value.isEmpty) {
+        errorMessage.value = 'Selecione o motivo de aprendizado.';
+        return;
+      }
       if (studyTime.value.isEmpty) {
         errorMessage.value = 'Selecione o tempo de estudo.';
         return;
       }
 
-      // Validar studyTime é um inteiro válido
-      final studyTimeValue = int.tryParse(studyTime.value);
+      // Extrair número da string studyTime (ex: "10 min / dia" → 10)
+      final studyTimeMatch = RegExp(r'(\d+)').firstMatch(studyTime.value);
+      final studyTimeValue = studyTimeMatch != null ? int.tryParse(studyTimeMatch.group(1)!) : null;
       if (studyTimeValue == null || studyTimeValue <= 0) {
         errorMessage.value = 'Tempo de estudo inválido.';
         return;
+      }
+      
+      // Validar userName e userAge apenas se não for login social
+      if (authProvider.value != 'google') {
+        if (userName.value.isEmpty) {
+          errorMessage.value = 'Digite seu nome.';
+          return;
+        }
+        if (userAge.value.isEmpty) {
+          errorMessage.value = 'Selecione sua idade.';
+          return;
+        }
       }
 
       // Gerar username único a partir do userName (já sanitizado)
@@ -562,8 +771,9 @@ class OnboardingController extends GetxController {
 
       final userId = user.uid;
 
-      // Validar studyTime é um inteiro válido
-      final studyTimeValue = int.tryParse(studyTime.value);
+      // Extrair número da string studyTime (ex: "10 min / dia" → 10)
+      final studyTimeMatch = RegExp(r'(\d+)').firstMatch(studyTime.value);
+      final studyTimeValue = studyTimeMatch != null ? int.tryParse(studyTimeMatch.group(1)!) : null;
       if (studyTimeValue == null || studyTimeValue <= 0) {
         errorMessage.value = 'Tempo de estudo inválido.';
         return;

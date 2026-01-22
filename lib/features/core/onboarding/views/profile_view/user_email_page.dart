@@ -60,10 +60,11 @@ class _UserEmailPageState extends State<UserEmailPage> {
       backgroundColor: AppTheme.white,
       appBar: const OnboardingHeader(progress: 77),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Qual é o seu e-mail?',
@@ -83,7 +84,7 @@ class _UserEmailPageState extends State<UserEmailPage> {
                 keyboardType: TextInputType.emailAddress,
                 errorText: _errorMessage,
               ),
-              const Spacer(),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 200),
               AppButton(
                 text: 'Continuar',
                 onPressed: isValid

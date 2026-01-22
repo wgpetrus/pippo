@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
@@ -45,18 +46,28 @@ class _SigninViewState extends State<SigninView> {
   // Build
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Entrar'),
+      appBar: const AppAppbar(
+        title: 'Entrar',
+        showBack: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.only(
+            left: r.spacing24,
+            right: r.spacing24,
+            top: r.spacing24,
+            bottom: r.spacing24 + r.keyboardHeight,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
+                SizedBox(height: r.spacing8),
                 AppTextField(
                   label: 'Usuário / e-mail',
                   hint: 'digite seu usuário / e-mail',
@@ -64,7 +75,7 @@ class _SigninViewState extends State<SigninView> {
                   keyboardType: TextInputType.emailAddress,
                   validator: _controller.validateEmail,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: r.spacing16),
                 AppTextField(
                   label: 'Senha',
                   hint: 'digite sua senha',
@@ -75,20 +86,40 @@ class _SigninViewState extends State<SigninView> {
                     icon: FaIcon(
                       _obscurePassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
                       color: AppTheme.gray400,
-                      size: 18,
+                      size: r.fontSize16,
                     ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
-                const SizedBox(height: 12),
-                _buildForgotPassword(),
-                const SizedBox(height: 32),
+                SizedBox(height: r.spacing12),
+                _buildForgotPassword(r),
+                SizedBox(height: r.spacing32),
                 Obx(() => _controller.errorMessage.value.isNotEmpty
                     ? Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          _controller.errorMessage.value,
-                          style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
+                        padding: EdgeInsets.only(bottom: r.spacing16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              _controller.errorMessage.value,
+                              style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
+                            ),
+                            // Botão "Fazer login" quando erro de conta existente com credencial diferente
+                            if (_controller.showLoginButton.value) ...[
+                              SizedBox(height: r.spacing12),
+                              AppButton(
+                                text: 'Fazer login com e-mail',
+                                isPrimary: false,
+                                onPressed: () {
+                                  // Limpar erro e focar no formulário
+                                  _controller.errorMessage.value = '';
+                                  _controller.showLoginButton.value = false;
+                                  _emailController.clear();
+                                  _passwordController.clear();
+                                },
+                              ),
+                            ],
+                          ],
                         ),
                       )
                     : const SizedBox.shrink()),
@@ -106,8 +137,8 @@ class _SigninViewState extends State<SigninView> {
                               }
                             },
                     )),
-                const SizedBox(height: 20),
-                _buildSocialButtons(),
+                SizedBox(height: r.spacing16),
+                _buildSocialButtons(r),
               ],
             ),
           ),
@@ -117,7 +148,7 @@ class _SigninViewState extends State<SigninView> {
   }
 
   // Widgets
-  Widget _buildForgotPassword() {
+  Widget _buildForgotPassword(ResponsiveUtils r) {
     return Obx(() => GestureDetector(
           onTap: _controller.isLoading.value ? null : _controller.goToForgotPassword,
           child: Opacity(
@@ -125,16 +156,26 @@ class _SigninViewState extends State<SigninView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Esqueceu sua senha', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary)),
-                const SizedBox(height: 2),
-                Container(height: 1.5, width: 165, color: AppTheme.primary),
+                Text(
+                  'Esqueceu sua senha',
+                  style: AppTheme.textMdSemibold.copyWith(
+                    color: AppTheme.primary,
+                    fontSize: r.fontSize14,
+                  ),
+                ),
+                SizedBox(height: r.spacing4 / 2),
+                Container(
+                  height: 1.5,
+                  width: r.value(mobile: 165, tablet: 180, desktop: 200),
+                  color: AppTheme.primary,
+                ),
               ],
             ),
           ),
         ));
   }
 
-  Widget _buildSocialButtons() {
+  Widget _buildSocialButtons(ResponsiveUtils r) {
     return Obx(() => Row(
           children: [
             Expanded(
@@ -144,7 +185,7 @@ class _SigninViewState extends State<SigninView> {
                 onPressed: _controller.isLoading.value ? null : _controller.onFacebookTap,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: r.spacing12),
             Expanded(
               child: SocialButton(
                 text: 'Gmail',

@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regra para users
+    match /users/{userId} {
+      // Permitir leitura se for o próprio usuário ou autenticado
+      allow read: if request.auth != null;
+      
+      // Permitir criação apenas se for o próprio usuário
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Permitir atualização apenas se for o próprio usuário
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Não permitir deleção (usar Cloud Function para soft delete)
+      allow delete: if false;
+      
+      // Subcoleções
+      match /courses/{courseId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /stats/{statId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Regra para emailVerifications (OTP)
+    match /emailVerifications/{email} {
+      // Permitir leitura/escrita apenas para o próprio email
+      allow read, write: if request.auth != null;
+    }
+    
+    // Regra para passwordResets (OTP)
+    match /passwordResets/{email} {
+      // Permitir leitura/escrita para qualquer usuário (necessário para reset)
+      allow read, write: if true;
+    }
+  }
+}

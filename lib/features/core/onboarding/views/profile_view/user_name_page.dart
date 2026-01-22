@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
+import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../controllers/onboarding_controller.dart';
@@ -28,6 +29,7 @@ class _UserNamePageState extends State<UserNamePage> {
   String? _errorMessage;
 
   // Lifecycle
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +52,7 @@ class _UserNamePageState extends State<UserNamePage> {
   }
 
   // Métodos
+
   void _validateInput() {
     setState(() {
       _errorMessage = ValidationHelper.validateName(_nameController.text);
@@ -57,8 +60,10 @@ class _UserNamePageState extends State<UserNamePage> {
   }
 
   // Build
+
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
     final hasText = _nameController.text.isNotEmpty;
     final isValid = hasText && _errorMessage == null;
 
@@ -66,21 +71,22 @@ class _UserNamePageState extends State<UserNamePage> {
       backgroundColor: AppTheme.white,
       appBar: const OnboardingHeader(progress: 55),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(r.spacing24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Qual é o seu nome?',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: r.spacing24),
               Text(
                 'Nome',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: r.spacing8),
               OnboardingTextField(
                 controller: _nameController,
                 focusNode: _focusNode,
@@ -88,7 +94,7 @@ class _UserNamePageState extends State<UserNamePage> {
                 isFocused: _isFocused,
                 errorText: _errorMessage,
               ),
-              const Spacer(),
+              SizedBox(height: r.hp(40)),
               AppButton(
                 text: 'Continuar',
                 onPressed: isValid
@@ -98,7 +104,7 @@ class _UserNamePageState extends State<UserNamePage> {
                       }
                     : null,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: r.spacing16),
             ],
           ),
         ),

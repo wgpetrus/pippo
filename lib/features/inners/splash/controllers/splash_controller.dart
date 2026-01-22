@@ -4,8 +4,12 @@ import 'dart:async';
 // Flutter packages
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Controllers
+import '../../../core/onboarding/controllers/onboarding_controller.dart';
 
 /// Controller da splash screen
 class SplashController extends GetxController {
@@ -66,7 +70,20 @@ class SplashController extends GetxController {
       final onboardingCompleted = await _isOnboardingCompleted(userId);
 
       if (!onboardingCompleted) {
-        _navigateToOnboarding();
+        // Configurar OnboardingController antes de navegar
+        // O binding criará o controller se não existir
+        Get.offAllNamed('/onboarding');
+        
+        // Configurar após navegação para garantir que o controller existe
+        Future.microtask(() {
+          try {
+            final onboardingController = Get.find<OnboardingController>();
+            onboardingController.skipWelcome.value = true;
+          } catch (e) {
+            // Controller será criado pelo binding na próxima frame
+            debugPrint('⚠️ OnboardingController não encontrado, será criado pelo binding');
+          }
+        });
       } else {
         _navigateToHome();
       }

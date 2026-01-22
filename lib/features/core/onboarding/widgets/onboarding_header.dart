@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import '../controllers/onboarding_controller.dart';
 import 'bouncing_mascot.dart';
@@ -18,6 +19,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
   final int? progress; // Manual progress override (deprecated, use currentScreen)
   final double expandedHeight;
   final bool showBackButton; // Controls back button visibility
+  final bool showExitButton; // Controls exit button visibility
 
   const OnboardingHeader({
     super.key,
@@ -27,6 +29,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
     this.progress,
     this.expandedHeight = 0.35,
     this.showBackButton = true, // Default: show back button
+    this.showExitButton = true, // Default: show exit button
   });
 
   @override
@@ -63,6 +66,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
         leading: showBackButton ? const AppBackButton() : null,
         title: displayProgress != null ? ProgressBar(progress: displayProgress) : null,
         titleSpacing: 12,
+        actions: showExitButton ? [_buildExitButton(context)] : null,
       );
     }
 
@@ -88,6 +92,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       titleSpacing: 12,
+      actions: showExitButton ? [_buildExitButton(context)] : null,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
@@ -130,6 +135,69 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
         ),
+      ),
+    );
+  }
+
+  // Widgets
+  Widget _buildExitButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: TextButton(
+        onPressed: () => _showExitDialog(context),
+        child: Text(
+          'Sair',
+          style: AppTheme.textMdBold.copyWith(color: AppTheme.error),
+        ),
+      ),
+    );
+  }
+
+  // Métodos
+  void _showExitDialog(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        contentPadding: EdgeInsets.all(r.spacing16),
+        title: Text(
+          'Sair do cadastro?',
+          style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
+        ),
+        content: Text(
+          'Seu progresso será perdido e você precisará começar novamente.',
+          style: AppTheme.textMd.copyWith(color: AppTheme.black),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancelar',
+              style: AppTheme.textMdBold.copyWith(color: AppTheme.gray700),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              try {
+                final controller = Get.find<OnboardingController>();
+                controller.exitOnboarding();
+              } catch (e) {
+                // Controller não encontrado, apenas voltar
+                Get.offAllNamed('/onboarding');
+              }
+            },
+            child: Text(
+              'Sair',
+              style: AppTheme.textMdBold.copyWith(color: AppTheme.error),
+            ),
+          ),
+        ],
       ),
     );
   }

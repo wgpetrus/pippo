@@ -151,6 +151,17 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                           }
                         },
                 )),
+                
+                const SizedBox(height: 12),
+                
+                // Botão cancelar
+                AppButton(
+                  text: 'Cancelar',
+                  isPrimary: false,
+                  onPressed: _controller.isLoading.value
+                      ? null
+                      : _controller.backToSignin,
+                ),
               ],
             ),
           ),

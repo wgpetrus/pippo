@@ -169,6 +169,18 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                           ? () {}
                           : _controller.resendVerificationCode,
                     )),
+                    
+                    // Botão cancelar quando teclado está fechado
+                    if (!isKeyboardVisible) ...[
+                      SizedBox(height: r.spacing24),
+                      AppButton(
+                        text: 'Cancelar',
+                        isPrimary: false,
+                        onPressed: _controller.isLoading.value
+                            ? null
+                            : _controller.cancelVerification,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -176,14 +188,26 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
             if (isKeyboardVisible)
               Padding(
                 padding: EdgeInsets.fromLTRB(r.spacing24, 0, r.spacing24, r.spacing16),
-                child: Obx(() => AppButton(
-                  text: 'Verify',
-                  isLoading: _controller.isLoading.value,
-                  onPressed: (_isComplete && !_controller.isLoading.value)
-                      ? () => _controller.verifyCode(_pinController.text)
-                      : null,
-                  isPrimary: _isComplete,
-                )),
+                child: Column(
+                  children: [
+                    Obx(() => AppButton(
+                      text: 'Verify',
+                      isLoading: _controller.isLoading.value,
+                      onPressed: (_isComplete && !_controller.isLoading.value)
+                          ? () => _controller.verifyCode(_pinController.text)
+                          : null,
+                      isPrimary: _isComplete,
+                    )),
+                    SizedBox(height: r.spacing12),
+                    AppButton(
+                      text: 'Cancelar',
+                      isPrimary: false,
+                      onPressed: _controller.isLoading.value
+                          ? null
+                          : _controller.cancelVerification,
+                    ),
+                  ],
+                ),
               ),
           ],
         ),
