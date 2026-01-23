@@ -58,27 +58,29 @@ class _CompletePageState extends State<CompletePage> {
     final r = ResponsiveUtils(context);
     
     // Calcula estatísticas
-    final accuracy = (_controller.accuracy * 100).toStringAsFixed(0);
-    final duration = DateTime.now().difference(_controller.lessonStartTime.value);
+    final accuracy = (_controller.accuracy).toStringAsFixed(0);
+    final duration = _controller.startTime.value != null 
+        ? DateTime.now().difference(_controller.startTime.value!)
+        : Duration.zero;
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
     final timeString = '$minutes:${seconds.toString().padLeft(2, '0')}';
 
     // Calcula XP e gems que serão ganhos (preview)
-    final baseXp = _controller.accuracy >= 0.9
+    final baseXp = _controller.accuracy >= 90
         ? 15
-        : _controller.accuracy >= 0.7
+        : _controller.accuracy >= 70
             ? 13
-            : _controller.accuracy >= 0.5
+            : _controller.accuracy >= 50
                 ? 11
                 : 10;
-    final baseGems = _controller.accuracy >= 0.9
+    final baseGems = _controller.accuracy >= 90
         ? 3
-        : _controller.accuracy >= 0.7
+        : _controller.accuracy >= 70
             ? 2
             : 1;
 
-    // Adiciona bônus se perfeito ou primeira lição do dia
+    // Adiciona bônus se perfeito
     var totalXp = baseXp;
     if (_controller.isPerfect) totalXp += 5;
 
@@ -139,12 +141,22 @@ class _CompletePageState extends State<CompletePage> {
               const Spacer(),
 
               // Cards de estatísticas
-              r.isLandscape
+              Obx(() {
+                // Recalcula valores reativamente
+                final currentAccuracy = (_controller.accuracy).toStringAsFixed(0);
+                final currentDuration = _controller.startTime.value != null 
+                    ? DateTime.now().difference(_controller.startTime.value!)
+                    : Duration.zero;
+                final currentMinutes = currentDuration.inMinutes;
+                final currentSeconds = currentDuration.inSeconds % 60;
+                final currentTimeString = '$currentMinutes:${currentSeconds.toString().padLeft(2, '0')}';
+                
+                return r.isLandscape
                   ? Row(
                       children: [
                         Expanded(
                           child: _buildStatCard(
-                            context: context,
+                            r: r,
                             icon: AppAssets.treasureXpCoin,
                             value: totalXp.toString(),
                             label: 'XP Total',
@@ -154,9 +166,9 @@ class _CompletePageState extends State<CompletePage> {
                         SizedBox(width: r.spacing12),
                         Expanded(
                           child: _buildStatCard(
-                            context: context,
+                            r: r,
                             icon: AppAssets.treasureTarget,
-                            value: '$accuracy%',
+                            value: '$currentAccuracy%',
                             label: _controller.isPerfect ? 'Perfeito!' : 'Excelente',
                             color: AppTheme.pink,
                           ),
@@ -164,9 +176,9 @@ class _CompletePageState extends State<CompletePage> {
                         SizedBox(width: r.spacing12),
                         Expanded(
                           child: _buildStatCard(
-                            context: context,
+                            r: r,
                             icon: AppAssets.lessonClock,
-                            value: timeString,
+                            value: currentTimeString,
                             label: 'Tempo',
                             color: AppTheme.orange,
                           ),
@@ -174,7 +186,7 @@ class _CompletePageState extends State<CompletePage> {
                         SizedBox(width: r.spacing12),
                         Expanded(
                           child: _buildStatCard(
-                            context: context,
+                            r: r,
                             icon: AppAssets.appbarGem,
                             value: baseGems.toString(),
                             label: 'Gemas',
@@ -189,7 +201,7 @@ class _CompletePageState extends State<CompletePage> {
                           children: [
                             Expanded(
                               child: _buildStatCard(
-                                context: context,
+                                r: r,
                                 icon: AppAssets.treasureXpCoin,
                                 value: totalXp.toString(),
                                 label: 'XP Total',
@@ -199,9 +211,9 @@ class _CompletePageState extends State<CompletePage> {
                             SizedBox(width: r.spacing12),
                             Expanded(
                               child: _buildStatCard(
-                                context: context,
+                                r: r,
                                 icon: AppAssets.treasureTarget,
-                                value: '$accuracy%',
+                                value: '$currentAccuracy%',
                                 label: _controller.isPerfect ? 'Perfeito!' : 'Excelente',
                                 color: AppTheme.pink,
                               ),
@@ -213,9 +225,9 @@ class _CompletePageState extends State<CompletePage> {
                           children: [
                             Expanded(
                               child: _buildStatCard(
-                                context: context,
+                                r: r,
                                 icon: AppAssets.lessonClock,
-                                value: timeString,
+                                value: currentTimeString,
                                 label: 'Tempo',
                                 color: AppTheme.orange,
                               ),
@@ -223,7 +235,7 @@ class _CompletePageState extends State<CompletePage> {
                             SizedBox(width: r.spacing12),
                             Expanded(
                               child: _buildStatCard(
-                                context: context,
+                                r: r,
                                 icon: AppAssets.appbarGem,
                                 value: baseGems.toString(),
                                 label: 'Gemas',
@@ -233,7 +245,8 @@ class _CompletePageState extends State<CompletePage> {
                           ],
                         ),
                       ],
-                    ),
+                    );
+              }),
 
               SizedBox(height: r.spacing24),
 
@@ -256,13 +269,12 @@ class _CompletePageState extends State<CompletePage> {
 
   // Widget de card de estatística
   Widget _buildStatCard({
-    required BuildContext context,
+    required ResponsiveUtils r,
     required String icon,
     required String value,
     required String label,
     required Color color,
   }) {
-    final r = ResponsiveUtils(context);
 
     return Container(
       decoration: BoxDecoration(

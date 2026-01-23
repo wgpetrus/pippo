@@ -297,8 +297,8 @@ This plan implements the core lesson system for Pippo, following a strict order-
   - Ensure controller is disposed properly
   - _Requirements: All_
 
-- [ ] 21. Implement lesson views (UI only, no logic)
-  - [ ] 21.1 Create ImageExercisePage
+- [x] 21. Implement lesson views (UI only, no logic)
+  - [x] 21.1 Create ImageExercisePage
     - Use ExerciseHeader (progress, close, hearts)
     - Use MascotBubble for question
     - Display 4 ImageWithLabel options
@@ -306,7 +306,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Mark TODO comments for controller integration
     - _Requirements: 2.1, 2.2_
 
-  - [ ] 21.2 Create TranslationExercisePage
+  - [x] 21.2 Create TranslationExercisePage
     - Use ExerciseHeader
     - Use AudioCard for word with audio
     - Display 4 LessonOptionCard for translations
@@ -314,7 +314,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Mark TODO comments for controller integration
     - _Requirements: 2.3, 2.4_
 
-  - [ ] 21.3 Create WordExercisePage
+  - [x] 21.3 Create WordExercisePage
     - Use ExerciseHeader
     - Use MascotBubble for instruction
     - Use WordZone for answer area
@@ -323,7 +323,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Mark TODO comments for controller integration
     - _Requirements: 2.5, 2.6_
 
-  - [ ] 21.4 Create MatchExercisePage
+  - [x] 21.4 Create MatchExercisePage
     - Use ExerciseHeader
     - Display two columns of AudioWordButton
     - Show connection lines for pairs
@@ -331,7 +331,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Mark TODO comments for controller integration
     - _Requirements: 2.7, 2.8, 2.9_
 
-  - [ ] 21.5 Create CompletePage
+  - [x] 21.5 Create CompletePage
     - Display mascot celebrating
     - Show title "Lesson Complete!"
     - Display statistics (XP, accuracy, time)
@@ -339,7 +339,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Mark TODO comments for controller integration
     - _Requirements: 5.1_
 
-  - [ ] 21.6 Create FailPage
+  - [x] 21.6 Create FailPage
     - Display sad mascot
     - Show title "Lesson Failed"
     - Display message about hearts
@@ -347,11 +347,11 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Mark TODO comments for controller integration
     - _Requirements: 3.4_
 
-- [ ] 22. Checkpoint - Ensure UI is complete
+- [x] 22. Checkpoint - Ensure UI is complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 23. Connect views to controller (Etapa 8)
-  - [ ] 23.1 Connect ImageExercisePage to controller
+- [x] 23. Connect views to controller (Etapa 8)
+  - [x] 23.1 Connect ImageExercisePage to controller
     - Add Get.find<LessonController>() in initState
     - Wrap reactive widgets with Obx()
     - Connect image selection to controller.submitAnswer()
@@ -360,7 +360,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Remove TODO comments
     - _Requirements: 2.2, 3.2, 4.1, 4.2_
 
-  - [ ] 23.2 Connect TranslationExercisePage to controller
+  - [x] 23.2 Connect TranslationExercisePage to controller
     - Add Get.find<LessonController>()
     - Wrap reactive widgets with Obx()
     - Connect translation selection to controller.submitAnswer()
@@ -368,7 +368,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Remove TODO comments
     - _Requirements: 2.4, 3.2, 4.1, 4.2_
 
-  - [ ] 23.3 Connect WordExercisePage to controller
+  - [x] 23.3 Connect WordExercisePage to controller
     - Add Get.find<LessonController>()
     - Wrap reactive widgets with Obx()
     - Connect word arrangement to controller.submitAnswer()
@@ -376,7 +376,7 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Remove TODO comments
     - _Requirements: 2.6, 3.2, 4.1, 4.2_
 
-  - [ ] 23.4 Connect MatchExercisePage to controller
+  - [x] 23.4 Connect MatchExercisePage to controller
     - Add Get.find<LessonController>()
     - Wrap reactive widgets with Obx()
     - Connect pair matching to controller.submitAnswer()
@@ -384,34 +384,28 @@ This plan implements the core lesson system for Pippo, following a strict order-
     - Remove TODO comments
     - _Requirements: 2.9, 3.2, 4.1, 4.2_
 
-  - [ ] 23.5 Connect CompletePage to controller
+  - [x] 23.5 Connect CompletePage to controller
     - Display rewards from controller
     - Show level up if occurred
     - Connect continue button to navigation
     - Remove TODO comments
     - _Requirements: 5.1, 6.4_
 
-  - [ ] 23.6 Connect FailPage to controller
+  - [x] 23.6 Connect FailPage to controller
     - Display fail message
     - Connect try again button to restart
     - Remove TODO comments
     - _Requirements: 3.4_
 
-- [ ] 24. Add lesson routes to app_routes.dart
-  - Add route for sections page (lesson selection)
-  - Add routes for all exercise types
-  - Add routes for complete/fail pages
-  - Register LessonBinding
+- [x] 24. Integrate lesson system with home flow
+  - Add LessonBinding registration in main.dart or home flow (if needed globally)
+  - Update home course button to navigate to SectionsPage via Get.to()
+  - Ensure LessonController is accessible when navigating from home
+  - Verify navigation flow: Home → SectionsPage → Exercises → Complete/Fail → Home
+  - All lesson navigation uses Get.to() and Get.back() (NO new routes needed)
   - _Requirements: All_
 
-- [ ] 25. Integrate with existing home flow
-  - Connect lesson button in home to lesson start
-  - Pass courseId and lessonId parameters
-  - Handle navigation back to home after completion
-  - Update home stats after lesson completion
-  - _Requirements: All_
-
-- [ ] 26. Final checkpoint - End-to-end testing
+- [x] 25. Final checkpoint - End-to-end testing
   - Test complete lesson flow (start → exercises → completion)
   - Test failed lesson flow (start → wrong answers → failure)
   - Test resume lesson flow (start → pause → resume → complete)

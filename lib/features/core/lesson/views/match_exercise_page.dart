@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
 import '../controllers/lesson_controller.dart';
@@ -25,14 +26,6 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   int? _selectedTextIndex;
   final Set<int> _matchedPairs = {};
 
-  // Dados mockados (índices correspondem)
-  final _pairs = [
-    {'audio': 'audio_i', 'text': 'Eu'},
-    {'audio': 'audio_cat', 'text': 'Gato'},
-    {'audio': 'audio_and', 'text': 'e'},
-    {'audio': 'audio_boy', 'text': 'menino'},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -41,13 +34,25 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
+    // Obter exercício atual do controller
+    if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+      return const Scaffold(
+        body: Center(child: Text('Exercício não encontrado')),
+      );
+    }
+    
+    final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
+    final pairs = (currentExercise['pairs'] as List?) ?? [];
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: r.spacing16),
 
             // Header
             Obx(() => ExerciseHeader(
@@ -56,28 +61,28 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
                   onBack: () => Get.back(),
                 )),
 
-            const SizedBox(height: 24),
+            SizedBox(height: r.spacing24),
 
             // Título
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: r.spacing20),
               child: Text(
-                'Toque nos pares correspondentes',
+                currentExercise['prompt'] as String? ?? 'Toque nos pares correspondentes',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: r.spacing32),
 
             // Pares
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: r.spacing20),
                 child: Column(
                   children: [
-                    for (int i = 0; i < _pairs.length; i++) ...[
-                      _buildPairRow(i),
-                      if (i < _pairs.length - 1) const SizedBox(height: 16),
+                    for (int i = 0; i < pairs.length; i++) ...[
+                      _buildPairRow(i, pairs, r),
+                      if (i < pairs.length - 1) SizedBox(height: r.spacing16),
                     ],
                   ],
                 ),
@@ -88,7 +93,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
             Center(
               child: TextButton(
                 onPressed: () {
-                  // TODO: Pular exercício de áudio
+                  // TODO: Implementar skip de exercício de áudio
                 },
                 child: Text(
                   "Não posso ouvir agora",
@@ -102,11 +107,14 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
             // Botão Check
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: AppButton(
-                text: 'Verificar',
-                onPressed: _matchedPairs.length == _pairs.length ? _onCheck : null,
-              ),
+              padding: EdgeInsets.all(r.spacing20),
+              child: Obx(() => AppButton(
+                    text: 'Verificar',
+                    isLoading: _controller.isLoading.value,
+                    onPressed: _matchedPairs.length == pairs.length && !_controller.isLoading.value
+                        ? _onCheck
+                        : null,
+                  )),
             ),
           ],
         ),
@@ -116,11 +124,12 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
   // Widgets
 
-  Widget _buildPairRow(int index) {
+  Widget _buildPairRow(int index, List pairs, ResponsiveUtils r) {
     final isMatched = _matchedPairs.contains(index);
+    final pair = pairs[index];
 
     return SizedBox(
-      height: 56,
+      height: r.height(56, min: 48, max: 64),
       child: Row(
         children: [
           // Card de áudio
@@ -131,12 +140,12 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
             ),
           ),
 
-          const SizedBox(width: 12),
+          SizedBox(width: r.spacing12),
 
           // Card de texto
           Expanded(
             child: LessonOptionCard(
-              label: _pairs[index]['text']!,
+              label: pair['text'] as String? ?? '',
               status: _getTextStatus(index),
               onTap: isMatched ? null : () => _onTextTap(index),
             ),
@@ -190,21 +199,31 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     }
   }
 
-  void _onCheck() {
-    // Todos os pares foram combinados corretamente
-    // Registra como resposta correta
-    _controller.recordAnswer(isCorrect: true);
+  void _onCheck() async {
+    // Submete resposta ao controller
+    // O controller valida se todos os pares estão corretos
+    await _controller.submitAnswer(userAnswer: _matchedPairs.toList());
 
+    // Mostra feedback
     FeedbackBottomSheet.show(
       context,
-      type: FeedbackType.correct,
+      type: _controller.isCorrectAnswer.value 
+          ? FeedbackType.correct 
+          : FeedbackType.incorrect,
+      correctAnswer: _controller.correctAnswerText.value,
       onContinue: _onContinue,
     );
   }
 
   void _onContinue() {
-    // Avança para o próximo exercício (último da lição)
+    // Controller gerencia navegação para próximo exercício ou tela de conclusão
     _controller.nextExercise();
-    Get.off(() => const CompletePage());
+    
+    // Reseta estado local para próximo exercício
+    setState(() {
+      _matchedPairs.clear();
+      _selectedAudioIndex = null;
+      _selectedTextIndex = null;
+    });
   }
 }

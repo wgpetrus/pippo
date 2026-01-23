@@ -11,6 +11,7 @@ import '../widgets/audio_word_button.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/lesson_option_card.dart';
+import 'complete_page.dart';
 import 'translation_exercise_page.dart';
 
 /// Página de exercício de seleção de imagem
@@ -25,25 +26,32 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
   late final LessonController _controller;
   int? _selectedIndex;
 
-  // Dados mockados
-  final _correctIndex = 0;
-  final _options = [
-    {'image': AppAssets.lessonBoy, 'label': 'Menino'},
-    {'image': AppAssets.lessonWaiter, 'label': 'Garçom'},
-    {'image': AppAssets.lessonGirl, 'label': 'Menina'},
-    {'image': AppAssets.lessonDog, 'label': 'Cachorro'},
-  ];
-
   @override
   void initState() {
     super.initState();
     _controller = Get.find<LessonController>();
   }
 
+  Map<String, dynamic> get _currentExercise {
+    if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+      return {};
+    }
+    return _controller.currentExercises[_controller.currentExerciseIndex.value];
+  }
+
+  List<dynamic> get _options => _currentExercise['options'] as List? ?? [];
+
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    
+
+    // Validação de exercício
+    if (_currentExercise.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('Exercício não encontrado')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: SafeArea(
@@ -65,7 +73,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: r.spacing16),
               child: Text(
-                'Selecione a imagem correta',
+                _currentExercise['prompt'] as String? ?? 'Selecione a imagem correta',
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
             ),
@@ -76,7 +84,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: r.spacing16),
               child: AudioWordButton(
-                word: 'le garçon',
+                word: _currentExercise['word'] as String? ?? '',
                 onTap: () {
                   // TODO: Tocar áudio
                 },
@@ -99,9 +107,10 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
                   ),
                   itemCount: _options.length,
                   itemBuilder: (context, index) {
+                    final option = _options[index];
                     return LessonOptionCard(
-                      imageAsset: _options[index]['image']!,
-                      label: _options[index]['label']!,
+                      imageAsset: option['image'] as String? ?? '',
+                      label: option['label'] as String? ?? '',
                       showImage: true,
                       status: _selectedIndex == index
                           ? LessonOptionStatus.selected
@@ -116,10 +125,13 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
             // Botão Check
             Padding(
               padding: EdgeInsets.all(r.spacing16),
-              child: AppButton(
-                text: 'Verificar',
-                onPressed: _selectedIndex != null ? _onCheck : null,
-              ),
+              child: Obx(() => AppButton(
+                    text: 'Verificar',
+                    isLoading: _controller.isLoading.value,
+                    onPressed: _selectedIndex != null && !_controller.isLoading.value
+                        ? _onCheck
+                        : null,
+                  )),
             ),
           ],
         ),
@@ -135,25 +147,29 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
     });
   }
 
-  void _onCheck() {
+  void _onCheck() async {
     if (_selectedIndex == null) return;
 
-    final isCorrect = _selectedIndex == _correctIndex;
+    final selectedOption = _options[_selectedIndex!];
+    final selectedImageId = selectedOption['id'] as String;
 
-    // Registra a resposta no controller
-    _controller.recordAnswer(isCorrect: isCorrect);
-
-    FeedbackBottomSheet.show(
-      context,
-      type: isCorrect ? FeedbackType.correct : FeedbackType.wrong,
-      correctAnswer: _options[_correctIndex]['label'],
-      onContinue: _onContinue,
-    );
+    // Submete a resposta ao controller
+    await _controller.submitAnswer(selectedImageId, 'image');
   }
 
   void _onContinue() {
     // Avança para o próximo exercício
     _controller.nextExercise();
-    Get.off(() => const TranslationExercisePage());
+    
+    // Verifica se há mais exercícios
+    if (_controller.currentExerciseIndex.value < _controller.currentExercises.length) {
+      // Continua na mesma tela (próximo exercício)
+      setState(() {
+        _selectedIndex = null;
+      });
+    } else {
+      // Último exercício - navega para tela de conclusão
+      Get.off(() => const CompletePage());
+    }
   }
 }

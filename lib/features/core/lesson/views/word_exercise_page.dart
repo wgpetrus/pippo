@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,7 +11,7 @@ import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/mascot_bubble.dart';
 import '../widgets/word_chip.dart';
 import '../widgets/word_zone.dart';
-import 'match_exercise_page.dart';
+import 'complete_page.dart';
 
 /// Página de exercício de ordenação de palavras
 class WordExercisePage extends StatefulWidget {
@@ -28,11 +27,6 @@ class _WordExercisePageState extends State<WordExercisePage> {
   // Palavras selecionadas (resposta)
   final List<String> _selectedWords = [];
 
-  // Dados mockados
-  final _sentence = "J'apprends une.";
-  final _correctAnswer = ['Eu', 'estou', 'aprendendo', 'uma'];
-  final _availableWords = ['língua', 'velho', 'estudar', 'novo', 'Eu', 'estou', 'aprendendo', 'uma'];
-
   @override
   void initState() {
     super.initState();
@@ -41,88 +35,116 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
+    return Obx(() {
+      // Tratamento de erro
+      if (_controller.errorMessage.value.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Get.snackbar(
+            'Erro',
+            _controller.errorMessage.value,
+            backgroundColor: AppTheme.red,
+            colorText: AppTheme.white,
+          );
+        });
+      }
 
-            // Header
-            Obx(() => ExerciseHeader(
-                  progress: _controller.progress,
-                  energy: Get.find<GamificationController>().currentEnergy.value,
-                  onBack: () => Get.back(),
-                )),
+      // Obter exercício atual do controller
+      if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+        return const Scaffold(
+          body: Center(child: Text('Exercício não encontrado')),
+        );
+      }
+      
+      final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
+      final sentence = currentExercise['sentence'] as String? ?? '';
+      final availableWords = (currentExercise['availableWords'] as List?)?.cast<String>() ?? [];
+      
+      return Scaffold(
+        backgroundColor: AppTheme.white,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 24),
-
-            // Título
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Selecione a tradução correta',
-                style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+              // Header
+              ExerciseHeader(
+                progress: _controller.progress,
+                energy: Get.find<GamificationController>().currentEnergy.value,
+                onBack: () => Get.back(),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-            // Mascote com balão de áudio
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: MascotBubble(
-                mascotAsset: AppAssets.lessonMascotFire,
-                text: _sentence,
-                onAudioTap: () {
-                  // TODO: Tocar áudio
-                },
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Zona de resposta
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: WordZone(
-                words: _selectedWords,
-                onWordTap: _onRemoveWord,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Palavras disponíveis
-            Expanded(
-              child: Padding(
+              // Título
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildAvailableWords(),
+                child: Text(
+                  currentExercise['prompt'] as String? ?? 'Selecione a tradução correta',
+                  style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+                ),
               ),
-            ),
 
-            // Botão Check
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: AppButton(
-                text: 'Verificar',
-                onPressed: _selectedWords.isNotEmpty ? _onCheck : null,
+              const SizedBox(height: 20),
+
+              // Mascote com balão de áudio
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: MascotBubble(
+                  mascotAsset: AppAssets.lessonMascotFire,
+                  text: sentence,
+                  onAudioTap: () {
+                    // TODO: Tocar áudio
+                  },
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 24),
+
+              // Zona de resposta
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: WordZone(
+                  words: _selectedWords,
+                  onWordTap: _onRemoveWord,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Palavras disponíveis
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildAvailableWords(availableWords),
+                ),
+              ),
+
+              // Botão Check
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: AppButton(
+                  text: 'Verificar',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: _selectedWords.isNotEmpty && !_controller.isLoading.value
+                      ? _onCheck
+                      : null,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   // Widgets
 
-  Widget _buildAvailableWords() {
+  Widget _buildAvailableWords(List<String> availableWords) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _availableWords.map((word) {
+      children: availableWords.map((word) {
         final isSelected = _selectedWords.contains(word);
         return WordChip(
           text: word,
@@ -147,18 +169,18 @@ class _WordExercisePageState extends State<WordExercisePage> {
     });
   }
 
-  void _onCheck() {
+  void _onCheck() async {
     if (_selectedWords.isEmpty) return;
 
-    final isCorrect = listEquals(_selectedWords, _correctAnswer);
+    // Submete a resposta ao controller
+    await _controller.submitAnswer(_selectedWords, 'word_order');
 
-    // Registra a resposta no controller
-    _controller.recordAnswer(isCorrect: isCorrect);
-
+    // Mostra feedback
+    if (!mounted) return;
     FeedbackBottomSheet.show(
       context,
-      type: isCorrect ? FeedbackType.correct : FeedbackType.wrong,
-      correctAnswer: _correctAnswer.join(' '),
+      type: _controller.isCorrectAnswer.value ? FeedbackType.correct : FeedbackType.wrong,
+      correctAnswer: _controller.correctAnswerText.value,
       onContinue: _onContinue,
     );
   }
@@ -166,6 +188,16 @@ class _WordExercisePageState extends State<WordExercisePage> {
   void _onContinue() {
     // Avança para o próximo exercício
     _controller.nextExercise();
-    Get.off(() => const MatchExercisePage());
+    
+    // Verifica se há mais exercícios
+    if (_controller.currentExerciseIndex.value < _controller.currentExercises.length) {
+      // Continua na mesma tela (próximo exercício)
+      setState(() {
+        _selectedWords.clear();
+      });
+    } else {
+      // Último exercício - navega para tela de conclusão
+      Get.off(() => const CompletePage());
+    }
   }
 }

@@ -1347,7 +1347,7 @@ class LessonController extends GetxController {
   
   /// Retoma o rastreamento de tempo da lição
   /// Reinicia o startTime sem perder o tempo acumulado
-  void resumeLesson() {
+  void resumeTimeTracking() {
     if (pauseTime.value == null) return;
     
     startTime.value = DateTime.now();
