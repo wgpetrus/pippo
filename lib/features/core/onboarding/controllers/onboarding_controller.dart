@@ -1,12 +1,17 @@
+// Dart SDK
 import 'dart:async';
 import 'dart:math';
 
+// Flutter
+import 'package:flutter/foundation.dart';
+
+// Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Imports locais
 import '../../../../shared/utils/validation_helper.dart';
 import '../navigation/onboarding_navigation.dart';
 
@@ -88,19 +93,87 @@ class OnboardingController extends GetxController {
   /// Verifica se deve pular verificação OTP (login social)
   bool shouldSkipVerifyCode() => authProvider.value == 'google';
 
+  /// Lida com skip welcome (usuário autenticado retornando ao onboarding)
+  Future<void> handleSkipWelcome() async {
+    await configureAuthenticatedUser();
+    nav.goToSelectLanguage();
+  }
+
   /// Configura dados do usuário autenticado (login com onboarding incompleto)
-  void configureAuthenticatedUser() {
+  Future<void> configureAuthenticatedUser() async {
     final user = _auth.currentUser;
-    if (user != null) {
-      userEmail.value = user.email ?? '';
-      userName.value = user.displayName ?? '';
+    if (user == null) return;
+    
+    // Carregar dados básicos do Firebase Auth
+    userEmail.value = user.email ?? '';
+    userName.value = user.displayName ?? '';
+    
+    // Detectar provider
+    final providers = user.providerData.map((p) => p.providerId).toList();
+    if (providers.contains('google.com')) {
+      authProvider.value = 'google';
+    } else {
+      authProvider.value = 'email';
+    }
+    
+    // Carregar dados parciais do Firestore (se existirem)
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(const Duration(seconds: 30));
       
-      // Detectar provider
-      final providers = user.providerData.map((p) => p.providerId).toList();
-      if (providers.contains('google.com')) {
-        authProvider.value = 'google';
-      } else {
-        authProvider.value = 'email';
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        
+        // Carregar dados do onboarding se existirem
+        if (data['name'] != null) userName.value = data['name'];
+        if (data['age'] != null) userAge.value = data['age'];
+        
+        if (kDebugMode) {
+          debugPrint('✅ Dados parciais carregados do Firestore');
+          debugPrint('   - name: ${userName.value}');
+          debugPrint('   - age: ${userAge.value}');
+        }
+        
+        // Verificar se há curso parcial (usuário pode ter saído no meio)
+        final coursesSnapshot = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('courses')
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 30));
+        
+        if (coursesSnapshot.docs.isNotEmpty) {
+          final courseData = coursesSnapshot.docs.first.data();
+          
+          // Carregar dados do curso
+          if (courseData['language'] != null) selectedLanguage.value = courseData['language'];
+          if (courseData['level'] != null) languageLevel.value = courseData['level'];
+          if (courseData['reason'] != null) learningReason.value = courseData['reason'];
+          if (courseData['studyTime'] != null) {
+            final studyTimeValue = courseData['studyTime'] as int;
+            studyTime.value = '$studyTimeValue min / dia';
+          }
+          
+          if (kDebugMode) {
+            debugPrint('✅ Dados do curso carregados');
+            debugPrint('   - language: ${selectedLanguage.value}');
+            debugPrint('   - level: ${languageLevel.value}');
+            debugPrint('   - reason: ${learningReason.value}');
+            debugPrint('   - studyTime: ${studyTime.value}');
+          }
+        }
+      }
+    } on TimeoutException {
+      if (kDebugMode) {
+        debugPrint('⚠️ Timeout ao carregar dados do Firestore');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Erro ao carregar dados do Firestore: $e');
       }
     }
   }
@@ -238,8 +311,19 @@ class OnboardingController extends GetxController {
             .timeout(const Duration(seconds: 30));
         
         if (emailQuery.docs.isNotEmpty) {
-          errorMessage.value = 'Este e-mail já está sendo usado por outra conta.';
-          showLoginOption.value = true;
+          // Email já existe - verificar provider
+          final existingUserData = emailQuery.docs.first.data();
+          final existingProvider = existingUserData['authProvider'] as String?;
+          
+          if (existingProvider == 'google') {
+            // Email já existe com login do Google
+            errorMessage.value = 'Já existe uma conta com este e-mail usando login do Google. Por favor, faça login com Google.';
+            showLoginOption.value = true;
+          } else {
+            // Email já existe com outro método de autenticação
+            errorMessage.value = 'Este e-mail já está sendo usado por outra conta.';
+            showLoginOption.value = true;
+          }
           return;
         }
       } on TimeoutException {
@@ -481,7 +565,7 @@ class OnboardingController extends GetxController {
     // BYPASS EM DEBUG MODE
     if (kDebugMode && sanitizedCode == '00000') {
       debugPrint('🔓 DEBUG MODE: Bypass OTP com código $sanitizedCode');
-      await finalizeAccount();
+      await completeOnboarding();
       return;
     }
 
@@ -543,8 +627,12 @@ class OnboardingController extends GetxController {
       // Limpar email temporário (não mais necessário)
       _tempEmail = null;
 
-      // Prosseguir para finalização da conta
-      await finalizeAccount();
+      debugPrint('✅ verifyCode: Código verificado com sucesso. Chamando completeOnboarding...');
+      
+      // Prosseguir para finalização da conta e navegação
+      await completeOnboarding();
+      
+      debugPrint('✅ verifyCode: completeOnboarding finalizado.');
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
@@ -686,6 +774,34 @@ class OnboardingController extends GetxController {
         }
       }
 
+      // Verificar se documento do usuário já existe no Firestore
+      final userDocSnapshot = await _firestore.collection('users').doc(user.uid).get();
+      if (userDocSnapshot.exists) {
+        // Documento já existe (criado pelo AuthController no login social)
+        // Verificar se onboarding já foi completado
+        final existingData = userDocSnapshot.data()!;
+        final alreadyCompleted = existingData['onboardingCompleted'] ?? false;
+        
+        if (alreadyCompleted) {
+          // Onboarding já foi completado anteriormente - não criar duplicados
+          debugPrint('⚠️ Onboarding já foi completado. Pulando criação.');
+          
+          // Salvar isFirstAccess = false no SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isFirstAccess', false);
+          
+          // Resetar isLoading antes de retornar para permitir navegação
+          isLoading.value = false;
+          
+          // Não navega aqui - deixa completeOnboarding() navegar
+          return;
+        }
+        
+        // Documento existe mas onboarding não foi completado
+        // Continuar para atualizar documento e criar curso/stats
+        debugPrint('📝 Documento existe mas onboarding incompleto. Atualizando...');
+      }
+
       // Gerar username único a partir do userName (já sanitizado)
       final username = await _generateUniqueUsername(userName.value);
 
@@ -695,17 +811,30 @@ class OnboardingController extends GetxController {
 
         // 1. Documento do usuário
         final userRef = _firestore.collection('users').doc(user.uid);
-        batch.set(userRef, {
-          'id': user.uid,
-          'email': userEmail.value,
-          'name': userName.value,
-          'username': username,
-          'age': userAge.value,
-          'authProvider': authProvider.value.isEmpty ? 'email' : authProvider.value,
-          'onboardingCompleted': true,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        
+        if (userDocSnapshot.exists) {
+          // Atualizar documento existente (login social)
+          batch.update(userRef, {
+            'name': userName.value,
+            'username': username,
+            'age': userAge.value,
+            'onboardingCompleted': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Criar novo documento (email/senha)
+          batch.set(userRef, {
+            'id': user.uid,
+            'email': userEmail.value,
+            'name': userName.value,
+            'username': username,
+            'age': userAge.value,
+            'authProvider': authProvider.value.isEmpty ? 'email' : authProvider.value,
+            'onboardingCompleted': true,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
 
         // 2. Documento do curso
         final courseRef = userRef.collection('courses').doc();
@@ -740,8 +869,7 @@ class OnboardingController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isFirstAccess', false);
 
-      // Navegar para tela de conclusão
-      nav.goToConclusion();
+      // Sucesso - não navega aqui, deixa completeOnboarding() navegar
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
       // Dados permanecem em memória (userName, userEmail, etc.) para retry
@@ -804,8 +932,7 @@ class OnboardingController extends GetxController {
       // NÃO modificar estatísticas de gamificação
       // NÃO atualizar SharedPreferences
 
-      // Navegar para tela de conclusão
-      nav.goToConclusion();
+      // Sucesso - não navega aqui, deixa completeOnboarding() navegar
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
@@ -819,17 +946,28 @@ class OnboardingController extends GetxController {
 
   /// Completa o onboarding
   Future<void> completeOnboarding() async {
+    debugPrint('🚀 completeOnboarding: Iniciando...');
+    
     // Verificar modo (add course ou novo usuário)
     if (isAddingCourse.value) {
+      debugPrint('📚 completeOnboarding: Modo add course');
       // Modo add course: apenas criar novo curso
       await addNewCourse();
     } else {
+      debugPrint('👤 completeOnboarding: Modo novo usuário');
       // Modo novo usuário: criar documento do usuário, primeiro curso e stats
       await finalizeAccount();
     }
 
-    // Navegar para /home usando Get.offAllNamed em ambos os casos
-    nav.finishOnboarding();
+    debugPrint('✅ completeOnboarding: Finalizou. ErrorMessage: "${errorMessage.value}"');
+    
+    // Navegar para /home usando Get.offAllNamed apenas se não houver erro
+    if (errorMessage.value.isEmpty) {
+      debugPrint('🏠 completeOnboarding: Navegando para home...');
+      nav.finishOnboarding();
+    } else {
+      debugPrint('❌ completeOnboarding: Não navegou devido a erro: ${errorMessage.value}');
+    }
   }
 
   /// Calcula o progresso atual do onboarding

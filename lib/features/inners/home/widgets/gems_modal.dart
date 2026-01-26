@@ -171,8 +171,6 @@ class GemsModal extends StatelessWidget {
     BuildContext context, {
     VoidCallback? onGoToShop,
   }) {
-    final r = ResponsiveUtils(context);
-    
     WoltModalSheet.show(
       context: context,
       pageListBuilder: (context) => [
@@ -181,14 +179,11 @@ class GemsModal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           hasSabGradient: false,
           hasTopBarLayer: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: r.spacing24),
-            child: GemsModal(
-              onGoToShop: () {
-                Navigator.of(context).pop();
-                onGoToShop?.call();
-              },
-            ),
+          child: GemsModal(
+            onGoToShop: () {
+              Navigator.of(context).pop();
+              onGoToShop?.call();
+            },
           ),
         ),
       ],

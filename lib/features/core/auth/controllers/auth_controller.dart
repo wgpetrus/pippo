@@ -78,6 +78,40 @@ class AuthController extends GetxController {
     showLoginButton.value = false; // Resetar estado
 
     try {
+      // VERIFICAR ANTES DE AUTENTICAR: Se email existe no Firestore com provider Google
+      if (kDebugMode) {
+        debugPrint('🔍 Verificando se email $email já existe no Firestore');
+      }
+      
+      final emailQuery = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email.trim().toLowerCase())
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+      
+      if (emailQuery.docs.isNotEmpty) {
+        // Email já existe - verificar provider
+        final existingUserData = emailQuery.docs.first.data();
+        final existingProvider = existingUserData['authProvider'] as String?;
+        
+        if (kDebugMode) {
+          debugPrint('⚠️ Email já existe com provider: $existingProvider');
+        }
+        
+        if (existingProvider == 'google') {
+          // Email já existe com login do Google - BLOQUEAR
+          errorMessage.value = 'Já existe uma conta com este e-mail usando login do Google. Por favor, faça login com Google.';
+          
+          if (kDebugMode) {
+            debugPrint('🚫 Login com email/senha bloqueado - email já tem conta Google');
+          }
+          
+          return;
+        }
+        // Se provider é 'email', pode continuar
+      }
+      
       // Autenticar via Firebase Auth
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -181,6 +215,41 @@ class AuthController extends GetxController {
         debugPrint('✅ Usuário Google selecionado: ${googleUser.email}');
       }
 
+      // VERIFICAR ANTES DE AUTENTICAR: Se email já existe no Firestore com outro provider
+      if (kDebugMode) {
+        debugPrint('🔍 Verificando se email ${googleUser.email} já existe no Firestore');
+      }
+      
+      final emailQuery = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: googleUser.email)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+      
+      if (emailQuery.docs.isNotEmpty) {
+        // Email já existe - verificar provider
+        final existingUserData = emailQuery.docs.first.data();
+        final existingProvider = existingUserData['authProvider'] as String?;
+        
+        if (kDebugMode) {
+          debugPrint('⚠️ Email já existe com provider: $existingProvider');
+        }
+        
+        if (existingProvider == 'email') {
+          // Email já existe com login por email/senha - BLOQUEAR
+          errorMessage.value = 'Já existe uma conta com este e-mail usando login por email/senha. Por favor, faça login com email e senha.';
+          showLoginButton.value = true;
+          
+          if (kDebugMode) {
+            debugPrint('🚫 Login com Google bloqueado - email já tem conta email/senha');
+          }
+          
+          return;
+        }
+        // Se provider é 'google', pode continuar (é o mesmo usuário)
+      }
+
       // Obter credenciais de autenticação
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
@@ -201,21 +270,7 @@ class AuthController extends GetxController {
           .timeout(const Duration(seconds: 30));
 
       if (!userDoc.exists) {
-        // Verificar se email já existe no Firestore (outro método de auth)
-        final emailQuery = await _firestore
-            .collection('users')
-            .where('email', isEqualTo: userCredential.user!.email)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 30));
-        
-        if (emailQuery.docs.isNotEmpty) {
-          // Email já existe com outro método de autenticação
-          await userCredential.user!.delete();
-          errorMessage.value = 'Este e-mail já tem uma conta. Faça login com e-mail e senha.';
-          showLoginButton.value = true;
-          return;
-        }
+        // Criar novo documento de usuário (email não existia antes)
         
         // Criar novo documento de usuário
         await _firestore

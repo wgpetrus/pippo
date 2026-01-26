@@ -1,11 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
+import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
 import '../widgets/home_appbar.dart';
 
 /// Controller da home
 class HomeController extends GetxController {
+  // Firebase instances
+  final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+
   // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
@@ -15,7 +22,59 @@ class HomeController extends GetxController {
   final selectedStat = Rxn<StatType>();
   final showContinue = false.obs;
 
-  // Métodos
+  // Estados de progresso das lições
+  final completedLessons = <String>[].obs; // IDs das lições completadas
+  final isLoadingProgress = false.obs;
+
+  // Lifecycle
+  @override
+  void onInit() {
+    super.onInit();
+    _loadLessonProgress();
+  }
+
+  // Métodos privados
+  Future<void> _loadLessonProgress() async {
+    isLoadingProgress.value = true;
+
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return;
+
+      // Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (coursesSnapshot.docs.isEmpty) return;
+
+      final courseId = coursesSnapshot.docs.first.id;
+
+      // Buscar progresso das lições
+      final progressSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('progress')
+          .where('status', isEqualTo: 'completed')
+          .get();
+
+      completedLessons.value = progressSnapshot.docs
+          .map((doc) => doc.data()['lessonId'] as String)
+          .toList();
+    } catch (e) {
+      // Silenciosamente falhar - não é crítico
+    } finally {
+      isLoadingProgress.value = false;
+    }
+  }
+
+  // Métodos públicos
   void onNavTap(int index) {
     currentNavIndex.value = index;
   }
@@ -26,6 +85,12 @@ class HomeController extends GetxController {
 
   void onStartTap() {
     showContinue.value = true;
+    
+    // Garantir que o LessonController está registrado antes de navegar
+    if (!Get.isRegistered<LessonController>()) {
+      Get.put(LessonController());
+    }
+    
     Get.to(() => const SectionsPage(courseName: 'French'));
   }
 
@@ -38,5 +103,10 @@ class HomeController extends GetxController {
 
   void goToShop() {
     currentNavIndex.value = 2; // Tab 2 = Shop
+  }
+
+  /// Recarrega o progresso das lições (chamar após completar uma lição)
+  Future<void> reloadProgress() async {
+    await _loadLessonProgress();
   }
 }

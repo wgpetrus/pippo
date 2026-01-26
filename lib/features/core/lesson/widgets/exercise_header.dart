@@ -25,21 +25,23 @@ class ExerciseHeader extends StatelessWidget {
       child: Row(
         children: [
           // Botão voltar (sem margem extra)
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: AppTheme.primary,
-              shape: BoxShape.circle,
+          // Se onBack é null, não mostra o botão (após verificar resposta)
+          if (onBack != null)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: AppTheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppTheme.white, size: 18),
+                onPressed: onBack,
+              ),
             ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppTheme.white, size: 18),
-              onPressed: onBack ?? () => Get.back(),
-            ),
-          ),
 
-          const SizedBox(width: 12),
+          if (onBack != null) const SizedBox(width: 12),
 
           // Barra de progresso
           Expanded(

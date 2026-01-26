@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../../../inners/home/controllers/home_controller.dart';
+import '../../../../shared/mocks/lesson_mocks.dart';
 
 /// Controller para gerenciar o fluxo de lições e exercícios
 class LessonController extends GetxController {
@@ -34,6 +36,7 @@ class LessonController extends GetxController {
   final showFeedback = false.obs;
   final isCorrectAnswer = false.obs;
   final correctAnswerText = ''.obs;
+  final lessonFailed = false.obs; // Flag para indicar que a lição falhou
 
   // Getters
   double get progress => currentExercises.isNotEmpty
@@ -53,7 +56,11 @@ class LessonController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _gamificationController = Get.find<GamificationController>();
+    try {
+      _gamificationController = Get.find<GamificationController>();
+    } catch (e) {
+      errorMessage.value = 'Erro ao inicializar sistema de gamificação.';
+    }
   }
 
   @override
@@ -69,12 +76,53 @@ class LessonController extends GetxController {
 
   // Métodos públicos
   
+  /// Inicia uma lição do curso ativo do usuário
+  /// Busca automaticamente o courseId do curso ativo no Firestore
+  Future<void> startLessonFromActiveCourse(String lessonId) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        errorMessage.value = 'Usuário não autenticado.';
+        return;
+      }
+
+      // Buscar curso ativo do usuário
+      final coursesSnapshot = await _gamificationController.firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (coursesSnapshot.docs.isEmpty) {
+        print('⚠️ Nenhum curso ativo encontrado, usando mock_course_id');
+        // Usar courseId mockado como fallback
+        await startLesson('mock_course_id', lessonId);
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
+      print('✅ Curso ativo encontrado: $courseId');
+      
+      await startLesson(courseId, lessonId);
+    } catch (e) {
+      print('❌ Erro ao buscar curso ativo: $e');
+      errorMessage.value = 'Não foi possível carregar o curso. Tente novamente.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+  
   /// Inicia uma lição seguindo a ordem CRÍTICA de operações
   /// 
   /// Ordem obrigatória:
   /// 1. Validar lição desbloqueada
   /// 2. Validar energia disponível (ou ilimitada ativa)
-  /// 3. Consumir energia (operação atômica)
+  /// 3. Consumir energia (operação atômica via GamificationController)
   /// 4. Inicializar estado da lição (hearts=3, counters=0, startTime)
   /// 5. Carregar exercícios do Firestore
   /// 6. Navegar para primeiro exercício
@@ -107,25 +155,19 @@ class LessonController extends GetxController {
       }
 
       // Step 2: Validar energia disponível (ou ilimitada ativa)
-      final hasUnlimited = _hasUnlimitedEnergy();
-      if (!hasUnlimited) {
-        final hasEnergy = await _hasEnergy();
-        if (!hasEnergy) {
-          errorMessage.value = 'Você não tem energia suficiente. Aguarde a regeneração ou compre mais energia.';
-          return;
-        }
+      if (!_gamificationController.canStartLesson()) {
+        errorMessage.value = 'Você não tem energia suficiente. Aguarde a regeneração ou compre mais energia.';
+        return;
       }
 
-      // Step 3: Consumir energia (operação atômica)
-      // Apenas consome se não tiver energia ilimitada
-      if (!hasUnlimited) {
-        try {
-          await _consumeEnergy();
-        } catch (e) {
-          // Erro ao consumir energia - NÃO prossegue
-          errorMessage.value = 'Não foi possível consumir energia. Tente novamente.';
-          return;
-        }
+      // Step 3: Consumir energia (operação atômica via GamificationController)
+      // Delega para GamificationController que gerencia energia corretamente
+      await _gamificationController.onLessonStart();
+      
+      // Verificar se houve erro ao consumir energia
+      if (_gamificationController.errorMessage.value.isNotEmpty) {
+        errorMessage.value = _gamificationController.errorMessage.value;
+        return;
       }
 
       // Step 4: Inicializar estado da lição
@@ -174,12 +216,6 @@ class LessonController extends GetxController {
       _isLessonStarting = false;
       isLoading.value = false;
     }
-  }
-
-  /// Verifica se o usuário pode iniciar uma lição
-  /// Retorna true se pode iniciar, false caso contrário
-  bool canStartLesson() {
-    return _gamificationController.canStartLesson();
   }
 
   /// Retoma uma lição em progresso sem consumir energia adicional
@@ -266,6 +302,10 @@ class LessonController extends GetxController {
   /// 5. Verifica se hearts = 0 (trigger failLesson())
   /// 6. Mostra feedback (correto/incorreto)
   /// 7. Se último exercício e hearts > 0: trigger completeLesson()
+  /// 
+  /// NOTA: Não verifica energia durante exercícios. Energia é consumida no início
+  /// e não é verificada novamente. Se energia regenerar durante a lição, o usuário
+  /// ainda pode completá-la. Isso é intencional para não interromper o fluxo.
   Future<void> submitAnswer(dynamic userAnswer, String exerciseType) async {
     try {
       // Obter exercício atual
@@ -344,13 +384,9 @@ class LessonController extends GetxController {
       correctAnswerText.value = correctAnswer;
       showFeedback.value = true;
 
-      // Step 7: Se último exercício e hearts > 0: trigger completeLesson()
-      final isLastExercise = currentExerciseIndex.value >= currentExercises.length - 1;
-      if (isLastExercise && hearts.value > 0) {
-        // Aguarda um momento para mostrar feedback antes de completar
-        await Future.delayed(const Duration(milliseconds: 500));
-        await completeLesson();
-      }
+      // Step 7: NÃO chama completeLesson() automaticamente
+      // A view deve chamar completeLesson() após o último exercício
+      // quando o usuário clicar em "Continue" no feedback
     } catch (e) {
       errorMessage.value = 'Erro ao processar resposta. Tente novamente.';
     }
@@ -435,6 +471,15 @@ class LessonController extends GetxController {
         // Step 9: Desbloquear próxima lição
         await _unlockNextLesson(courseId, lessonId);
         
+        // Step 9.5: Recarregar progresso das lições na home
+        try {
+          final homeController = Get.find<HomeController>();
+          await homeController.reloadProgress();
+        } catch (e) {
+          // HomeController pode não estar registrado - não é crítico
+          print('⚠️ HomeController não encontrado para recarregar progresso: $e');
+        }
+        
         // Step 10: Navegação será feita pela view
         // Controller apenas sinaliza sucesso via isLoading = false
         
@@ -478,24 +523,26 @@ class LessonController extends GetxController {
   /// 
   /// Consequências:
   /// - Define estado da lição como failed
-  /// - Exibe tela de falha
+  /// - Marca flag lessonFailed para a view detectar
   /// - Premia zero recompensas (XP = 0, gems = 0)
   /// - NÃO reembolsa energia consumida
-  /// - Navega para tela de falha
+  /// - View deve navegar para tela de falha
   Future<void> failLesson() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
+      // Marca que a lição falhou
+      lessonFailed.value = true;
+      
       // Define estado como failed
       // Não há recompensas (XP = 0, gems = 0)
       // Energia NÃO é reembolsada
       
       // A navegação para tela de falha será feita pela view
-      // Controller apenas sinaliza que a lição falhou
+      // Controller apenas sinaliza que a lição falhou via lessonFailed flag
       
-      // Reset dos estados da lição
-      _resetLessonState();
+      // NÃO reseta o estado aqui - deixa a view fazer isso após navegar
     } catch (e) {
       errorMessage.value = 'Erro ao processar falha da lição.';
     } finally {
@@ -554,13 +601,16 @@ class LessonController extends GetxController {
   }
   
   /// Carrega dados da lição e exercícios do Firestore com validação
+  /// Se não encontrar no Firestore, usa dados mockados
   /// Lança exceção se dados não forem encontrados ou inválidos
   Future<void> _loadLessonData(String courseId, String lessonId) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('Usuário não autenticado');
 
     try {
-      // Carregar dados da lição
+      print('🔍 Carregando lição: courseId=$courseId, lessonId=$lessonId');
+      
+      // Tentar carregar dados da lição do Firestore
       final lessonDoc = await _firestore
           .collection('courses')
           .doc(courseId)
@@ -569,15 +619,46 @@ class LessonController extends GetxController {
           .get();
 
       if (!lessonDoc.exists) {
-        throw Exception('Lição não encontrada');
+        print('⚠️ Lição não encontrada no Firestore, usando dados mockados');
+        
+        // Usar dados mockados
+        final mockLesson = LessonMocks.getLesson(courseId, lessonId);
+        if (mockLesson == null) {
+          print('❌ Lição não encontrada nem no Firestore nem nos mocks');
+          throw Exception('Lição não encontrada');
+        }
+
+        print('✅ Lição mockada encontrada: ${mockLesson['title']}');
+
+        // Extrair exercícios dos mocks
+        final mockExercises = mockLesson['exercises'] as List<Map<String, dynamic>>;
+        
+        currentLesson.value = {
+          'id': mockLesson['id'],
+          'courseId': mockLesson['courseId'],
+          'title': mockLesson['title'],
+          'description': mockLesson['description'],
+          'xpReward': mockLesson['xpReward'],
+          'gemsReward': mockLesson['gemsReward'],
+          'isLocked': mockLesson['isLocked'],
+        };
+
+        currentExercises.value = mockExercises;
+        
+        print('✅ ${currentExercises.length} exercícios mockados carregados com sucesso');
+        return;
       }
+
+      print('✅ Lição encontrada no Firestore: ${lessonDoc.data()}');
 
       currentLesson.value = {
         'id': lessonDoc.id,
+        'courseId': courseId,
         ...lessonDoc.data()!,
       };
 
-      // Carregar exercícios da lição
+      // Carregar exercícios da lição do Firestore
+      print('🔍 Carregando exercícios da lição do Firestore...');
       final exercisesSnapshot = await _firestore
           .collection('courses')
           .doc(courseId)
@@ -587,19 +668,51 @@ class LessonController extends GetxController {
           .orderBy('order')
           .get();
 
+      print('📊 Exercícios encontrados no Firestore: ${exercisesSnapshot.docs.length}');
+
       if (exercisesSnapshot.docs.isEmpty) {
+        print('❌ Nenhum exercício encontrado no Firestore para esta lição');
         throw Exception('Nenhum exercício encontrado para esta lição');
       }
 
       currentExercises.value = exercisesSnapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) {
+            print('  - Exercício ${doc.id}: ${doc.data()}');
+            return {
+              'id': doc.id,
+              ...doc.data(),
+            };
+          })
           .toList();
+      
+      print('✅ ${currentExercises.length} exercícios carregados com sucesso do Firestore');
     } on FirebaseException catch (e) {
+      print('❌ FirebaseException: ${e.code} - ${e.message}');
+      
+      // Tentar usar mocks como fallback
+      print('⚠️ Tentando usar dados mockados como fallback...');
+      final mockLesson = LessonMocks.getLesson(courseId, lessonId);
+      if (mockLesson != null) {
+        final mockExercises = mockLesson['exercises'] as List<Map<String, dynamic>>;
+        
+        currentLesson.value = {
+          'id': mockLesson['id'],
+          'courseId': mockLesson['courseId'],
+          'title': mockLesson['title'],
+          'description': mockLesson['description'],
+          'xpReward': mockLesson['xpReward'],
+          'gemsReward': mockLesson['gemsReward'],
+          'isLocked': mockLesson['isLocked'],
+        };
+
+        currentExercises.value = mockExercises;
+        print('✅ Usando dados mockados como fallback');
+        return;
+      }
+      
       throw Exception('Erro ao carregar lição: ${e.message}');
     } catch (e) {
+      print('❌ Erro genérico: $e');
       throw Exception('Erro ao carregar lição: $e');
     }
   }
@@ -636,75 +749,6 @@ class LessonController extends GetxController {
     }
   }
 
-  /// Verifica se o usuário tem energia disponível
-  Future<bool> _hasEnergy() async {
-    return _gamificationController.currentEnergy.value > 0;
-  }
-
-  /// Verifica se energia ilimitada está ativa
-  bool _hasUnlimitedEnergy() {
-    return _gamificationController.hasUnlimitedEnergy;
-  }
-
-  // Gerenciamento de energia
-  
-  /// Consome 1 energia do usuário (operação atômica via Firestore transaction)
-  /// Lança exceção se energia insuficiente ou erro ao processar
-  Future<void> _consumeEnergy() async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) throw Exception('Usuário não autenticado');
-
-    final statsRef = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('stats')
-        .doc('gamification');
-
-    try {
-      await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(statsRef);
-        
-        if (!snapshot.exists) {
-          throw Exception('Dados do usuário não encontrados');
-        }
-
-        final currentEnergy = snapshot.data()?['currentEnergy'] as int? ?? 0;
-        
-        if (currentEnergy <= 0) {
-          throw Exception('Energia insuficiente');
-        }
-
-        // Decrementa energia
-        transaction.update(statsRef, {
-          'currentEnergy': currentEnergy - 1,
-        });
-      });
-    } on FirebaseException catch (e) {
-      throw Exception('Erro ao processar energia: ${e.message}');
-    } catch (e) {
-      throw Exception('Erro ao processar energia: $e');
-    }
-  }
-
-  /// Calcula energia disponível baseado na regeneração
-  /// Fórmula: min(5, currentEnergy + (minutesPassed ~/ 30))
-  int _calculateAvailableEnergy(DateTime lastEnergyUpdate, int currentEnergy) {
-    final now = DateTime.now();
-    final minutesPassed = now.difference(lastEnergyUpdate).inMinutes;
-    final energyRegenerated = minutesPassed ~/ 30;
-    final totalEnergy = currentEnergy + energyRegenerated;
-    
-    return totalEnergy > 5 ? 5 : totalEnergy;
-  }
-
-  /// Calcula minutos até próxima energia
-  /// Fórmula: 30 - (minutesPassed % 30)
-  int _calculateMinutesUntilNextEnergy(DateTime lastEnergyUpdate) {
-    final now = DateTime.now();
-    final minutesPassed = now.difference(lastEnergyUpdate).inMinutes;
-    
-    return 30 - (minutesPassed % 30);
-  }
   
   // Cálculo de recompensas
   
@@ -1032,6 +1076,7 @@ class LessonController extends GetxController {
     showFeedback.value = false;
     isCorrectAnswer.value = false;
     correctAnswerText.value = '';
+    lessonFailed.value = false;
   }
 
   // Validação de exercícios
@@ -1116,12 +1161,12 @@ class LessonController extends GetxController {
         final gemsData = data['gems'] as Map<String, dynamic>? ?? {};
         
         // Obter valores atuais
-        final currentGems = gemsData['totalGems'] as int? ?? 0;
+        final currentGems = gemsData['gems'] as int? ?? 0;
         final totalGemsEarned = gemsData['totalGemsEarned'] as int? ?? 0;
         
-        // Adicionar gems
+        // Adicionar gems (campo correto: gems.gems, não gems.totalGems)
         transaction.update(statsRef, {
-          'gems.totalGems': currentGems + gemsAmount,
+          'gems.gems': currentGems + gemsAmount,
           'gems.totalGemsEarned': totalGemsEarned + gemsAmount,
         });
       });
@@ -1409,6 +1454,15 @@ class LessonController extends GetxController {
   int _calculateTimeSpent() {
     final milliseconds = _calculateTimeSpentMilliseconds();
     return (milliseconds / 1000).round();
+  }
+  
+  /// Retorna o tempo formatado como string (MM:SS)
+  /// Para exibição na UI
+  String getFormattedTime() {
+    final seconds = _calculateTimeSpent();
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
   
   /// Cache o progresso localmente quando falha ao salvar no Firestore

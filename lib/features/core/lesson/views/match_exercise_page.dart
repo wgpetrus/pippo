@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
@@ -11,6 +12,9 @@ import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/lesson_option_card.dart';
 import 'complete_page.dart';
+import 'image_exercise_page.dart';
+import 'translation_exercise_page.dart';
+import 'word_exercise_page.dart';
 
 /// Página de exercício de matching (combinar pares)
 class MatchExercisePage extends StatefulWidget {
@@ -21,17 +25,23 @@ class MatchExercisePage extends StatefulWidget {
 }
 
 class _MatchExercisePageState extends State<MatchExercisePage> {
+  // Controllers
   late final LessonController _controller;
+  
+  // Estados
   int? _selectedAudioIndex;
   int? _selectedTextIndex;
   final Set<int> _matchedPairs = {};
+  bool _hasChecked = false;
 
+  // Lifecycle
   @override
   void initState() {
     super.initState();
     _controller = Get.find<LessonController>();
   }
 
+  // Build
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
@@ -46,77 +56,90 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
     final pairs = (currentExercise['pairs'] as List?) ?? [];
     
-    return Scaffold(
-      backgroundColor: AppTheme.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: r.spacing16),
+    return WillPopScope(
+      onWillPop: () async {
+        // Bloquear voltar após verificar resposta
+        if (_hasChecked) return false;
+        
+        // Mostrar dialog de confirmação antes de sair
+        return await _showExitConfirmation(context) ?? false;
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: r.spacing16),
 
-            // Header
-            Obx(() => ExerciseHeader(
-                  progress: _controller.progress,
-                  energy: Get.find<GamificationController>().currentEnergy.value,
-                  onBack: () => Get.back(),
-                )),
+                // Header - sem botão voltar após verificar
+                Obx(() => ExerciseHeader(
+                      progress: _controller.progress,
+                      energy: Get.find<GamificationController>().currentEnergy.value,
+                      onBack: _hasChecked ? null : () => _onBackPressed(context),
+                    )),
 
-            SizedBox(height: r.spacing24),
+                SizedBox(height: r.spacing24),
 
-            // Título
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: r.spacing20),
-              child: Text(
-                currentExercise['prompt'] as String? ?? 'Toque nos pares correspondentes',
-                style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
-              ),
-            ),
-
-            SizedBox(height: r.spacing32),
-
-            // Pares
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: r.spacing20),
-                child: Column(
-                  children: [
-                    for (int i = 0; i < pairs.length; i++) ...[
-                      _buildPairRow(i, pairs, r),
-                      if (i < pairs.length - 1) SizedBox(height: r.spacing16),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            // Link "Can't listen now"
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Implementar skip de exercício de áudio
-                },
-                child: Text(
-                  "Não posso ouvir agora",
-                  style: AppTheme.textMdSemibold.copyWith(
-                    color: AppTheme.primary,
-                    decoration: TextDecoration.underline,
+                // Título
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+                  child: Text(
+                    currentExercise['question'] as String? ?? 'Toque nos pares correspondentes',
+                    style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   ),
                 ),
-              ),
-            ),
 
-            // Botão Check
-            Padding(
-              padding: EdgeInsets.all(r.spacing20),
-              child: Obx(() => AppButton(
-                    text: 'Verificar',
-                    isLoading: _controller.isLoading.value,
-                    onPressed: _matchedPairs.length == pairs.length && !_controller.isLoading.value
-                        ? _onCheck
-                        : null,
-                  )),
+                SizedBox(height: r.spacing32),
+
+                // Pares
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < pairs.length; i++) ...[
+                        _buildPairRow(i, pairs, r),
+                        if (i < pairs.length - 1) SizedBox(height: r.spacing16),
+                      ],
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: r.spacing24),
+
+                // Link "Can't listen now"
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      // TODO: [etapa 8] implementar skip de exercício de áudio
+                    },
+                    child: Text(
+                      "Não posso ouvir agora",
+                      style: AppTheme.textMdSemibold.copyWith(
+                        color: AppTheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: r.spacing16),
+
+                // Botão Check
+                Padding(
+                  padding: EdgeInsets.all(r.spacing16),
+                  child: Obx(() => AppButton(
+                        text: 'Verificar',
+                        isLoading: _controller.isLoading.value,
+                        onPressed: _matchedPairs.length == pairs.length && !_controller.isLoading.value && !_hasChecked
+                            ? _onCheck
+                            : null,
+                      )),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -129,14 +152,14 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     final pair = pairs[index];
 
     return SizedBox(
-      height: r.height(56, min: 48, max: 64),
+      height: 56,
       child: Row(
         children: [
           // Card de áudio
           Expanded(
             child: AudioCard(
               status: _getAudioStatus(index),
-              onTap: isMatched ? null : () => _onAudioTap(index),
+              onTap: (isMatched || _hasChecked) ? null : () => _onAudioTap(index),
             ),
           ),
 
@@ -146,8 +169,9 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
           Expanded(
             child: LessonOptionCard(
               label: pair['text'] as String? ?? '',
+              showImage: false,
               status: _getTextStatus(index),
-              onTap: isMatched ? null : () => _onTextTap(index),
+              onTap: (isMatched || _hasChecked) ? null : () => _onTextTap(index),
             ),
           ),
         ],
@@ -156,7 +180,6 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   }
 
   // Helpers
-
   AudioCardStatus _getAudioStatus(int index) {
     if (_matchedPairs.contains(index)) return AudioCardStatus.matched;
     if (_selectedAudioIndex == index) return AudioCardStatus.selected;
@@ -171,8 +194,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     return LessonOptionStatus.normal;
   }
 
-  // Métodos
-
+  // Métodos de ação
   void _onAudioTap(int index) {
     setState(() {
       _selectedAudioIndex = index;
@@ -200,30 +222,120 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   }
 
   void _onCheck() async {
+    setState(() {
+      _hasChecked = true;
+    });
+
+    // Criar mapa de pares para submeter
+    final Map<String, String> userPairs = {};
+    final pairs = _controller.currentExercises[_controller.currentExerciseIndex.value]['pairs'] as List;
+    
+    for (final index in _matchedPairs) {
+      final pair = pairs[index];
+      userPairs[pair['audio'] as String] = pair['text'] as String;
+    }
+
     // Submete resposta ao controller
-    // O controller valida se todos os pares estão corretos
-    await _controller.submitAnswer(userAnswer: _matchedPairs.toList());
+    await _controller.submitAnswer(userPairs, 'match');
 
     // Mostra feedback
+    if (!mounted) return;
+    
     FeedbackBottomSheet.show(
       context,
       type: _controller.isCorrectAnswer.value 
           ? FeedbackType.correct 
-          : FeedbackType.incorrect,
-      correctAnswer: _controller.correctAnswerText.value,
+          : FeedbackType.wrong,
+      correctAnswer: _controller.isCorrectAnswer.value 
+          ? null 
+          : _controller.correctAnswerText.value,
       onContinue: _onContinue,
     );
   }
 
   void _onContinue() {
-    // Controller gerencia navegação para próximo exercício ou tela de conclusão
-    _controller.nextExercise();
+    // Fechar o modal primeiro
+    Navigator.of(context).pop();
     
-    // Reseta estado local para próximo exercício
-    setState(() {
-      _matchedPairs.clear();
-      _selectedAudioIndex = null;
-      _selectedTextIndex = null;
-    });
+    // Depois avançar o índice do exercício
+    _controller.nextExercise();
+  }
+
+  // Métodos auxiliares
+
+  /// Mostra dialog de confirmação ao tentar sair da lição
+  Future<bool?> _showExitConfirmation(BuildContext context) async {
+    return await WoltModalSheet.show<bool>(
+      context: context,
+      pageListBuilder: (context) => [
+        WoltModalSheetPage(
+          backgroundColor: AppTheme.white,
+          surfaceTintColor: Colors.transparent,
+          hasSabGradient: false,
+          hasTopBarLayer: false,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ícone de aviso
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppTheme.orange.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_rounded,
+                    color: AppTheme.orange,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Título
+                Text(
+                  'Sair da lição?',
+                  style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+
+                // Mensagem
+                Text(
+                  'Se você sair agora, perderá o progresso desta lição e a energia gasta não será devolvida.',
+                  style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Botões
+                AppButton(
+                  text: 'Continuar Lição',
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                const SizedBox(height: 12),
+                AppButton(
+                  text: 'Sair',
+                  isPrimary: false,
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      modalTypeBuilder: (context) => WoltModalType.dialog(),
+      barrierDismissible: false,
+    );
+  }
+
+  /// Callback para o botão voltar do header
+  void _onBackPressed(BuildContext context) async {
+    final shouldExit = await _showExitConfirmation(context);
+    if (shouldExit == true) {
+      Get.back();
+    }
   }
 }

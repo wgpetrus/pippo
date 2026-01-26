@@ -6,6 +6,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../inners/gamification/controllers/gamification_controller.dart';
 import '../controllers/lesson_controller.dart';
 
 /// Página de conclusão da lição
@@ -33,12 +34,23 @@ class _CompletePageState extends State<CompletePage> {
       _rewardsClaimed = true;
     });
 
+    // Pausar o timer antes de completar a lição
+    _controller.pauseLesson();
+
     // Completa a lição e resgata recompensas
     await _controller.completeLesson();
 
     if (_controller.errorMessage.value.isEmpty) {
-      // Navega de volta para home ou sections
-      Get.back();
+      // Recarregar stats do GamificationController para atualizar UI
+      try {
+        final gamificationController = Get.find<GamificationController>();
+        await gamificationController.loadStats();
+      } catch (e) {
+        print('⚠️ Erro ao recarregar stats de gamificação: $e');
+      }
+      
+      // Navega de volta para home (limpa stack de lições)
+      Get.until((route) => route.settings.name == '/home');
     } else {
       // Mostra erro se houver
       Get.snackbar(
@@ -56,33 +68,30 @@ class _CompletePageState extends State<CompletePage> {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
+    final gamificationController = Get.find<GamificationController>();
     
     // Calcula estatísticas
     final accuracy = (_controller.accuracy).toStringAsFixed(0);
-    final duration = _controller.startTime.value != null 
-        ? DateTime.now().difference(_controller.startTime.value!)
-        : Duration.zero;
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    final timeString = '$minutes:${seconds.toString().padLeft(2, '0')}';
 
-    // Calcula XP e gems que serão ganhos (preview)
-    final baseXp = _controller.accuracy >= 90
-        ? 15
-        : _controller.accuracy >= 70
-            ? 13
-            : _controller.accuracy >= 50
-                ? 11
-                : 10;
-    final baseGems = _controller.accuracy >= 90
-        ? 3
-        : _controller.accuracy >= 70
-            ? 2
-            : 1;
-
-    // Adiciona bônus se perfeito
-    var totalXp = baseXp;
+    // Calcula XP e gems usando a MESMA lógica do controller
+    // Base XP da lição
+    var totalXp = _controller.currentLesson.value?['xpReward'] as int? ?? 10;
+    
+    // Perfect bonus (+5 se 100% accuracy)
     if (_controller.isPerfect) totalXp += 5;
+    
+    // First today bonus (+5 se primeira lição hoje)
+    // Nota: Não podemos verificar isso aqui sem async, então assumimos que não é
+    // O valor real será calculado no controller
+    
+    // XP Booster (2x se ativo)
+    if (gamificationController.hasXpBooster) totalXp *= 2;
+    
+    // Base gems da lição
+    var totalGems = _controller.currentLesson.value?['gemsReward'] as int? ?? 1;
+    
+    // Gem Multiplier (2x se ativo)
+    if (gamificationController.hasGemMultiplier) totalGems *= 2;
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -144,12 +153,15 @@ class _CompletePageState extends State<CompletePage> {
               Obx(() {
                 // Recalcula valores reativamente
                 final currentAccuracy = (_controller.accuracy).toStringAsFixed(0);
-                final currentDuration = _controller.startTime.value != null 
-                    ? DateTime.now().difference(_controller.startTime.value!)
-                    : Duration.zero;
-                final currentMinutes = currentDuration.inMinutes;
-                final currentSeconds = currentDuration.inSeconds % 60;
-                final currentTimeString = '$currentMinutes:${currentSeconds.toString().padLeft(2, '0')}';
+                final currentTimeString = _controller.getFormattedTime();
+                
+                // Recalcula XP e gems reativamente (para refletir mudanças em boosters)
+                var currentTotalXp = _controller.currentLesson.value?['xpReward'] as int? ?? 10;
+                if (_controller.isPerfect) currentTotalXp += 5;
+                if (gamificationController.hasXpBooster) currentTotalXp *= 2;
+                
+                var currentTotalGems = _controller.currentLesson.value?['gemsReward'] as int? ?? 1;
+                if (gamificationController.hasGemMultiplier) currentTotalGems *= 2;
                 
                 return r.isLandscape
                   ? Row(
@@ -158,7 +170,7 @@ class _CompletePageState extends State<CompletePage> {
                           child: _buildStatCard(
                             r: r,
                             icon: AppAssets.treasureXpCoin,
-                            value: totalXp.toString(),
+                            value: currentTotalXp.toString(),
                             label: 'XP Total',
                             color: AppTheme.gold,
                           ),
@@ -188,7 +200,7 @@ class _CompletePageState extends State<CompletePage> {
                           child: _buildStatCard(
                             r: r,
                             icon: AppAssets.appbarGem,
-                            value: baseGems.toString(),
+                            value: currentTotalGems.toString(),
                             label: 'Gemas',
                             color: AppTheme.red,
                           ),
@@ -203,7 +215,7 @@ class _CompletePageState extends State<CompletePage> {
                               child: _buildStatCard(
                                 r: r,
                                 icon: AppAssets.treasureXpCoin,
-                                value: totalXp.toString(),
+                                value: currentTotalXp.toString(),
                                 label: 'XP Total',
                                 color: AppTheme.gold,
                               ),
@@ -237,7 +249,7 @@ class _CompletePageState extends State<CompletePage> {
                               child: _buildStatCard(
                                 r: r,
                                 icon: AppAssets.appbarGem,
-                                value: baseGems.toString(),
+                                value: currentTotalGems.toString(),
                                 label: 'Gemas',
                                 color: AppTheme.red,
                               ),

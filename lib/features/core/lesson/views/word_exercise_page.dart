@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
 import '../controllers/lesson_controller.dart';
@@ -12,6 +14,9 @@ import '../widgets/mascot_bubble.dart';
 import '../widgets/word_chip.dart';
 import '../widgets/word_zone.dart';
 import 'complete_page.dart';
+import 'image_exercise_page.dart';
+import 'translation_exercise_page.dart';
+import 'match_exercise_page.dart';
 
 /// Página de exercício de ordenação de palavras
 class WordExercisePage extends StatefulWidget {
@@ -26,6 +31,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
   
   // Palavras selecionadas (resposta)
   final List<String> _selectedWords = [];
+  bool _hasChecked = false;
 
   @override
   void initState() {
@@ -35,6 +41,8 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Obx(() {
       // Tratamento de erro
       if (_controller.errorMessage.value.isNotEmpty) {
@@ -56,82 +64,92 @@ class _WordExercisePageState extends State<WordExercisePage> {
       }
       
       final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
-      final sentence = currentExercise['sentence'] as String? ?? '';
-      final availableWords = (currentExercise['availableWords'] as List?)?.cast<String>() ?? [];
+      final words = (currentExercise['words'] as List?)?.cast<String>() ?? [];
       
-      return Scaffold(
-        backgroundColor: AppTheme.white,
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
+      return WillPopScope(
+        onWillPop: () async {
+          // Bloquear voltar após verificar resposta
+          if (_hasChecked) return false;
+          
+          // Mostrar dialog de confirmação antes de sair
+          return await _showExitConfirmation(context) ?? false;
+        },
+        child: Scaffold(
+          backgroundColor: AppTheme.white,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: r.spacing16),
 
-              // Header
-              ExerciseHeader(
-                progress: _controller.progress,
-                energy: Get.find<GamificationController>().currentEnergy.value,
-                onBack: () => Get.back(),
+                  // Header - sem botão voltar após verificar
+                  ExerciseHeader(
+                    progress: _controller.progress,
+                    energy: Get.find<GamificationController>().currentEnergy.value,
+                    onBack: _hasChecked ? null : () => _onBackPressed(context),
+                  ),
+
+                  SizedBox(height: r.spacing24),
+
+                  // Título
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+                    child: Text(
+                      currentExercise['question'] as String? ?? 'Organize as palavras',
+                      style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+                    ),
+                  ),
+
+                  SizedBox(height: r.spacing16),
+
+                  // Mascote com balão de áudio
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+                    child: MascotBubble(
+                      mascotAsset: AppAssets.lessonMascotFire,
+                      text: currentExercise['question'] as String? ?? '',
+                      onAudioTap: () {
+                        // TODO: [etapa 8] conectar com TTS para tocar áudio
+                      },
+                    ),
+                  ),
+
+                  SizedBox(height: r.spacing24),
+
+                  // Zona de resposta
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+                    child: WordZone(
+                      words: _selectedWords,
+                      onWordTap: _hasChecked ? (_) {} : _onRemoveWord,
+                    ),
+                  ),
+
+                  SizedBox(height: r.spacing24),
+
+                  // Palavras disponíveis
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+                    child: _buildAvailableWords(words),
+                  ),
+
+                  SizedBox(height: r.spacing16),
+
+                  // Botão Check
+                  Padding(
+                    padding: EdgeInsets.all(r.spacing16),
+                    child: AppButton(
+                      text: 'Verificar',
+                      isLoading: _controller.isLoading.value,
+                      onPressed: _selectedWords.isNotEmpty && !_controller.isLoading.value && !_hasChecked
+                          ? _onCheck
+                          : null,
+                    ),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 24),
-
-              // Título
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  currentExercise['prompt'] as String? ?? 'Selecione a tradução correta',
-                  style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Mascote com balão de áudio
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: MascotBubble(
-                  mascotAsset: AppAssets.lessonMascotFire,
-                  text: sentence,
-                  onAudioTap: () {
-                    // TODO: Tocar áudio
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Zona de resposta
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: WordZone(
-                  words: _selectedWords,
-                  onWordTap: _onRemoveWord,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Palavras disponíveis
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _buildAvailableWords(availableWords),
-                ),
-              ),
-
-              // Botão Check
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: AppButton(
-                  text: 'Verificar',
-                  isLoading: _controller.isLoading.value,
-                  onPressed: _selectedWords.isNotEmpty && !_controller.isLoading.value
-                      ? _onCheck
-                      : null,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       );
@@ -141,15 +159,16 @@ class _WordExercisePageState extends State<WordExercisePage> {
   // Widgets
 
   Widget _buildAvailableWords(List<String> availableWords) {
+    final r = ResponsiveUtils(context);
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: r.spacing8,
+      runSpacing: r.spacing8,
       children: availableWords.map((word) {
         final isSelected = _selectedWords.contains(word);
         return WordChip(
           text: word,
           isSelected: isSelected,
-          onTap: isSelected ? null : () => _onSelectWord(word),
+          onTap: (isSelected || _hasChecked) ? null : () => _onSelectWord(word),
         );
       }).toList(),
     );
@@ -172,7 +191,11 @@ class _WordExercisePageState extends State<WordExercisePage> {
   void _onCheck() async {
     if (_selectedWords.isEmpty) return;
 
-    // Submete a resposta ao controller
+    setState(() {
+      _hasChecked = true;
+    });
+
+    // TODO: [etapa 8] submeter resposta ao controller
     await _controller.submitAnswer(_selectedWords, 'word_order');
 
     // Mostra feedback
@@ -186,18 +209,89 @@ class _WordExercisePageState extends State<WordExercisePage> {
   }
 
   void _onContinue() {
-    // Avança para o próximo exercício
-    _controller.nextExercise();
+    // Fechar o modal primeiro
+    Navigator.of(context).pop();
     
-    // Verifica se há mais exercícios
-    if (_controller.currentExerciseIndex.value < _controller.currentExercises.length) {
-      // Continua na mesma tela (próximo exercício)
-      setState(() {
-        _selectedWords.clear();
-      });
-    } else {
-      // Último exercício - navega para tela de conclusão
-      Get.off(() => const CompletePage());
+    // Depois avançar o índice do exercício
+    _controller.nextExercise();
+  }
+
+  // Métodos auxiliares
+
+  /// Mostra dialog de confirmação ao tentar sair da lição
+  Future<bool?> _showExitConfirmation(BuildContext context) async {
+    return await WoltModalSheet.show<bool>(
+      context: context,
+      pageListBuilder: (context) => [
+        WoltModalSheetPage(
+          backgroundColor: AppTheme.white,
+          surfaceTintColor: Colors.transparent,
+          hasSabGradient: false,
+          hasTopBarLayer: false,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ícone de aviso
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppTheme.orange.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_rounded,
+                    color: AppTheme.orange,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Título
+                Text(
+                  'Sair da lição?',
+                  style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+
+                // Mensagem
+                Text(
+                  'Se você sair agora, perderá o progresso desta lição e a energia gasta não será devolvida.',
+                  style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Botões
+                AppButton(
+                  text: 'Continuar Lição',
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                const SizedBox(height: 12),
+                AppButton(
+                  text: 'Sair',
+                  isPrimary: false,
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      modalTypeBuilder: (context) => WoltModalType.dialog(),
+      barrierDismissible: false,
+    );
+  }
+
+  /// Callback para o botão voltar do header
+  void _onBackPressed(BuildContext context) async {
+    final shouldExit = await _showExitConfirmation(context);
+    if (shouldExit == true) {
+      Get.back();
     }
   }
 }
+

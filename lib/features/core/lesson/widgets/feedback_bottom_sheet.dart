@@ -30,10 +30,7 @@ class FeedbackBottomSheet {
           child: _FeedbackContent(
             isCorrect: isCorrect,
             correctAnswer: correctAnswer,
-            onContinue: () {
-              Navigator.pop(context);
-              onContinue();
-            },
+            onContinue: onContinue,
           ),
         ),
       ],

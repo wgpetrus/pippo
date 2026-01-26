@@ -23,8 +23,8 @@ import '../widgets/unit_header.dart';
 
 /// Dados de cada botão de lição
 class _LessonButtonData {
+  final String lessonId; // ID da lição no Firestore
   final String iconAsset;
-  final LessonStatus status;
   final String? effectAsset;
   final double offsetX;
   final double offsetY;
@@ -32,14 +32,38 @@ class _LessonButtonData {
   final bool hasTooltip;
 
   const _LessonButtonData({
+    required this.lessonId,
     required this.iconAsset,
-    required this.status,
     this.effectAsset,
     required this.offsetX,
     required this.offsetY,
     this.animDelay = 0,
     this.hasTooltip = false,
   });
+
+  /// Determina o status da lição baseado no progresso
+  LessonStatus getStatus(List<String> completedLessons, int index) {
+    // Lição 1 sempre disponível
+    if (index == 0) {
+      return completedLessons.contains(lessonId) 
+          ? LessonStatus.completed 
+          : LessonStatus.available;
+    }
+
+    // Verificar se a lição anterior foi completada
+    // index 0 = lesson_1, index 1 = lesson_2, etc
+    // Então para index N, a lição anterior é lesson_N (não N+1)
+    final previousLessonId = 'lesson_$index';
+    final isPreviousCompleted = completedLessons.contains(previousLessonId);
+
+    if (completedLessons.contains(lessonId)) {
+      return LessonStatus.completed;
+    } else if (isPreviousCompleted) {
+      return LessonStatus.available;
+    } else {
+      return LessonStatus.locked;
+    }
+  }
 }
 
 /// Tela principal do app
@@ -49,40 +73,40 @@ class HomeView extends StatelessWidget {
   // Dados dos botões de lição
   static const _lessonButtons = [
     _LessonButtonData(
+      lessonId: 'lesson_1',
       iconAsset: AppAssets.iconStars,
-      status: LessonStatus.completed,
       effectAsset: AppAssets.effectStars,
       offsetX: -0.13,
       offsetY: 0.40,
+      hasTooltip: true,
     ),
     _LessonButtonData(
+      lessonId: 'lesson_2',
       iconAsset: AppAssets.iconHeadset,
-      status: LessonStatus.available,
       effectAsset: AppAssets.effectZebra,
       offsetX: -0.03,
       offsetY: 0.54,
       animDelay: 200,
-      hasTooltip: true,
     ),
     _LessonButtonData(
+      lessonId: 'lesson_3',
       iconAsset: AppAssets.iconMic,
-      status: LessonStatus.locked,
       effectAsset: AppAssets.effectZebra,
       offsetX: -0.08,
       offsetY: 0.67,
       animDelay: 400,
     ),
     _LessonButtonData(
+      lessonId: 'lesson_4',
       iconAsset: AppAssets.iconFire,
-      status: LessonStatus.locked,
       effectAsset: AppAssets.effectZebra,
       offsetX: 0.05,
       offsetY: 0.77,
       animDelay: 600,
     ),
     _LessonButtonData(
+      lessonId: 'lesson_5',
       iconAsset: AppAssets.iconStar,
-      status: LessonStatus.locked,
       effectAsset: AppAssets.effectZebra,
       offsetX: -0.20,
       offsetY: 0.85,
@@ -218,12 +242,12 @@ class HomeView extends StatelessWidget {
 
         // AppBar
         Builder(
-          builder: (appBarContext) => HomeAppbar(
+          builder: (appBarContext) => Obx(() => HomeAppbar(
             avatarAsset: AppAssets.charDiogo,
             flagAsset: AppAssets.flagFrance,
             selectedStat: controller.selectedStat.value,
             onStatTap: (stat) => _onStatTap(appBarContext, controller, stat),
-          ),
+          )),
         ),
 
         // Unit Header
@@ -270,10 +294,11 @@ class HomeView extends StatelessWidget {
         ),
 
         // Botões de lição (iterando sobre dados)
-        ..._lessonButtons.map((data) => _buildLessonButton(
+        ..._lessonButtons.asMap().entries.map((entry) => _buildLessonButton(
           context: context,
-          data: data,
-          controller: data.hasTooltip ? controller : null,
+          data: entry.value,
+          index: entry.key,
+          controller: entry.value.hasTooltip ? controller : null,
         )),
       ],
     );
@@ -282,10 +307,12 @@ class HomeView extends StatelessWidget {
   Widget _buildLessonButton({
     required BuildContext context,
     required _LessonButtonData data,
+    required int index,
     HomeController? controller,
   }) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final homeController = Get.find<HomeController>();
 
     return Positioned(
       top: screenHeight * data.offsetY,
@@ -298,13 +325,24 @@ class HomeView extends StatelessWidget {
             distance: 4,
             durationMs: 2000,
             delayMs: data.animDelay,
-            child: controller != null
-                ? Obx(() => _buildButtonWithTooltip(data: data, controller: controller))
-                : AppLessonButton(
-                    iconAsset: data.iconAsset,
-                    status: data.status,
-                    effectAsset: data.effectAsset,
-                  ),
+            child: Obx(() {
+              final status = data.getStatus(homeController.completedLessons, index);
+              
+              if (controller != null && data.hasTooltip) {
+                return _buildButtonWithTooltip(
+                  data: data,
+                  status: status,
+                  controller: controller,
+                );
+              }
+              
+              return AppLessonButton(
+                iconAsset: data.iconAsset,
+                status: status,
+                effectAsset: data.effectAsset,
+                onPressed: status == LessonStatus.completed ? null : controller?.onStartTap,
+              );
+            }),
           ),
         ),
       ),
@@ -313,6 +351,7 @@ class HomeView extends StatelessWidget {
 
   Widget _buildButtonWithTooltip({
     required _LessonButtonData data,
+    required LessonStatus status,
     required HomeController controller,
   }) {
     return Stack(
@@ -321,16 +360,16 @@ class HomeView extends StatelessWidget {
       children: [
         AppLessonButton(
           iconAsset: data.iconAsset,
-          status: data.status,
+          status: status,
           effectAsset: data.effectAsset,
-          onPressed: controller.onStartTap,
+          onPressed: status == LessonStatus.completed ? null : controller.onStartTap,
           progress: controller.showContinue.value ? 0.3 : null,
         ),
         Positioned(
           bottom: 85,
           child: LessonTooltip(
             text: controller.showContinue.value ? 'Continuar' : 'Começar!',
-            onTap: controller.onStartTap,
+            onTap: status == LessonStatus.completed ? null : controller.onStartTap,
           ),
         ),
       ],
@@ -339,24 +378,27 @@ class HomeView extends StatelessWidget {
 
   // Métodos
   void _onStatTap(BuildContext context, HomeController controller, StatType stat) {
-    // Marca como selecionada
+    // Marca como selecionada ANTES de abrir o modal
     controller.onStatTap(stat);
     
-    // Abre modal específico
-    switch (stat) {
-      case StatType.flag:
-        _showCoursesModal(context, controller);
-        break;
-      case StatType.fire:
-        _showStreakModal(context);
-        break;
-      case StatType.gem:
-        _showGemsModal(context, controller);
-        break;
-      case StatType.ray:
-        _showEnergyModal(context);
-        break;
-    }
+    // Aguarda um frame para garantir que a UI atualizou
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Abre modal específico
+      switch (stat) {
+        case StatType.flag:
+          _showCoursesModal(context, controller);
+          break;
+        case StatType.fire:
+          _showStreakModal(context);
+          break;
+        case StatType.gem:
+          _showGemsModal(context, controller);
+          break;
+        case StatType.ray:
+          _showEnergyModal(context);
+          break;
+      }
+    });
   }
 
   void _showCoursesModal(BuildContext context, HomeController controller) {

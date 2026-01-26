@@ -202,14 +202,11 @@ class EnergyModal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           hasSabGradient: false,
           hasTopBarLayer: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: EnergyModal(
-              onUnlimitedTap: () {
-                Navigator.of(context).pop();
-                onUnlimitedTap?.call();
-              },
-            ),
+          child: EnergyModal(
+            onUnlimitedTap: () {
+              Navigator.of(context).pop();
+              onUnlimitedTap?.call();
+            },
           ),
         ),
       ],

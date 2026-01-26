@@ -36,6 +36,9 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLocked = status == SectionStatus.locked;
+    
+    // Debug: Log dos valores recebidos
+    print('🎨 SectionCard "$title": progress=$currentProgress/$totalProgress, status=$status');
 
     return GestureDetector(
       onTap: isLocked ? null : onTap,

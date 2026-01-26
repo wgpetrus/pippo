@@ -74,7 +74,11 @@ class FailPage extends StatelessWidget {
               AppButton(
                 text: 'Tentar Novamente',
                 onPressed: () {
-                  // Reinicia a lição (volta para sections ou home)
+                  // Reseta o estado da lição
+                  controller.onClose();
+                  
+                  // Volta para a tela de seções (2 vezes: FailPage -> LessonExerciseContainer -> SectionsPage)
+                  Get.back();
                   Get.back();
                 },
               ),

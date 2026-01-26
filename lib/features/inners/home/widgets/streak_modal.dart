@@ -130,6 +130,7 @@ class StreakModal extends StatelessWidget {
       
       return Container(
         width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(24),
@@ -390,14 +391,11 @@ class StreakModal extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           hasSabGradient: false,
           hasTopBarLayer: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: StreakModal(
-              onSeeMore: () {
-                Navigator.of(context).pop();
-                onSeeMore?.call();
-              },
-            ),
+          child: StreakModal(
+            onSeeMore: () {
+              Navigator.of(context).pop();
+              onSeeMore?.call();
+            },
           ),
         ),
       ],

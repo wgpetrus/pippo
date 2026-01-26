@@ -16,6 +16,11 @@ import 'package:get/get.dart';
 class GamificationController extends GetxController {
   // Firebase instances
   final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+
+  // Getters públicos para acesso externo
+  FirebaseFirestore get firestore => _firestore;
+  String? get userId => _auth.currentUser?.uid;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -202,7 +207,20 @@ class GamificationController extends GetxController {
   }
 
   /// Cria estatísticas iniciais para novo usuário
+  /// 
+  /// IMPORTANTE: Só cria stats se o documento do usuário já existir no Firestore.
+  /// Isso previne criação de usuários vazios durante o onboarding.
   Future<void> _createInitialStats(String userId) async {
+    // Verificar se documento do usuário existe antes de criar stats
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    
+    if (!userDoc.exists) {
+      // Usuário ainda não completou onboarding - não criar stats
+      debugPrint('⚠️ GamificationController: Documento do usuário não existe. Aguardando onboarding.');
+      return;
+    }
+    
+    // Usuário existe - criar stats
     await _retryOperation(() => _firestore
         .collection('users')
         .doc(userId)
@@ -715,7 +733,10 @@ class GamificationController extends GetxController {
       // 7. Salvar no Firestore
       await _saveStats(userId);
 
-      // 8. Registrar no histórico
+      // 8. Recarregar stats para garantir sincronização
+      await loadStats();
+
+      // 9. Registrar no histórico
       await _recordLessonHistory(
         userId: userId,
         xpEarned: totalXpReward,

@@ -38,7 +38,7 @@ class _WelcomeViewState extends State<WelcomeView> {
     // Se skipWelcome = true, pular direto para próxima tela
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_controller.skipWelcome.value) {
-        _controller.nav.goToSelectLanguage();
+        _controller.handleSkipWelcome();
       }
     });
   }
