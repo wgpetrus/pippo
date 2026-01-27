@@ -9,12 +9,14 @@ class LeaderboardHeader extends StatelessWidget {
   final String title;
   final List<String> shieldAssets;
   final int currentLevel;
+  final Function(int)? onLeagueSelected;
 
   const LeaderboardHeader({
     super.key,
     required this.title,
     required this.shieldAssets,
     required this.currentLevel,
+    this.onLeagueSelected,
   });
 
   @override
@@ -38,6 +40,7 @@ class LeaderboardHeader extends StatelessWidget {
             child: LeagueSelector(
               shieldAssets: shieldAssets,
               currentLevel: currentLevel,
+              onLeagueSelected: onLeagueSelected,
             ),
           ),
         ),

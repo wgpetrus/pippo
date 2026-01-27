@@ -271,7 +271,7 @@ class _SectionsPageState extends State<SectionsPage> {
             status: sectionStatus,
             currentProgress: currentProgress,
             totalProgress: totalProgress,
-            onTap: sectionStatus == SectionStatus.inProgress 
+            onTap: (sectionStatus == SectionStatus.inProgress || sectionStatus == SectionStatus.notStarted)
                 ? () => _startLesson(context) 
                 : null,
           );

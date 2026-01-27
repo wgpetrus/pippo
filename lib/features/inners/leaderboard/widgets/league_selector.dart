@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 
 /// Exibição do nível atual da liga (escudo central maior, laterais menores)
+/// 
+/// Este widget exibe os escudos das ligas com o escudo atual em destaque.
+/// Os escudos laterais (anterior e próximo) são exibidos com menor opacidade.
+/// 
+/// Propriedades:
+/// - shieldAssets: Lista de assets dos escudos das ligas
+/// - currentLevel: Índice da liga atual (0-based)
+/// - onLeagueSelected: Callback opcional quando um escudo é clicado
 class LeagueSelector extends StatelessWidget {
   final List<String> shieldAssets;
   final int currentLevel;
+  final Function(int)? onLeagueSelected;
 
   const LeagueSelector({
     super.key,
     required this.shieldAssets,
     required this.currentLevel,
+    this.onLeagueSelected,
   });
 
   @override
@@ -24,20 +34,36 @@ class LeagueSelector extends StatelessWidget {
         children: [
           // Escudo anterior (menor, desativado)
           if (prevIndex != null)
-            _buildShield(shieldAssets[prevIndex], isActive: false)
+            _buildShield(
+              shieldAssets[prevIndex],
+              isActive: false,
+              onTap: onLeagueSelected != null
+                  ? () => onLeagueSelected!(prevIndex)
+                  : null,
+            )
           else
             const SizedBox(width: 80),
 
           const SizedBox(width: 8),
 
           // Escudo atual (maior, ativo)
-          _buildShield(shieldAssets[currentLevel], isActive: true),
+          _buildShield(
+            shieldAssets[currentLevel],
+            isActive: true,
+            onTap: null, // Escudo atual não é clicável
+          ),
 
           const SizedBox(width: 8),
 
           // Próximo escudo (menor, desativado)
           if (nextIndex != null)
-            _buildShield(shieldAssets[nextIndex], isActive: false)
+            _buildShield(
+              shieldAssets[nextIndex],
+              isActive: false,
+              onTap: onLeagueSelected != null
+                  ? () => onLeagueSelected!(nextIndex)
+                  : null,
+            )
           else
             const SizedBox(width: 80),
         ],
@@ -46,11 +72,11 @@ class LeagueSelector extends StatelessWidget {
   }
 
   // Widgets
-  Widget _buildShield(String asset, {required bool isActive}) {
+  Widget _buildShield(String asset, {required bool isActive, VoidCallback? onTap}) {
     final size = isActive ? 100.0 : 70.0;
     final opacity = isActive ? 1.0 : 0.4;
 
-    return AnimatedOpacity(
+    final shield = AnimatedOpacity(
       opacity: opacity,
       duration: const Duration(milliseconds: 200),
       child: Image.asset(
@@ -60,5 +86,15 @@ class LeagueSelector extends StatelessWidget {
         fit: BoxFit.contain,
       ),
     );
+
+    // Se tem callback e não é o escudo ativo, tornar clicável
+    if (onTap != null && !isActive) {
+      return GestureDetector(
+        onTap: onTap,
+        child: shield,
+      );
+    }
+
+    return shield;
   }
 }

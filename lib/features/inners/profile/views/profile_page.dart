@@ -76,6 +76,7 @@ class ProfilePage extends StatelessWidget {
           SliverToBoxAdapter(
             child: OverviewSection(
               flagAsset: AppAssets.flagFrance,
+              useOwnStats: true, // Usar stats do GamificationController
             ),
           ),
 

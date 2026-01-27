@@ -75,9 +75,14 @@ class UserProfilePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Overview
+            // Overview - passar dados do usuário específico
             OverviewSection(
               flagAsset: AppAssets.flagFrance,
+              totalXp: xp, // XP do usuário específico
+              currentStreak: 5, // TODO: [future] buscar do Firestore
+              longestStreak: 12, // TODO: [future] buscar do Firestore
+              level: 3, // TODO: [future] buscar do Firestore
+              useOwnStats: false, // Não usar stats do GamificationController
             ),
             const SizedBox(height: 32),
           ],

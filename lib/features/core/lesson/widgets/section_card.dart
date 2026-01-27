@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 
 /// Estados possíveis do card de seção
 enum SectionStatus {
@@ -35,24 +36,24 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
     final isLocked = status == SectionStatus.locked;
-    
-    // Debug: Log dos valores recebidos
-    print('🎨 SectionCard "$title": progress=$currentProgress/$totalProgress, status=$status');
+    final isCompleted = status == SectionStatus.completed;
+    final isClickable = !isLocked && !isCompleted && onTap != null;
 
     return GestureDetector(
-      onTap: isLocked ? null : onTap,
+      onTap: isClickable ? onTap : null,
       child: Container(
-        height: 180,
+        height: r.hp(22),
         decoration: BoxDecoration(
           color: AppTheme.gray500,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(r.spacing16),
         ),
         child: Container(
-          margin: const EdgeInsets.only(bottom: 4),
+          margin: EdgeInsets.only(bottom: r.spacing4),
           decoration: BoxDecoration(
             color: isLocked ? AppTheme.gray700 : AppTheme.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(r.spacing16),
             border: Border.all(color: AppTheme.gray600, width: 2),
           ),
           child: ClipRRect(
@@ -60,14 +61,14 @@ class SectionCard extends StatelessWidget {
             child: Stack(
               children: [
                 // Sparkles (só no completed)
-                if (status == SectionStatus.completed) _buildSparkles(),
+                if (status == SectionStatus.completed) _buildSparkles(r),
 
                 // Cadeado (só no locked)
-                if (isLocked) _buildLockIcon(),
+                if (isLocked) _buildLockIcon(r),
 
                 // Conteúdo principal
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(r.spacing16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -80,17 +81,19 @@ class SectionCard extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 4),
+                      SizedBox(height: r.spacing4),
 
                       // Subtítulo baseado no estado
-                      _buildSubtitle(),
+                      _buildSubtitle(r),
 
-                      const SizedBox(height: 12),
+                      SizedBox(height: r.spacing12),
 
                       // Barra de progresso ou START NOW
+                      // TODO: [etapa 8] mover lógica de exibição para controller (shouldShowProgress)
                       if (status == SectionStatus.completed ||
-                          status == SectionStatus.inProgress)
-                        _buildProgressBar(),
+                          status == SectionStatus.inProgress ||
+                          (status == SectionStatus.notStarted && currentProgress > 0))
+                        _buildProgressBar(r),
                     ],
                   ),
                 ),
@@ -100,7 +103,7 @@ class SectionCard extends StatelessWidget {
                   right: 0,
                   top: 0,
                   bottom: 0,
-                  child: _buildMascot(),
+                  child: _buildMascot(r),
                 ),
               ],
             ),
@@ -112,10 +115,10 @@ class SectionCard extends StatelessWidget {
 
   // Widgets
 
-  Widget _buildSparkles() {
+  Widget _buildSparkles(ResponsiveUtils r) {
     return Positioned.fill(
       child: Padding(
-        padding: const EdgeInsets.only(left: 16, top: 16),
+        padding: EdgeInsets.only(left: r.spacing16, top: r.spacing16),
         child: Align(
           alignment: Alignment.topLeft,
           child: SizedBox(
@@ -164,10 +167,10 @@ class SectionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLockIcon() {
+  Widget _buildLockIcon(ResponsiveUtils r) {
     return Positioned(
-      left: 16,
-      top: 16,
+      left: r.spacing16,
+      top: r.spacing16,
       child: FaIcon(
         FontAwesomeIcons.lock,
         size: 20,
@@ -176,7 +179,7 @@ class SectionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(ResponsiveUtils r) {
     if (status == SectionStatus.locked) {
       return Text(
         'Complete o curso para\ndesbloquear.',
@@ -202,7 +205,7 @@ class SectionCard extends StatelessWidget {
 
         // COMEÇAR AGORA (só no notStarted)
         if (status == SectionStatus.notStarted) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: r.spacing8),
           GestureDetector(
             onTap: onTap,
             child: Text(
@@ -217,7 +220,7 @@ class SectionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar() {
+  Widget _buildProgressBar(ResponsiveUtils r) {
     final isCompleted = status == SectionStatus.completed;
     final progress = totalProgress > 0 ? currentProgress / totalProgress : 0.0;
 
@@ -258,7 +261,7 @@ class SectionCard extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(width: 8),
+        SizedBox(width: r.spacing8),
 
         // Troféu
         _buildTrophy(),
@@ -306,14 +309,14 @@ class SectionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMascot() {
+  Widget _buildMascot(ResponsiveUtils r) {
     final isLocked = status == SectionStatus.locked;
     final asset = mascotAsset ?? AppAssets.mascotLesson;
 
     return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topRight: Radius.circular(16),
-        bottomRight: Radius.circular(16),
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(r.spacing16),
+        bottomRight: Radius.circular(r.spacing16),
       ),
       child: ColorFiltered(
         colorFilter: isLocked
@@ -329,7 +332,7 @@ class SectionCard extends StatelessWidget {
           opacity: isLocked ? 0.6 : 1.0,
           child: Image.asset(
             asset,
-            height: 180,
+            height: r.hp(22),
             fit: BoxFit.cover,
           ),
         ),

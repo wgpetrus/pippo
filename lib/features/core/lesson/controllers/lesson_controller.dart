@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../inners/gamification/controllers/gamification_controller.dart';
 import '../../../inners/home/controllers/home_controller.dart';
+import '../../../inners/treasure/controllers/treasure_controller.dart';
 import '../../../../shared/mocks/lesson_mocks.dart';
 
 /// Controller para gerenciar o fluxo de lições e exercícios
@@ -467,6 +469,39 @@ class LessonController extends GetxController {
         
         // Step 8: Atualizar desafios
         await _updateChallenges();
+        
+        // Step 8.5: Integração com TreasureController (se disponível)
+        // 
+        // Atualiza progresso de desafios relacionados a lições:
+        // - 'lessons': Incrementa contador de lições completadas
+        // - 'correct_exercises': Incrementa contador de exercícios corretos
+        // 
+        // TODO: [future] Adicionar mais tipos de desafios:
+        // - 'perfect_lessons': Lições com 100% de acurácia
+        // - 'time_spent': Tempo de estudo em minutos
+        // - 'lesson_streak': Lições consecutivas sem erros
+        try {
+          // Verificar se TreasureController está registrado
+          if (Get.isRegistered<TreasureController>()) {
+            final treasureController = Get.find<TreasureController>();
+            
+            // Atualizar progresso de desafios de lições
+            await treasureController.updateChallengeProgress('lessons', 1);
+            
+            // Atualizar progresso de desafios de exercícios corretos
+            await treasureController.updateChallengeProgress(
+              'correct_exercises', 
+              correctAnswers.value,
+            );
+            
+            debugPrint('✅ Desafios atualizados: 1 lição, ${correctAnswers.value} exercícios corretos');
+          } else {
+            debugPrint('⚠️ TreasureController não registrado - desafios não atualizados');
+          }
+        } catch (e) {
+          // Erro ao atualizar desafios - não é crítico
+          debugPrint('⚠️ Erro ao atualizar desafios: $e');
+        }
         
         // Step 9: Desbloquear próxima lição
         await _unlockNextLesson(courseId, lessonId);

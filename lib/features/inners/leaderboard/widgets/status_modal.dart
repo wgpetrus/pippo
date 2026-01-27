@@ -1,32 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
-import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../controllers/leaderboard_controller.dart';
 
 /// Modal para selecionar status do usuário
 class StatusModal {
-  // Dados mockados de status disponíveis
+  // Opções de emoji disponíveis
   static const _statusOptions = [
-    AppAssets.charDiogo,
-    AppAssets.charMara,
-    AppAssets.charDafny,
-    AppAssets.charFrancilene,
-    AppAssets.charGlauciane,
-    AppAssets.charLindoedson,
-    AppAssets.charRenner,
-    AppAssets.charDiogo,
-    AppAssets.charMara,
-    AppAssets.charDafny,
+    '😊', '😎', '🔥', '💪', '🎯', '🎭', '🚀', '⭐', '💎', '👑',
+    '🎉', '😴', '🤔', '😤', '🥳', '🤓', '😇', '🤩', '😈', '🥶'
   ];
 
   /// Exibe o modal de seleção de status
-  static void show(BuildContext context, {
+  static void show(
+    BuildContext context, {
     required String currentAvatar,
     String? currentStatus,
-    required Function(String?) onStatusSelected,
+    required LeaderboardController controller,
   }) {
+    final r = ResponsiveUtils(context);
     String? selectedStatus = currentStatus;
 
     WoltModalSheet.show(
@@ -37,47 +33,87 @@ class StatusModal {
           surfaceTintColor: AppTheme.white,
           hasSabGradient: false,
           topBarTitle: Text('Defina seu status', style: AppTheme.textXlBold),
-          trailingNavBarWidget: _buildGemCounter(),
           isTopBarLayerAlwaysVisible: true,
           child: StatefulBuilder(
             builder: (context, setState) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: Column(
-                  children: [
-                    // Avatar com status atual
-                    _buildCurrentAvatar(currentAvatar, selectedStatus),
-                    const SizedBox(height: 32),
+              return Obx(() {
+                final isUpdating = controller.isUpdatingStatus.value;
+                final errorMsg = controller.errorMessage.value;
 
-                    // Grid de opções
-                    _buildStatusGrid(
-                      selectedStatus: selectedStatus,
-                      onSelect: (status) {
-                        setState(() => selectedStatus = status);
-                      },
-                    ),
-                    const SizedBox(height: 32),
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(r.spacing24, r.spacing16, r.spacing24, r.spacing24),
+                  child: Column(
+                    children: [
+                      // Avatar com status atual
+                      _buildCurrentAvatar(r, currentAvatar, selectedStatus),
+                      SizedBox(height: r.spacing32),
 
-                    // Botões
-                    AppButton(
-                      text: 'Pronto',
-                      onPressed: () {
-                        onStatusSelected(selectedStatus);
-                        Navigator.pop(context);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    AppButton(
-                      text: 'Limpar status',
-                      isPrimary: false,
-                      onPressed: () {
-                        onStatusSelected(null);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-              );
+                      // Mensagem de erro (se houver)
+                      if (errorMsg.isNotEmpty) ...[
+                        Container(
+                          padding: EdgeInsets.all(r.spacing12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.red.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.error_outline, color: AppTheme.red, size: 20),
+                              SizedBox(width: r.spacing8),
+                              Expanded(
+                                child: Text(
+                                  errorMsg,
+                                  style: AppTheme.textSmMedium.copyWith(color: AppTheme.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: r.spacing16),
+                      ],
+
+                      // Grid de opções
+                      _buildStatusGrid(
+                        r: r,
+                        selectedStatus: selectedStatus,
+                        onSelect: (status) {
+                          setState(() => selectedStatus = status);
+                        },
+                        enabled: !isUpdating,
+                      ),
+                      SizedBox(height: r.spacing32),
+
+                      // Botões
+                      AppButton(
+                        text: 'Pronto',
+                        isLoading: isUpdating,
+                        onPressed: isUpdating
+                            ? null
+                            : () async {
+                                await controller.updateUserStatus(selectedStatus);
+                                if (controller.errorMessage.value.isEmpty) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                      ),
+                      SizedBox(height: r.spacing12),
+                      AppButton(
+                        text: 'Limpar status',
+                        isPrimary: false,
+                        onPressed: isUpdating
+                            ? null
+                            : () async {
+                                await controller.updateUserStatus(null);
+                                if (controller.errorMessage.value.isEmpty) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                      ),
+                    ],
+                  ),
+                );
+              });
             },
           ),
         ),
@@ -86,31 +122,14 @@ class StatusModal {
   }
 
   // Widgets
-  static Widget _buildGemCounter() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(AppAssets.appbarGem, width: 24, height: 24),
-          const SizedBox(width: 6),
-          Text(
-            '650',
-            style: AppTheme.textLgBold.copyWith(color: AppTheme.red),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Widget _buildCurrentAvatar(String avatar, String? status) {
+  static Widget _buildCurrentAvatar(ResponsiveUtils r, String avatar, String? status) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         // Borda tracejada
         Container(
-          width: 100,
-          height: 100,
+          width: r.wp(25),
+          height: r.wp(25),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
@@ -120,8 +139,8 @@ class StatusModal {
             ),
           ),
           child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
+            margin: EdgeInsets.all(r.spacing8),
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.gray700,
             ),
@@ -138,7 +157,7 @@ class StatusModal {
           child: Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.primary,
               shape: BoxShape.circle,
             ),
@@ -154,32 +173,39 @@ class StatusModal {
   }
 
   static Widget _buildStatusGrid({
+    required ResponsiveUtils r,
     required String? selectedStatus,
     required Function(String) onSelect,
+    required bool enabled,
   }) {
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: r.spacing12,
+      runSpacing: r.spacing12,
       alignment: WrapAlignment.center,
-      children: _statusOptions.asMap().entries.map((entry) {
-        final index = entry.key;
-        final asset = entry.value;
-        final isSelected = index == 0; // Primeiro selecionado por padrão
+      children: _statusOptions.map((emoji) {
+        final isSelected = emoji == selectedStatus;
 
         return GestureDetector(
-          onTap: () => onSelect('😊'), // Placeholder
+          onTap: enabled ? () => onSelect(emoji) : null,
           child: Container(
             width: 56,
             height: 56,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: enabled ? AppTheme.white : AppTheme.gray600.withOpacity(0.3),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : AppTheme.gray600,
                 width: isSelected ? 3 : 1,
               ),
             ),
-            child: ClipOval(
-              child: Image.asset(asset, fit: BoxFit.cover),
+            child: Center(
+              child: Text(
+                emoji,
+                style: TextStyle(
+                  fontSize: 28,
+                  color: enabled ? null : AppTheme.gray600,
+                ),
+              ),
             ),
           ),
         );

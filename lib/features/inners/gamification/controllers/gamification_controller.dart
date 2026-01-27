@@ -32,12 +32,13 @@ class GamificationController extends GetxController {
   final currentEnergy = 5.obs;
   final gems = 0.obs;
   final totalXp = 0.obs;
-  final weeklyXp = 0.obs;
+  final weeklyXP = 0.obs; // ✅ Padronizado para weeklyXP (X maiúsculo)
   final todayXp = 0.obs;
   final level = 1.obs;
   final xpToNextLevel = 100.obs;
   final totalGemsEarned = 0.obs;
   final totalGemsSpent = 0.obs;
+  final currentLeague = 'bronze'.obs; // ✅ NOVO: Liga atual do usuário
 
   // Estados internos (não reativos)
   String _lastStreakDate = '';
@@ -128,7 +129,7 @@ class GamificationController extends GetxController {
       // Carregar XP
       final xpData = data['xp'] as Map<String, dynamic>? ?? {};
       totalXp.value = xpData['totalXp'] ?? 0;
-      weeklyXp.value = xpData['weeklyXp'] ?? 0;
+      weeklyXP.value = xpData['weeklyXP'] ?? 0; // ✅ Padronizado para weeklyXP
       todayXp.value = xpData['todayXp'] ?? 0;
       level.value = xpData['level'] ?? 1;
       xpToNextLevel.value = xpData['xpToNextLevel'] ?? 100;
@@ -143,6 +144,9 @@ class GamificationController extends GetxController {
       totalGemsSpent.value = gemsData['totalGemsSpent'] ?? 0;
       _gemMultiplierUntil =
           _timestampToDateTime(gemsData['gemMultiplierUntil']);
+
+      // ✅ NOVO: Carregar currentLeague
+      currentLeague.value = data['currentLeague'] ?? 'bronze';
 
       // Calcular regeneração de energia após carregar
       _calculateEnergyRegeneration();
@@ -183,7 +187,7 @@ class GamificationController extends GetxController {
           },
           'xp': {
             'totalXp': totalXp.value,
-            'weeklyXp': weeklyXp.value,
+            'weeklyXP': weeklyXP.value, // ✅ Padronizado para weeklyXP
             'todayXp': todayXp.value,
             'level': level.value,
             'xpToNextLevel': xpToNextLevel.value,
@@ -201,6 +205,7 @@ class GamificationController extends GetxController {
                 ? _dateTimeToTimestamp(_gemMultiplierUntil!)
                 : null,
           },
+          'currentLeague': currentLeague.value, // ✅ NOVO: Salvar currentLeague
           'lastUpdated': FieldValue.serverTimestamp(),
         })
         .timeout(const Duration(seconds: 30)));
@@ -243,7 +248,7 @@ class GamificationController extends GetxController {
           },
           'xp': {
             'totalXp': 0,
-            'weeklyXp': 0,
+            'weeklyXP': 0, // ✅ Padronizado para weeklyXP
             'todayXp': 0,
             'level': 1,
             'xpToNextLevel': 100,
@@ -257,6 +262,7 @@ class GamificationController extends GetxController {
             'totalGemsSpent': 0,
             'gemMultiplierUntil': null,
           },
+          'currentLeague': 'bronze', // ✅ NOVO: Inicializar como bronze
           'lastUpdated': FieldValue.serverTimestamp(),
         })
         .timeout(const Duration(seconds: 30)));
@@ -711,6 +717,29 @@ class GamificationController extends GetxController {
       // 2. Adicionar XP (com booster se ativo)
       _addXp(totalXpReward);
 
+      // 2.5. Integração com TreasureController - atualizar desafios de XP (se disponível)
+      // 
+      // Atualiza progresso de desafios relacionados a XP:
+      // - 'xp': Incrementa contador de XP ganho
+      // 
+      // TODO: [future] Adicionar mais tipos de desafios relacionados a gamificação:
+      // - 'level_ups': Número de níveis subidos
+      // - 'gems_earned': Gems ganhas (não gastas)
+      // - 'energy_used': Energia consumida em lições
+      try {
+        if (Get.isRegistered<dynamic>()) {
+          // Tentar encontrar TreasureController
+          final treasureController = Get.find<dynamic>();
+          if (treasureController.toString().contains('TreasureController')) {
+            // Atualizar progresso de desafios de XP
+            await treasureController.updateChallengeProgress('xp', totalXpReward);
+          }
+        }
+      } catch (e) {
+        // TreasureController não registrado ou erro - não é crítico
+        print('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de XP: $e');
+      }
+
       // 3. Adicionar gems (com multiplier se ativo)
       _addGems(totalGemsReward);
 
@@ -718,6 +747,28 @@ class GamificationController extends GetxController {
       if (isFirstLesson) {
         _updateStreak();
         await _checkStreakMilestonesWithHistory(userId);
+        
+        // 4.5. Integração com TreasureController - atualizar desafios de streak (se disponível)
+        // 
+        // Atualiza progresso de desafios relacionados a streak:
+        // - 'streak': Incrementa contador de dias de streak mantidos
+        // 
+        // TODO: [future] Adicionar mais tipos de desafios relacionados a streak:
+        // - 'streak_milestones': Atingir milestones específicos (7, 14, 30 dias)
+        // - 'streak_freeze_used': Usar streak freeze
+        try {
+          if (Get.isRegistered<dynamic>()) {
+            // Tentar encontrar TreasureController
+            final treasureController = Get.find<dynamic>();
+            if (treasureController.toString().contains('TreasureController')) {
+              // Atualizar progresso de desafios de streak
+              await treasureController.updateChallengeProgress('streak', 1);
+            }
+          }
+        } catch (e) {
+          // TreasureController não registrado ou erro - não é crítico
+          print('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de streak: $e');
+        }
       }
 
       // 5. Verificar level up
@@ -796,7 +847,7 @@ class GamificationController extends GetxController {
   }
 
   // Métodos privados - XP e Levels
-  /// Adiciona XP e atualiza totalXp, weeklyXp e todayXp atomicamente
+  /// Adiciona XP e atualiza totalXp, weeklyXP e todayXp atomicamente
   void _addXp(int baseXp) {
     // Validar XP não negativo
     if (baseXp < 0) {
@@ -811,7 +862,7 @@ class GamificationController extends GetxController {
 
     // Atualizar todos os três contadores atomicamente
     totalXp.value += xpToAdd;
-    weeklyXp.value += xpToAdd;
+    weeklyXP.value += xpToAdd; // ✅ Padronizado para weeklyXP
     todayXp.value += xpToAdd;
   }
 
@@ -822,7 +873,7 @@ class GamificationController extends GetxController {
 
     // Reset semanal (segunda-feira 00:00)
     if (_isMonday(now) && _lastWeeklyResetDate != today) {
-      weeklyXp.value = 0;
+      weeklyXP.value = 0; // ✅ Padronizado para weeklyXP
       _lastWeeklyResetDate = today;
     }
 

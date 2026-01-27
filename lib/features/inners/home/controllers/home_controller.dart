@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../treasure/controllers/treasure_controller.dart';
 import '../widgets/home_appbar.dart';
 
 /// Controller da home
@@ -76,7 +77,25 @@ class HomeController extends GetxController {
 
   // Métodos públicos
   void onNavTap(int index) {
+    final previousIndex = currentNavIndex.value;
     currentNavIndex.value = index;
+    
+    // Se navegando para a tab Treasure (index 3), recarregar desafios
+    if (index == 3 && previousIndex != 3) {
+      _refreshTreasurePage();
+    }
+  }
+
+  /// Recarrega dados da página Treasure quando usuário retorna à tab
+  void _refreshTreasurePage() {
+    try {
+      if (Get.isRegistered<TreasureController>()) {
+        final treasureController = Get.find<TreasureController>();
+        treasureController.loadChallenges();
+      }
+    } catch (e) {
+      // TreasureController não registrado - não é crítico
+    }
   }
 
   void onStatTap(StatType stat) {

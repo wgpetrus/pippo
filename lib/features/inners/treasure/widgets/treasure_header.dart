@@ -10,20 +10,22 @@ class TreasureHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Container(
-      margin: const EdgeInsets.all(20),
+      margin: EdgeInsets.all(r.spacing16),
       height: ResponsiveUtils.height(180, min: 140, max: 220),
       decoration: BoxDecoration(
         color: AppTheme.pink,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(r.spacing24),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(r.spacing24),
         child: Stack(
           children: [
             // Conteúdo
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(r.spacing16),
               child: Row(
                 children: [
                   // Texto (título no top, descrição no bottom)
@@ -55,7 +57,7 @@ class TreasureHeader extends StatelessWidget {
 
             // Mascote treasure hunter (máximo tamanho)
             Positioned(
-              right: 20,
+              right: r.spacing16,
               bottom: 0,
               top: 0,
               child: Image.asset(
