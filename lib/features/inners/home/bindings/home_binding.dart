@@ -4,6 +4,7 @@ import '../../../core/auth/controllers/auth_controller.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
 import '../../leaderboard/controllers/leaderboard_controller.dart';
+import '../../shop/controllers/shop_controller.dart';
 import '../../treasure/controllers/treasure_controller.dart';
 import '../controllers/home_controller.dart';
 
@@ -23,6 +24,9 @@ class HomeBinding extends Bindings {
 
     // Instanciar LeaderboardController
     Get.lazyPut<LeaderboardController>(() => LeaderboardController());
+
+    // Instanciar ShopController
+    Get.lazyPut<ShopController>(() => ShopController());
 
     // Instanciar TreasureController
     Get.lazyPut<TreasureController>(() => TreasureController());

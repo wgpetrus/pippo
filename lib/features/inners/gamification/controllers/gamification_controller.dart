@@ -70,6 +70,46 @@ class GamificationController extends GetxController {
   /// Verifica se streak freeze está disponível para uso
   bool get streakFreezeAvailable => _streakFreezeAvailable;
 
+  /// Retorna o tempo de expiração do XP booster (null se não ativo)
+  DateTime? get xpBoosterUntil => _xpBoosterUntil;
+
+  /// Retorna o tempo de expiração do gem multiplier (null se não ativo)
+  DateTime? get gemMultiplierUntil => _gemMultiplierUntil;
+
+  /// Retorna tempo restante do XP booster formatado (ex: "45min restantes")
+  /// Retorna string vazia se não ativo ou expirado
+  String getXpBoosterTimeRemaining() {
+    if (_xpBoosterUntil == null) return '';
+    
+    final now = DateTime.now();
+    if (now.isAfter(_xpBoosterUntil!)) return '';
+    
+    final diff = _xpBoosterUntil!.difference(now);
+    
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}min restantes';
+    } else {
+      return '${diff.inHours}h restantes';
+    }
+  }
+
+  /// Retorna tempo restante do gem multiplier formatado (ex: "45min restantes")
+  /// Retorna string vazia se não ativo ou expirado
+  String getGemMultiplierTimeRemaining() {
+    if (_gemMultiplierUntil == null) return '';
+    
+    final now = DateTime.now();
+    if (now.isAfter(_gemMultiplierUntil!)) return '';
+    
+    final diff = _gemMultiplierUntil!.difference(now);
+    
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}min restantes';
+    } else {
+      return '${diff.inHours}h restantes';
+    }
+  }
+
   // Lifecycle
   @override
   void onInit() {

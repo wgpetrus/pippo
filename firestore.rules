@@ -22,7 +22,16 @@ service cloud.firestore {
       }
       
       match /stats/{statId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        
+        // Regras de escrita com validações para shop system
+        allow write: if request.auth != null 
+          && request.auth.uid == userId
+          // Validar que gems nunca fique negativo (Requirement 6.1)
+          && request.resource.data.gems.gems >= 0
+          // Validar que energy está entre 0-5 (Requirement 2.3)
+          && request.resource.data.energy.currentEnergy >= 0
+          && request.resource.data.energy.currentEnergy <= 5;
       }
     }
     
