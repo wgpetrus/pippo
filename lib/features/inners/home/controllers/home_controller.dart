@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/widgets/app_lesson_button.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
@@ -25,7 +27,9 @@ class HomeController extends GetxController {
 
   // Estados de progresso das lições
   final completedLessons = <String>[].obs; // IDs das lições completadas
+  final inProgressLessons = <String>[].obs; // IDs das lições em progresso
   final isLoadingProgress = false.obs;
+  final currentUnitIndex = 0.obs; // Índice da unidade atual (0 = Unidade 1, 1 = Unidade 2, etc)
 
   // Lifecycle
   @override
@@ -33,14 +37,131 @@ class HomeController extends GetxController {
     super.onInit();
     _loadLessonProgress();
   }
+  
+  @override
+  void onReady() {
+    super.onReady();
+    // Verificar se há lição em progresso para mostrar "Continuar"
+    _checkInProgressLesson();
+  }
+  
+  // Getters
+  
+  /// Retorna os dados da unidade atual
+  Map<String, dynamic> get currentUnit {
+    return _units[currentUnitIndex.value];
+  }
+  
+  /// Retorna os botões de lição da unidade atual
+  List<Map<String, dynamic>> get currentLessonButtons {
+    return currentUnit['lessons'] as List<Map<String, dynamic>>;
+  }
+  
+  // Dados das unidades
+  final _units = [
+    {
+      'number': 'Unidade 1',
+      'title': 'Use frases básicas',
+      'lessons': [
+        {
+          'lessonId': 'lesson_1',
+          'iconAsset': AppAssets.iconStars,
+          'effectAsset': AppAssets.effectStars,
+          'offsetX': -0.13,
+          'offsetY': 0.40,        },
+        {
+          'lessonId': 'lesson_2',
+          'iconAsset': AppAssets.iconHeadset,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': -0.03,
+          'offsetY': 0.54,
+          'animDelay': 200,
+        },
+        {
+          'lessonId': 'lesson_3',
+          'iconAsset': AppAssets.iconMic,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': -0.08,
+          'offsetY': 0.67,
+          'animDelay': 400,
+        },
+        {
+          'lessonId': 'lesson_4',
+          'iconAsset': AppAssets.iconFire,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': 0.05,
+          'offsetY': 0.77,
+          'animDelay': 600,
+        },
+        {
+          'lessonId': 'lesson_5',
+          'iconAsset': AppAssets.iconStar,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': -0.20,
+          'offsetY': 0.85,
+          'animDelay': 800,
+        },
+      ],
+    },
+    {
+      'number': 'Unidade 2',
+      'title': 'Cumprimente pessoas',
+      'lessons': [
+        {
+          'lessonId': 'lesson_1',
+          'iconAsset': AppAssets.iconStars,
+          'effectAsset': AppAssets.effectStars,
+          'offsetX': -0.13,
+          'offsetY': 0.40,        },
+        {
+          'lessonId': 'lesson_2',
+          'iconAsset': AppAssets.iconHeadset,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': -0.03,
+          'offsetY': 0.54,
+          'animDelay': 200,
+        },
+        {
+          'lessonId': 'lesson_3',
+          'iconAsset': AppAssets.iconMic,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': -0.08,
+          'offsetY': 0.67,
+          'animDelay': 400,
+        },
+        {
+          'lessonId': 'lesson_4',
+          'iconAsset': AppAssets.iconFire,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': 0.05,
+          'offsetY': 0.77,
+          'animDelay': 600,
+        },
+        {
+          'lessonId': 'lesson_5',
+          'iconAsset': AppAssets.iconStar,
+          'effectAsset': AppAssets.effectZebra,
+          'offsetX': -0.20,
+          'offsetY': 0.85,
+          'animDelay': 800,
+        },
+      ],
+    },
+  ];
 
   // Métodos privados
   Future<void> _loadLessonProgress() async {
+    debugPrint('🔄 _loadLessonProgress() INICIADO');
     isLoadingProgress.value = true;
 
     try {
       final userId = _auth.currentUser?.uid;
-      if (userId == null) return;
+      if (userId == null) {
+        debugPrint('  ❌ Usuário não autenticado');
+        return;
+      }
+      
+      debugPrint('  👤 UserId: $userId');
 
       // Buscar curso ativo
       final coursesSnapshot = await _firestore
@@ -51,12 +172,16 @@ class HomeController extends GetxController {
           .limit(1)
           .get();
 
-      if (coursesSnapshot.docs.isEmpty) return;
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('  ⚠️ Nenhum curso ativo encontrado');
+        return;
+      }
 
       final courseId = coursesSnapshot.docs.first.id;
+      debugPrint('  📚 Curso ativo: $courseId');
 
-      // Buscar progresso das lições
-      final progressSnapshot = await _firestore
+      // Buscar lições completadas
+      final completedSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
@@ -65,14 +190,83 @@ class HomeController extends GetxController {
           .where('status', isEqualTo: 'completed')
           .get();
 
-      completedLessons.value = progressSnapshot.docs
+      completedLessons.value = completedSnapshot.docs
           .map((doc) => doc.data()['lessonId'] as String)
           .toList();
+      
+      debugPrint('  ✅ Lições completadas: ${completedLessons.length}');
+      debugPrint('    IDs: ${completedLessons.join(", ")}');
+      
+      // Buscar lições em progresso
+      final inProgressSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('progress')
+          .where('status', isEqualTo: 'in_progress')
+          .get();
+
+      inProgressLessons.value = inProgressSnapshot.docs
+          .map((doc) => doc.data()['lessonId'] as String)
+          .toList();
+      
+      debugPrint('  ✅ Lições em progresso: ${inProgressLessons.length}');
+      debugPrint('    IDs: ${inProgressLessons.join(", ")}');
+      
+      // Determinar unidade atual baseada no progresso
+      _updateCurrentUnit();
+      
+      debugPrint('  ✅ Unidade atual: ${currentUnitIndex.value}');
     } catch (e) {
       // Silenciosamente falhar - não é crítico
+      debugPrint('  ❌ Erro ao carregar progresso: $e');
     } finally {
       isLoadingProgress.value = false;
+      debugPrint('✅ _loadLessonProgress() CONCLUÍDO');
     }
+  }
+  
+  /// Verifica se há lição em progresso para mostrar "Continuar"
+  void _checkInProgressLesson() {
+    debugPrint('🔍 _checkInProgressLesson() INICIADO');
+    debugPrint('  📊 inProgressLessons: ${inProgressLessons.length}');
+    debugPrint('    IDs: ${inProgressLessons.join(", ")}');
+    debugPrint('  📊 completedLessons: ${completedLessons.length}');
+    debugPrint('    IDs: ${completedLessons.join(", ")}');
+    
+    // Mostrar "Continue" se:
+    // 1. Há lições em progresso OU
+    // 2. Há lições completadas (usuário já começou o curso)
+    final hasProgress = inProgressLessons.isNotEmpty || completedLessons.isNotEmpty;
+    showContinue.value = hasProgress;
+    
+    debugPrint('  ✅ showContinue: ${showContinue.value} (inProgress: ${inProgressLessons.isNotEmpty}, completed: ${completedLessons.isNotEmpty})');
+    debugPrint('✅ _checkInProgressLesson() CONCLUÍDO');
+  }
+  
+  /// Atualiza a unidade atual baseada nas lições completadas
+  void _updateCurrentUnit() {
+    // Contar quantas lições foram completadas
+    final completedCount = completedLessons.length;
+    
+    // Cada BOTÃO representa uma unidade completa (9 lições)
+    // 0-8 completadas = Botão 1 ativo (Unidade 1)
+    // 9-17 completadas = Botão 2 ativo (Unidade 2)
+    // 18-26 completadas = Botão 3 ativo (Unidade 3)
+    const lessonsPerButton = 9;
+    final activeButtonIndex = completedCount ~/ lessonsPerButton;
+    
+    // O header da unidade muda baseado em qual botão está ativo
+    // Botão 1 ativo (0-8 lições) = Header "Unidade 1"
+    // Botão 2 ativo (9-17 lições) = Header "Unidade 2"
+    // Botão 3 ativo (18-26 lições) = Header "Unidade 3"
+    currentUnitIndex.value = activeButtonIndex.clamp(0, _units.length - 1);
+    
+    debugPrint('📊 _updateCurrentUnit:');
+    debugPrint('  ✅ Lições completadas: $completedCount');
+    debugPrint('  📐 Cálculo: $completedCount ~/ $lessonsPerButton = $activeButtonIndex');
+    debugPrint('  🎯 Header da unidade: ${currentUnitIndex.value + 1} (index ${currentUnitIndex.value})');
   }
 
   // Métodos públicos
@@ -101,8 +295,16 @@ class HomeController extends GetxController {
   void onStatTap(StatType stat) {
     selectedStat.value = selectedStat.value == stat ? null : stat;
   }
+  
+  /// Limpa a seleção do stat (chamar quando modal fechar)
+  void clearStatSelection() {
+    selectedStat.value = null;
+  }
 
-  void onStartTap() {
+  /// Inicia lição do botão especificado
+  /// buttonIndex: índice do botão clicado (0-4)
+  void onStartTap(int buttonIndex) {
+    // Marcar que há lição em progresso IMEDIATAMENTE
     showContinue.value = true;
     
     // Garantir que o LessonController está registrado antes de navegar
@@ -110,7 +312,13 @@ class HomeController extends GetxController {
       Get.put(LessonController());
     }
     
-    Get.to(() => const SectionsPage(courseName: 'French'));
+    debugPrint('🎯 onStartTap: buttonIndex=$buttonIndex');
+    
+    // Navegar para as seções do botão clicado
+    Get.to(() => SectionsPage(
+      courseName: 'French',
+      buttonIndex: buttonIndex,
+    ));
   }
 
   void onAddCourse() {
@@ -127,5 +335,139 @@ class HomeController extends GetxController {
   /// Recarrega o progresso das lições (chamar após completar uma lição)
   Future<void> reloadProgress() async {
     await _loadLessonProgress();
+    _checkInProgressLesson();
+  }
+  
+  /// Determina o status de um botão de lição baseado no progresso
+  /// 
+  /// ESTRUTURA CORRETA:
+  /// - Cada BOTÃO = 1 UNIDADE COMPLETA = 9 lições (3 seções × 3 lições)
+  /// - Botão 1 (lesson_1) = lições 1-9
+  /// - Botão 2 (lesson_2) = lições 10-18
+  /// - Botão 3 (lesson_3) = lições 19-27
+  /// - Botões 4-5 = placeholders (não implementados ainda)
+  /// 
+  /// O currentUnitIndex apenas controla qual HEADER é exibido, NÃO quais botões são visíveis.
+  /// Todos os 5 botões são SEMPRE visíveis, apenas habilitam/desabilitam baseado no progresso.
+  LessonStatus getLessonStatus(String lessonId, int lessonIndex) {
+    debugPrint('🔍 getLessonStatus: lessonId=$lessonId, lessonIndex=$lessonIndex');
+    debugPrint('  📊 completedLessons: ${completedLessons.join(", ")}');
+    
+    // Cada botão representa 9 lições
+    // Botão 0 (lesson_1) = lições 1-9
+    // Botão 1 (lesson_2) = lições 10-18
+    // Botão 2 (lesson_3) = lições 19-27
+    // etc.
+    const lessonsPerButton = 9;
+    final firstLessonOfButton = (lessonIndex * lessonsPerButton) + 1;
+    final lastLessonOfButton = firstLessonOfButton + lessonsPerButton - 1;
+    
+    debugPrint('  📋 Botão $lessonIndex ($lessonId): lições $firstLessonOfButton-$lastLessonOfButton');
+    
+    // Verificar se TODAS as 9 lições deste botão foram completadas
+    int completedCount = 0;
+    for (int i = firstLessonOfButton; i <= lastLessonOfButton; i++) {
+      if (completedLessons.contains(i.toString())) {
+        completedCount++;
+      }
+    }
+    
+    final allLessonsCompleted = completedCount == lessonsPerButton;
+    
+    debugPrint('  ✅ Lições completadas: $completedCount/$lessonsPerButton');
+    debugPrint('  ✅ Todas lições completadas: $allLessonsCompleted');
+    
+    // Se todas as 9 lições foram completadas, botão está COMPLETED
+    if (allLessonsCompleted) {
+      debugPrint('  → Status: COMPLETED (todas $lessonsPerButton lições completadas)');
+      return LessonStatus.completed;
+    }
+    
+    // Primeiro botão (lesson_1) sempre disponível
+    if (lessonIndex == 0) {
+      debugPrint('  → Status: AVAILABLE (primeiro botão do curso)');
+      return LessonStatus.available;
+    }
+    
+    // Para outros botões, verificar se o botão anterior foi completado
+    final previousButtonIndex = lessonIndex - 1;
+    final prevFirstLesson = (previousButtonIndex * lessonsPerButton) + 1;
+    final prevLastLesson = prevFirstLesson + lessonsPerButton - 1;
+    
+    debugPrint('  🔍 Verificando botão anterior (index $previousButtonIndex)');
+    debugPrint('    📋 Botão anterior: lições $prevFirstLesson-$prevLastLesson');
+    
+    // Verificar se TODAS as 9 lições do botão anterior foram completadas
+    int prevCompletedCount = 0;
+    for (int i = prevFirstLesson; i <= prevLastLesson; i++) {
+      if (completedLessons.contains(i.toString())) {
+        prevCompletedCount++;
+      }
+    }
+    
+    final prevAllCompleted = prevCompletedCount == lessonsPerButton;
+    
+    debugPrint('    ✅ Lições completadas do botão anterior: $prevCompletedCount/$lessonsPerButton');
+    debugPrint('    ✅ Botão anterior completado: $prevAllCompleted');
+    
+    // Se o botão anterior foi completado, este botão está AVAILABLE
+    if (prevAllCompleted) {
+      debugPrint('  → Status: AVAILABLE (botão anterior completado)');
+      return LessonStatus.available;
+    }
+    
+    // Caso contrário, está LOCKED
+    debugPrint('  → Status: LOCKED (botão anterior não completado)');
+    return LessonStatus.locked;
+  }
+
+  // Métodos de UI
+
+  /// Determina se deve mostrar tooltip e qual texto usar
+  /// Retorna "Começar" se o botão não tem progresso, "Continuar" se tem progresso
+  /// Retorna null se não deve mostrar tooltip (botão completo ou não é o botão atual)
+  String? getTooltipText(String lessonId, int lessonIndex) {
+    // Calcular qual é o botão da unidade atual baseado no progresso
+    final completedCount = completedLessons.length;
+    const lessonsPerButton = 9;
+    final currentButtonIndex = completedCount ~/ lessonsPerButton;
+    
+    debugPrint('🎯 getTooltipText: lessonIndex=$lessonIndex, completedCount=$completedCount, currentButtonIndex=$currentButtonIndex');
+    
+    // Apenas o botão da unidade atual pode ter tooltip
+    if (lessonIndex != currentButtonIndex) {
+      debugPrint('  ❌ Não é o botão atual');
+      return null;
+    }
+    
+    // Calcular quais lições pertencem a este botão
+    final firstLessonOfButton = (lessonIndex * lessonsPerButton) + 1;
+    final lastLessonOfButton = firstLessonOfButton + lessonsPerButton - 1;
+    
+    // Verificar quantas lições foram completadas deste botão
+    int completedCountInButton = 0;
+    for (int i = firstLessonOfButton; i <= lastLessonOfButton; i++) {
+      if (completedLessons.contains(i.toString())) {
+        completedCountInButton++;
+      }
+    }
+    
+    debugPrint('  📊 Lições $firstLessonOfButton-$lastLessonOfButton: $completedCountInButton/$lessonsPerButton completadas');
+    
+    // Se TODAS as lições foram completadas, não mostrar tooltip
+    if (completedCountInButton == lessonsPerButton) {
+      debugPrint('  ✅ Todas completadas, sem tooltip');
+      return null;
+    }
+    
+    // Se tem alguma lição completada, mostrar "Continuar"
+    if (completedCountInButton > 0) {
+      debugPrint('  ✅ Retornando: Continuar');
+      return 'Continuar';
+    }
+    
+    // Se não tem nenhuma lição completada, mostrar "Começar"
+    debugPrint('  ✅ Retornando: Começar');
+    return 'Começar';
   }
 }

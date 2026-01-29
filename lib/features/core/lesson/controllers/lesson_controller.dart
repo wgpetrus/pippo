@@ -39,6 +39,10 @@ class LessonController extends GetxController {
   final isCorrectAnswer = false.obs;
   final correctAnswerText = ''.obs;
   final lessonFailed = false.obs; // Flag para indicar que a lição falhou
+  
+  // Recompensas calculadas (para exibição na tela de conclusão)
+  final calculatedXp = 0.obs;
+  final calculatedGems = 0.obs;
 
   // Getters
   double get progress => currentExercises.isNotEmpty
@@ -101,18 +105,18 @@ class LessonController extends GetxController {
           .get();
 
       if (coursesSnapshot.docs.isEmpty) {
-        print('⚠️ Nenhum curso ativo encontrado, usando mock_course_id');
+        debugPrint('⚠️ Nenhum curso ativo encontrado, usando mock_course_id');
         // Usar courseId mockado como fallback
         await startLesson('mock_course_id', lessonId);
         return;
       }
 
       final courseId = coursesSnapshot.docs.first.id;
-      print('✅ Curso ativo encontrado: $courseId');
+      debugPrint('✅ Curso ativo encontrado: $courseId');
       
       await startLesson(courseId, lessonId);
     } catch (e) {
-      print('❌ Erro ao buscar curso ativo: $e');
+      debugPrint('❌ Erro ao buscar curso ativo: $e');
       errorMessage.value = 'Não foi possível carregar o curso. Tente novamente.';
     } finally {
       isLoading.value = false;
@@ -404,14 +408,60 @@ class LessonController extends GetxController {
 
   /// Avança para o próximo exercício
   void nextExercise() {
+    debugPrint('➡️ nextExercise() INICIADO');
+    debugPrint('  📊 CurrentExerciseIndex: ${currentExerciseIndex.value}');
+    debugPrint('  📚 Total Exercises: ${currentExercises.length}');
+    
     if (currentExerciseIndex.value < currentExercises.length) {
       currentExerciseIndex.value++;
+      debugPrint('  ✅ Avançado para exercício ${currentExerciseIndex.value}');
+      
+      // Salvar progresso automaticamente após cada exercício
+      // (exceto no último, pois será salvo como completed)
+      if (currentExerciseIndex.value < currentExercises.length) {
+        debugPrint('  💾 Salvando progresso em background...');
+        _saveProgressInBackground();
+      } else {
+        debugPrint('  ⏭️ Último exercício - não salvar como in_progress');
+      }
     }
     
     // Reset feedback states ao avançar
     showFeedback.value = false;
     isCorrectAnswer.value = false;
     correctAnswerText.value = '';
+    
+    debugPrint('✅ nextExercise() CONCLUÍDO');
+  }
+  
+  /// Salva o progresso em background sem bloquear a UI
+  Future<void> _saveProgressInBackground() async {
+    try {
+      debugPrint('🔄 _saveProgressInBackground() INICIADO');
+      
+      final courseId = currentLesson.value?['courseId'] as String?;
+      final lessonId = currentLesson.value?['id'] as String?;
+      
+      debugPrint('  📚 CourseId: $courseId');
+      debugPrint('  📖 LessonId: $lessonId');
+      debugPrint('  📊 CurrentExerciseIndex: ${currentExerciseIndex.value}');
+      debugPrint('  ❤️ Hearts: ${hearts.value}');
+      debugPrint('  ✅ CorrectAnswers: ${correctAnswers.value}');
+      debugPrint('  📝 TotalAnswers: ${totalAnswers.value}');
+      
+      if (courseId != null && lessonId != null) {
+        debugPrint('  ✅ Chamando saveInProgressState()...');
+        await saveInProgressState(courseId, lessonId);
+        debugPrint('  ✅ saveInProgressState() CONCLUÍDO');
+      } else {
+        debugPrint('  ❌ CourseId ou LessonId é null!');
+        debugPrint('  currentLesson.value: ${currentLesson.value}');
+      }
+    } catch (e) {
+      // Falha silenciosa - não é crítico
+      debugPrint('❌ Erro ao salvar progresso em background: $e');
+      debugPrint('  Stack trace: ${StackTrace.current}');
+    }
   }
 
   /// Completa a lição seguindo a ordem CRÍTICA de operações
@@ -431,6 +481,10 @@ class LessonController extends GetxController {
   /// Tratamento de erros: retry até 3 vezes com exponential backoff
   /// Se todas falharem: cache localmente, sincroniza na próxima abertura
   Future<void> completeLesson() async {
+    debugPrint('🎯 completeLesson() INICIADO');
+    debugPrint('  📖 Lição atual: ${currentLesson.value?['id']}');
+    debugPrint('  📚 Curso: ${currentLesson.value?['courseId']}');
+    
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -439,28 +493,58 @@ class LessonController extends GetxController {
     
     while (retryCount < maxRetries) {
       try {
+        debugPrint('🔄 Tentativa ${retryCount + 1}/$maxRetries');
+        
         // Step 1: Calcular recompensas
+        debugPrint('📝 Step 1: Calculando recompensas...');
         final totalXp = await _calculateTotalXP();
         final totalGems = _calculateTotalGems();
+        debugPrint('  ⭐ Total XP: $totalXp');
+        debugPrint('  💎 Total Gems: $totalGems');
+        
+        // Armazenar valores calculados para exibição na UI
+        calculatedXp.value = totalXp;
+        calculatedGems.value = totalGems;
         
         // Step 2: Distribuir XP (atomic operation)
+        debugPrint('📝 Step 2: Distribuindo XP...');
         await _distributeXP(totalXp);
+        debugPrint('  ✅ XP distribuído');
         
         // Step 3: Adicionar gems ao totalGems
+        debugPrint('📝 Step 3: Adicionando gems...');
         await _addGems(totalGems);
+        debugPrint('  ✅ Gems adicionadas');
         
         // Step 4: Verificar e executar level up
+        debugPrint('📝 Step 4: Verificando level up...');
         final leveledUp = await _checkAndLevelUp();
+        debugPrint('  ✅ Level up: $leveledUp');
         
         // Step 5: Atualizar streak (apenas se primeira lição hoje)
+        debugPrint('📝 Step 5: Verificando streak...');
         final isFirstToday = await _isFirstLessonToday();
         if (isFirstToday) {
           await _updateStreak();
+          debugPrint('  ✅ Streak atualizado');
+        } else {
+          debugPrint('  ⏭️ Não é primeira lição hoje, streak não atualizado');
         }
         
         // Step 6: Salvar progresso da lição
         final courseId = currentLesson.value?['courseId'] as String? ?? '';
         final lessonId = currentLesson.value?['id'] as String? ?? '';
+        
+        debugPrint('📝 Step 6: Salvando progresso da lição...');
+        debugPrint('  📚 CourseId: $courseId');
+        debugPrint('  📖 LessonId: $lessonId');
+        
+        if (courseId.isEmpty || lessonId.isEmpty) {
+          debugPrint('❌ ERRO: CourseId ou LessonId vazio!');
+          debugPrint('  currentLesson.value: ${currentLesson.value}');
+          throw Exception('CourseId ou LessonId não pode ser vazio');
+        }
+        
         await _saveLessonProgress(courseId, lessonId, totalXp, totalGems);
         
         // Step 7: Atualizar histórico diário
@@ -512,46 +596,56 @@ class LessonController extends GetxController {
           await homeController.reloadProgress();
         } catch (e) {
           // HomeController pode não estar registrado - não é crítico
-          print('⚠️ HomeController não encontrado para recarregar progresso: $e');
+          debugPrint('⚠️ HomeController não encontrado para recarregar progresso: $e');
         }
         
         // Step 10: Navegação será feita pela view
         // Controller apenas sinaliza sucesso via isLoading = false
         
         // Sucesso - sair do loop de retry
+        debugPrint('✅ completeLesson() CONCLUÍDO COM SUCESSO');
         break;
         
       } on FirebaseException catch (e) {
         retryCount++;
+        debugPrint('❌ FirebaseException na tentativa $retryCount: ${e.code} - ${e.message}');
         
         if (retryCount >= maxRetries) {
           // Todas as tentativas falharam - cache localmente
+          debugPrint('❌ Todas as tentativas falharam, fazendo cache local...');
           await _cacheProgressLocally();
           errorMessage.value = 'Não foi possível salvar seu progresso. Tentaremos novamente automaticamente.';
         } else {
           // Aguardar antes de tentar novamente (exponential backoff)
           // 500ms, 1000ms, 1500ms
           final delayMs = 500 * retryCount;
+          debugPrint('⏳ Aguardando ${delayMs}ms antes de tentar novamente...');
           await Future.delayed(Duration(milliseconds: delayMs));
         }
       } catch (e) {
         retryCount++;
+        debugPrint('❌ Exception na tentativa $retryCount: $e');
+        debugPrint('  Stack trace: ${StackTrace.current}');
         
         if (retryCount >= maxRetries) {
           // Todas as tentativas falharam - cache localmente
+          debugPrint('❌ Todas as tentativas falharam, fazendo cache local...');
           await _cacheProgressLocally();
           errorMessage.value = 'Não foi possível salvar seu progresso. Tentaremos novamente automaticamente.';
         } else {
           // Aguardar antes de tentar novamente (exponential backoff)
           final delayMs = 500 * retryCount;
+          debugPrint('⏳ Aguardando ${delayMs}ms antes de tentar novamente...');
           await Future.delayed(Duration(milliseconds: delayMs));
         }
       }
     }
     
     // Reset dos estados da lição
+    debugPrint('🔄 Resetando estados da lição...');
     _resetLessonState();
     isLoading.value = false;
+    debugPrint('✅ completeLesson() FINALIZADO');
   }
 
   /// Falha a lição quando hearts chegam a 0
@@ -643,7 +737,7 @@ class LessonController extends GetxController {
     if (userId == null) throw Exception('Usuário não autenticado');
 
     try {
-      print('🔍 Carregando lição: courseId=$courseId, lessonId=$lessonId');
+      debugPrint('🔍 Carregando lição: courseId=$courseId, lessonId=$lessonId');
       
       // Tentar carregar dados da lição do Firestore
       final lessonDoc = await _firestore
@@ -654,16 +748,16 @@ class LessonController extends GetxController {
           .get();
 
       if (!lessonDoc.exists) {
-        print('⚠️ Lição não encontrada no Firestore, usando dados mockados');
+        debugPrint('⚠️ Lição não encontrada no Firestore, usando dados mockados');
         
         // Usar dados mockados
         final mockLesson = LessonMocks.getLesson(courseId, lessonId);
         if (mockLesson == null) {
-          print('❌ Lição não encontrada nem no Firestore nem nos mocks');
+          debugPrint('❌ Lição não encontrada nem no Firestore nem nos mocks');
           throw Exception('Lição não encontrada');
         }
 
-        print('✅ Lição mockada encontrada: ${mockLesson['title']}');
+        debugPrint('✅ Lição mockada encontrada: ${mockLesson['title']}');
 
         // Extrair exercícios dos mocks
         final mockExercises = mockLesson['exercises'] as List<Map<String, dynamic>>;
@@ -680,11 +774,11 @@ class LessonController extends GetxController {
 
         currentExercises.value = mockExercises;
         
-        print('✅ ${currentExercises.length} exercícios mockados carregados com sucesso');
+        debugPrint('✅ ${currentExercises.length} exercícios mockados carregados com sucesso');
         return;
       }
 
-      print('✅ Lição encontrada no Firestore: ${lessonDoc.data()}');
+      debugPrint('✅ Lição encontrada no Firestore: ${lessonDoc.data()}');
 
       currentLesson.value = {
         'id': lessonDoc.id,
@@ -693,7 +787,7 @@ class LessonController extends GetxController {
       };
 
       // Carregar exercícios da lição do Firestore
-      print('🔍 Carregando exercícios da lição do Firestore...');
+      debugPrint('🔍 Carregando exercícios da lição do Firestore...');
       final exercisesSnapshot = await _firestore
           .collection('courses')
           .doc(courseId)
@@ -703,16 +797,16 @@ class LessonController extends GetxController {
           .orderBy('order')
           .get();
 
-      print('📊 Exercícios encontrados no Firestore: ${exercisesSnapshot.docs.length}');
+      debugPrint('📊 Exercícios encontrados no Firestore: ${exercisesSnapshot.docs.length}');
 
       if (exercisesSnapshot.docs.isEmpty) {
-        print('❌ Nenhum exercício encontrado no Firestore para esta lição');
+        debugPrint('❌ Nenhum exercício encontrado no Firestore para esta lição');
         throw Exception('Nenhum exercício encontrado para esta lição');
       }
 
       currentExercises.value = exercisesSnapshot.docs
           .map((doc) {
-            print('  - Exercício ${doc.id}: ${doc.data()}');
+            debugPrint('  - Exercício ${doc.id}: ${doc.data()}');
             return {
               'id': doc.id,
               ...doc.data(),
@@ -720,12 +814,12 @@ class LessonController extends GetxController {
           })
           .toList();
       
-      print('✅ ${currentExercises.length} exercícios carregados com sucesso do Firestore');
+      debugPrint('✅ ${currentExercises.length} exercícios carregados com sucesso do Firestore');
     } on FirebaseException catch (e) {
-      print('❌ FirebaseException: ${e.code} - ${e.message}');
+      debugPrint('❌ FirebaseException: ${e.code} - ${e.message}');
       
       // Tentar usar mocks como fallback
-      print('⚠️ Tentando usar dados mockados como fallback...');
+      debugPrint('⚠️ Tentando usar dados mockados como fallback...');
       final mockLesson = LessonMocks.getLesson(courseId, lessonId);
       if (mockLesson != null) {
         final mockExercises = mockLesson['exercises'] as List<Map<String, dynamic>>;
@@ -741,13 +835,13 @@ class LessonController extends GetxController {
         };
 
         currentExercises.value = mockExercises;
-        print('✅ Usando dados mockados como fallback');
+        debugPrint('✅ Usando dados mockados como fallback');
         return;
       }
       
       throw Exception('Erro ao carregar lição: ${e.message}');
     } catch (e) {
-      print('❌ Erro genérico: $e');
+      debugPrint('❌ Erro genérico: $e');
       throw Exception('Erro ao carregar lição: $e');
     }
   }
@@ -1112,6 +1206,8 @@ class LessonController extends GetxController {
     isCorrectAnswer.value = false;
     correctAnswerText.value = '';
     lessonFailed.value = false;
+    calculatedXp.value = 0;
+    calculatedGems.value = 0;
   }
 
   // Validação de exercícios
@@ -1226,6 +1322,10 @@ class LessonController extends GetxController {
     
     final timeSpent = _calculateTimeSpent();
     final mistakes = totalAnswers.value - correctAnswers.value;
+    
+    final accuracy = totalAnswers.value > 0
+        ? ((correctAnswers.value / totalAnswers.value) * 100).round()
+        : 0;
     
     final progressRef = _firestore
         .collection('users')
@@ -1417,12 +1517,18 @@ class LessonController extends GetxController {
   /// Pausa o rastreamento de tempo da lição
   /// Salva o tempo atual e acumula o tempo decorrido até agora
   void pauseLesson() {
-    if (startTime.value == null || pauseTime.value != null) return;
+    if (startTime.value == null) return;
+    
+    // Se já está pausado, não fazer nada
+    if (pauseTime.value != null) return;
     
     final now = DateTime.now();
     final elapsed = now.difference(startTime.value!).inMilliseconds;
     accumulatedTime.value += elapsed;
     pauseTime.value = now;
+    
+    // Resetar startTime para null para parar completamente o timer
+    startTime.value = null;
   }
   
   /// Retoma o rastreamento de tempo da lição
@@ -1437,8 +1543,17 @@ class LessonController extends GetxController {
   /// Salva o estado atual da lição como in_progress
   /// Permite retomar a lição mais tarde sem consumir energia adicional
   Future<void> saveInProgressState(String courseId, String lessonId) async {
+    debugPrint('💾 saveInProgressState() INICIADO');
+    debugPrint('  📚 CourseId: $courseId');
+    debugPrint('  📖 LessonId: $lessonId');
+    
     final userId = _auth.currentUser?.uid;
-    if (userId == null) throw Exception('Usuário não autenticado');
+    if (userId == null) {
+      debugPrint('  ❌ Usuário não autenticado!');
+      throw Exception('Usuário não autenticado');
+    }
+    
+    debugPrint('  👤 UserId: $userId');
     
     final progressRef = _firestore
         .collection('users')
@@ -1448,19 +1563,31 @@ class LessonController extends GetxController {
         .collection('progress')
         .doc(lessonId);
     
+    debugPrint('  📍 Path: users/$userId/courses/$courseId/progress/$lessonId');
+    
+    final progressData = {
+      'lessonId': lessonId,
+      'status': 'in_progress',
+      'currentExerciseIndex': currentExerciseIndex.value,
+      'hearts': hearts.value,
+      'correctAnswers': correctAnswers.value,
+      'totalAnswers': totalAnswers.value,
+      'accumulatedTime': accumulatedTime.value,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+    
+    debugPrint('  📦 Dados a salvar: $progressData');
+    
     try {
-      await progressRef.set({
-        'lessonId': lessonId,
-        'status': 'in_progress',
-        'currentExerciseIndex': currentExerciseIndex.value,
-        'hearts': hearts.value,
-        'correctAnswers': correctAnswers.value,
-        'totalAnswers': totalAnswers.value,
-        'accumulatedTime': accumulatedTime.value,
-        'lastUpdated': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await progressRef.set(progressData, SetOptions(merge: true));
+      debugPrint('  ✅ Progresso salvo com sucesso no Firestore!');
     } on FirebaseException catch (e) {
+      debugPrint('  ❌ FirebaseException: ${e.code} - ${e.message}');
       throw Exception('Erro ao salvar estado da lição: ${e.message}');
+    } catch (e) {
+      debugPrint('  ❌ Exception: $e');
+      debugPrint('  Stack trace: ${StackTrace.current}');
+      throw Exception('Erro ao salvar estado da lição: $e');
     }
   }
   
@@ -1470,6 +1597,7 @@ class LessonController extends GetxController {
   /// 
   /// Retorna tempo total em milissegundos
   int _calculateTimeSpentMilliseconds() {
+    // Se não há startTime, retorna apenas tempo acumulado (lição pausada ou não iniciada)
     if (startTime.value == null) return accumulatedTime.value;
     
     // Se está pausado, retorna apenas tempo acumulado
@@ -1529,9 +1657,9 @@ class LessonController extends GetxController {
       
       // TODO: Implementar cache usando SharedPreferences
       // Por enquanto, apenas log do erro
-      print('CACHE LOCAL: Progresso não salvo - $progressData');
+      debugPrint('CACHE LOCAL: Progresso não salvo - $progressData');
     } catch (e) {
-      print('Erro ao fazer cache local: $e');
+      debugPrint('Erro ao fazer cache local: $e');
     }
   }
 }

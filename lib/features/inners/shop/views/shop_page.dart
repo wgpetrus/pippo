@@ -18,7 +18,7 @@ class ShopPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    final controller = Get.put(ShopController());
+    Get.put(ShopController());
     final gamification = Get.find<GamificationController>();
     
     return Scaffold(
@@ -37,16 +37,16 @@ class ShopPage extends StatelessWidget {
             final isLoading = gamification.isLoading.value;
             
             return Padding(
-              padding: const EdgeInsets.only(right: 20),
+              padding: EdgeInsets.only(right: r.spacing16),
               child: Row(
                 children: [
-                  Image.asset(AppAssets.appbarGem, width: 24, height: 24),
-                  const SizedBox(width: 6),
+                  Image.asset(AppAssets.appbarGem, width: r.spacing24, height: r.spacing24),
+                  SizedBox(width: r.spacing4),
                   if (isLoading)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
+                    SizedBox(
+                      width: r.spacing16,
+                      height: r.spacing16,
+                      child: const CircularProgressIndicator(
                         strokeWidth: 2,
                         color: AppTheme.primary,
                       ),
@@ -68,19 +68,19 @@ class ShopPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Your packs
+            // Seus pacotes
             _buildYourPacks(r),
             SizedBox(height: r.spacing32),
 
-            // Spatial offer (espaço extra para badge NEW)
+            // Oferta especial
             _buildSpatialOffer(r),
             SizedBox(height: r.spacing24),
 
-            // Learning Boosts
+            // Boosts de aprendizado
             _buildLearningBoosts(r),
             SizedBox(height: r.spacing24),
 
-            // Customization & Collectibles
+            // Personalização e colecionáveis
             _buildCustomization(r),
           ],
         ),
@@ -90,42 +90,90 @@ class ShopPage extends StatelessWidget {
 
   // Widgets
   Widget _buildYourPacks(ResponsiveUtils r) {
+    final controller = Get.find<ShopController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: const Text('Seus pacotes', style: AppTheme.textLgBold),
         ),
         SizedBox(height: r.spacing12),
 
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
-          child: Row(
-            children: [
-              ShopItemCard(
-                iconAsset: AppAssets.shopElixirXp,
-                label: 'Boost de XP x10',
+        Obx(() {
+          // Pacotes disponíveis
+          final xpBoostQty = controller.getPackQuantity('xp_boost');
+          final skipLessonQty = controller.getPackQuantity('skip_lesson');
+          
+          // Se não tem nenhum pacote, mostrar mensagem
+          if (xpBoostQty == 0 && skipLessonQty == 0) {
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+              child: Container(
+                padding: EdgeInsets.all(r.spacing16),
+                decoration: BoxDecoration(
+                  color: AppTheme.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.gray400, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.inventory_2_outlined,
+                      size: r.spacing24,
+                      color: AppTheme.gray300,
+                    ),
+                    SizedBox(width: r.spacing12),
+                    Expanded(
+                      child: Text(
+                        'Você ainda não possui pacotes. Adquira nas ofertas especiais!',
+                        style: AppTheme.textSmRegular.copyWith(
+                          color: AppTheme.gray300,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(width: r.spacing12),
-              ShopItemCard(
-                iconAsset: AppAssets.shopChest,
-                label: 'Pular Lição x5',
-              ),
-            ],
-          ),
-        ),
+            );
+          }
+          
+          // Mostrar pacotes adquiridos
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: r.spacing16),
+            child: Row(
+              children: [
+                if (xpBoostQty > 0) ...[
+                  ShopItemCard(
+                    iconAsset: AppAssets.shopElixirXp,
+                    label: 'Boost de XP x$xpBoostQty',
+                  ),
+                  SizedBox(width: r.spacing12),
+                ],
+                if (skipLessonQty > 0) ...[
+                  ShopItemCard(
+                    iconAsset: AppAssets.shopChest,
+                    label: 'Pular Lição x$skipLessonQty',
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
 
   Widget _buildSpatialOffer(ResponsiveUtils r) {
+    final controller = Get.find<ShopController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: const Text('Oferta especial', style: AppTheme.textLgBold),
         ),
         SizedBox(height: r.spacing16),
@@ -133,9 +181,10 @@ class ShopPage extends StatelessWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           clipBehavior: Clip.none,
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: Row(
             children: [
+              // Pacote de gems com dinheiro real
               ShopItemCard(
                 iconAsset: AppAssets.shopGemCar,
                 label: '1600',
@@ -145,16 +194,35 @@ class ShopPage extends StatelessWidget {
                 priceColor: AppTheme.primary,
                 badge: 'NEW',
                 badgeColor: AppTheme.primary,
+                onTap: () => controller.purchaseGemPack(
+                  Get.context!,
+                  'gem_pack_1600',
+                  1600,
+                  '\$ 4.99',
+                ),
               ),
               SizedBox(width: r.spacing12),
-              ShopItemCard(
-                iconAsset: AppAssets.shopChest,
-                label: '100',
-                price: '\$ GRÁTIS',
-                backgroundColor: AppTheme.green100,
-                borderColor: AppTheme.green,
-                priceColor: AppTheme.green,
-              ),
+              
+              // Recompensa gratuita (reativo)
+              Obx(() {
+                final isClaimed = controller.isRewardClaimedReactive('free_chest_100');
+                
+                return ShopItemCard(
+                  iconAsset: AppAssets.shopChest,
+                  label: '100',
+                  price: isClaimed ? 'RESGATADO' : '\$ GRÁTIS',
+                  backgroundColor: isClaimed ? AppTheme.white : AppTheme.green100,
+                  borderColor: isClaimed ? AppTheme.gray300 : AppTheme.green,
+                  priceColor: isClaimed ? AppTheme.gray300 : AppTheme.green,
+                  onTap: isClaimed 
+                      ? null 
+                      : () => controller.claimFreeReward(
+                            Get.context!,
+                            'free_chest_100',
+                            100,
+                          ),
+                );
+              }),
             ],
           ),
         ),
@@ -170,26 +238,38 @@ class ShopPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: const SectionTitle(emoji: '🚀', title: 'Boosts de Aprendizado'),
         ),
         SizedBox(height: r.spacing12),
 
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: Obx(() {
             final isLoading = gamification.isLoading.value;
             
             return Column(
               children: [
                 // Recarga de Energia - 100 gems
-                BoostItem(
-                  iconAsset: AppAssets.appbarRay,
-                  title: 'Recarga de Energia',
-                  description: 'Recarregue 5 energias instantaneamente!',
-                  price: 100,
-                  isLoading: isLoading,
-                  onTap: isLoading ? null : controller.purchaseEnergyRefill,
+                Builder(
+                  builder: (context) {
+                    final currentEnergy = gamification.currentEnergy.value;
+                    final isEnergyFull = currentEnergy >= 5;
+                    final description = isEnergyFull
+                        ? 'Energia completa! ($currentEnergy/5)'
+                        : 'Recarregue 5 energias instantaneamente!';
+                    
+                    return BoostItem(
+                      iconAsset: AppAssets.appbarRay,
+                      title: 'Recarga de Energia',
+                      description: description,
+                      price: 100,
+                      badge: isEnergyFull ? 'COMPLETA' : null,
+                      badgeColor: isEnergyFull ? AppTheme.green : null,
+                      isLoading: isLoading,
+                      onTap: (isEnergyFull || isLoading) ? null : controller.purchaseEnergyRefill,
+                    );
+                  }
                 ),
                 SizedBox(height: r.spacing12),
                 
@@ -222,21 +302,20 @@ class ShopPage extends StatelessWidget {
                     final isActive = gamification.hasGemMultiplier;
                     final timeRemaining = gamification.getGemMultiplierTimeRemaining();
                     final description = timeRemaining.isNotEmpty
-                        ? 'Ativo! $timeRemaining'
-                        : 'Ganhe 2× gemas nas lições por 1 hora!';
-                    
-                    return BoostItem(
-                      iconAsset: AppAssets.shopElixir2x,
-                      title: 'Multiplicador de Gemas',
-                      description: description,
-                      price: 200,
-                      badge: isActive ? 'ATIVO' : 'POPULAR',
-                      badgeColor: isActive ? AppTheme.green : AppTheme.orange,
-                      isLoading: isLoading,
-                      onTap: (isActive || isLoading) ? null : () => controller.purchaseGemMultiplier(context),
-                    );
-                  }
-                ),
+                      ? 'Ativo! $timeRemaining'
+                      : 'Ganhe 2× gemas nas lições por 1 hora!';
+                  
+                  return BoostItem(
+                    iconAsset: AppAssets.shopElixir2x,
+                    title: 'Multiplicador de Gemas',
+                    description: description,
+                    price: 200,
+                    badge: isActive ? 'ATIVO' : 'POPULAR',
+                    badgeColor: isActive ? AppTheme.green : AppTheme.orange,
+                    isLoading: isLoading,
+                    onTap: (isActive || isLoading) ? null : () => controller.purchaseGemMultiplier(Get.context!),
+                  );
+                }),
                 SizedBox(height: r.spacing12),
                 
                 // Streak Freeze - 200 gems
@@ -252,7 +331,7 @@ class ShopPage extends StatelessWidget {
                       badge: isActive ? 'ATIVO' : null,
                       badgeColor: isActive ? AppTheme.green : null,
                       isLoading: isLoading,
-                      onTap: (isActive || isLoading) ? null : () => controller.purchaseStreakFreeze(context),
+                      onTap: (isActive || isLoading) ? null : () => controller.purchaseStreakFreeze(Get.context!),
                     );
                   }
                 ),
@@ -265,17 +344,19 @@ class ShopPage extends StatelessWidget {
   }
 
   Widget _buildCustomization(ResponsiveUtils r) {
+    final controller = Get.find<ShopController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: const SectionTitle(emoji: '🎨', title: 'Personalização e Colecionáveis'),
         ),
         SizedBox(height: r.spacing12),
 
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.spacing16 + 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: Column(
             children: [
               CollectibleItem(
@@ -285,6 +366,11 @@ class ShopPage extends StatelessWidget {
                 oldPrice: '20',
                 badge: 'NOVO',
                 badgeColor: AppTheme.primary,
+                onTap: () => controller.purchaseCollectible(
+                  Get.context!,
+                  'mascot_skins',
+                  '\$ 4.99',
+                ),
               ),
               SizedBox(height: r.spacing12),
               CollectibleItem(
@@ -292,6 +378,11 @@ class ShopPage extends StatelessWidget {
                 title: 'Pacotes de Emblemas',
                 price: '\$ 8',
                 oldPrice: '20',
+                onTap: () => controller.purchaseCollectible(
+                  Get.context!,
+                  'badge_packs',
+                  '\$ 8',
+                ),
               ),
             ],
           ),

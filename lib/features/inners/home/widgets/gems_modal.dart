@@ -167,11 +167,11 @@ class GemsModal extends StatelessWidget {
   }
 
   // Métodos estáticos
-  static void show(
+  static Future<void> show(
     BuildContext context, {
     VoidCallback? onGoToShop,
-  }) {
-    WoltModalSheet.show(
+  }) async {
+    await WoltModalSheet.show(
       context: context,
       pageListBuilder: (context) => [
         WoltModalSheetPage(

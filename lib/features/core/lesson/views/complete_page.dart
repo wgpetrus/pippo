@@ -25,6 +25,21 @@ class _CompletePageState extends State<CompletePage> {
   void initState() {
     super.initState();
     _controller = Get.find<LessonController>();
+    
+    // CORREÇÃO 1: Pausar o timer imediatamente ao entrar na tela
+    _controller.pauseLesson();
+    
+    // CORREÇÃO 2: Calcular e armazenar XP e Gems imediatamente
+    _calculateRewards();
+  }
+  
+  /// Calcula as recompensas e armazena nos observáveis para exibição
+  Future<void> _calculateRewards() async {
+    final totalXp = await _controller.calculateTotalXPForTest();
+    final totalGems = _controller.calculateTotalGemsForTest();
+    
+    _controller.calculatedXp.value = totalXp;
+    _controller.calculatedGems.value = totalGems;
   }
 
   Future<void> _claimRewards() async {
@@ -34,10 +49,8 @@ class _CompletePageState extends State<CompletePage> {
       _rewardsClaimed = true;
     });
 
-    // Pausar o timer antes de completar a lição
-    _controller.pauseLesson();
-
     // Completa a lição e resgata recompensas
+    // O timer já foi pausado no initState
     await _controller.completeLesson();
 
     if (_controller.errorMessage.value.isEmpty) {
@@ -46,7 +59,7 @@ class _CompletePageState extends State<CompletePage> {
         final gamificationController = Get.find<GamificationController>();
         await gamificationController.loadStats();
       } catch (e) {
-        print('⚠️ Erro ao recarregar stats de gamificação: $e');
+        debugPrint('⚠️ Erro ao recarregar stats de gamificação: $e');
       }
       
       // Navega de volta para home (limpa stack de lições)
@@ -72,26 +85,6 @@ class _CompletePageState extends State<CompletePage> {
     
     // Calcula estatísticas
     final accuracy = (_controller.accuracy).toStringAsFixed(0);
-
-    // Calcula XP e gems usando a MESMA lógica do controller
-    // Base XP da lição
-    var totalXp = _controller.currentLesson.value?['xpReward'] as int? ?? 10;
-    
-    // Perfect bonus (+5 se 100% accuracy)
-    if (_controller.isPerfect) totalXp += 5;
-    
-    // First today bonus (+5 se primeira lição hoje)
-    // Nota: Não podemos verificar isso aqui sem async, então assumimos que não é
-    // O valor real será calculado no controller
-    
-    // XP Booster (2x se ativo)
-    if (gamificationController.hasXpBooster) totalXp *= 2;
-    
-    // Base gems da lição
-    var totalGems = _controller.currentLesson.value?['gemsReward'] as int? ?? 1;
-    
-    // Gem Multiplier (2x se ativo)
-    if (gamificationController.hasGemMultiplier) totalGems *= 2;
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -151,17 +144,11 @@ class _CompletePageState extends State<CompletePage> {
 
               // Cards de estatísticas
               Obx(() {
-                // Recalcula valores reativamente
+                // Usa valores calculados pelo controller (incluem todos os bônus)
+                final currentTotalXp = _controller.calculatedXp.value;
+                final currentTotalGems = _controller.calculatedGems.value;
                 final currentAccuracy = (_controller.accuracy).toStringAsFixed(0);
                 final currentTimeString = _controller.getFormattedTime();
-                
-                // Recalcula XP e gems reativamente (para refletir mudanças em boosters)
-                var currentTotalXp = _controller.currentLesson.value?['xpReward'] as int? ?? 10;
-                if (_controller.isPerfect) currentTotalXp += 5;
-                if (gamificationController.hasXpBooster) currentTotalXp *= 2;
-                
-                var currentTotalGems = _controller.currentLesson.value?['gemsReward'] as int? ?? 1;
-                if (gamificationController.hasGemMultiplier) currentTotalGems *= 2;
                 
                 return r.isLandscape
                   ? Row(

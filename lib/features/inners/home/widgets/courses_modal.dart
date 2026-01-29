@@ -191,7 +191,7 @@ class CoursesModal extends StatelessWidget {
   }
 
   // Métodos estáticos
-  static void show(
+  static Future<void> show(
     BuildContext context, {
     required List<CourseData> courses,
     required String selectedCourseName,
@@ -199,8 +199,8 @@ class CoursesModal extends StatelessWidget {
     int maxLevel = 15,
     VoidCallback? onAddCourse,
     ValueChanged<CourseData>? onCourseSelected,
-  }) {
-    WoltModalSheet.show(
+  }) async {
+    await WoltModalSheet.show(
       context: context,
       pageListBuilder: (context) => [
         WoltModalSheetPage(

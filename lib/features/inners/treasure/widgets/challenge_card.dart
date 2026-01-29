@@ -19,6 +19,12 @@ import '../controllers/treasure_controller.dart';
 /// - 13.1: Chama controller.claimReward() ao clicar
 /// - 14.1, 14.2, 14.3: Usa ResponsiveUtils para todas as dimensões
 /// - 10.5, 13.7: Exibe mensagens de erro amigáveis do controller
+/// 
+/// **Melhorias de UX:**
+/// - Recompensa destacada com badge colorido (dourado para gems, azul para XP)
+/// - Label clara do tipo de recompensa ("Gems" ou "XP")
+/// - Ícone maior e mais visível
+/// - Cores distintas para diferenciar tipos de recompensa instantaneamente
 class ChallengeCard extends StatelessWidget {
   final Map<String, dynamic> challengeData;
 
@@ -71,7 +77,7 @@ class ChallengeCard extends StatelessWidget {
         boxShadow: controller.shouldShowGlowAnimation(challengeData)
             ? [
                 BoxShadow(
-                  color: AppTheme.green.withValues(alpha: 0.3),
+                  color: AppTheme.green.withOpacity(0.3),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -125,27 +131,60 @@ class ChallengeCard extends StatelessWidget {
               ),
               SizedBox(width: r.spacing12),
 
-              // Recompensa (ícone e valor)
-              Column(
-                children: [
-                  Image.asset(
-                    rewardIcon,
-                    width: ResponsiveUtils.width(32, min: 28, max: 40),
-                    height: ResponsiveUtils.width(32, min: 28, max: 40),
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.star,
-                      size: ResponsiveUtils.width(32, min: 28, max: 40),
-                      color: AppTheme.gold,
-                    ),
+              // Recompensa (ícone, valor e tipo) - MELHORADO para clareza
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing8,
+                  vertical: r.spacing8,
+                ),
+                decoration: BoxDecoration(
+                  color: rewardType == 'gems' 
+                      ? AppTheme.gold.withOpacity(0.1)
+                      : AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: rewardType == 'gems' 
+                        ? AppTheme.gold.withOpacity(0.3)
+                        : AppTheme.primary.withOpacity(0.3),
+                    width: 1.5,
                   ),
-                  SizedBox(height: r.spacing4),
-                  Text(
-                    '+$rewardAmount',
-                    style: AppTheme.textSmBold.copyWith(
-                      color: AppTheme.gold,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Ícone da recompensa
+                    Image.asset(
+                      rewardIcon,
+                      width: ResponsiveUtils.width(36, min: 32, max: 44),
+                      height: ResponsiveUtils.width(36, min: 32, max: 44),
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.star,
+                        size: ResponsiveUtils.width(36, min: 32, max: 44),
+                        color: rewardType == 'gems' ? AppTheme.gold : AppTheme.primary,
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: r.spacing4),
+                    // Valor da recompensa
+                    Text(
+                      '+$rewardAmount',
+                      style: AppTheme.textMdBold.copyWith(
+                        color: rewardType == 'gems' ? AppTheme.gold : AppTheme.primary,
+                        fontSize: r.fontSize16,
+                      ),
+                    ),
+                    // Label do tipo de recompensa
+                    Text(
+                      rewardType == 'gems' ? 'Gems' : 'XP',
+                      style: AppTheme.textXsBold.copyWith(
+                        color: rewardType == 'gems' 
+                            ? AppTheme.gold.withOpacity(0.8)
+                            : AppTheme.primary.withOpacity(0.8),
+                        fontSize: r.fontSize10,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -228,7 +267,7 @@ class ChallengeCard extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: [
                             barColor,
-                            barColor.withValues(alpha: 0.5),
+                            barColor.withOpacity(0.5),
                             AppTheme.white
                           ],
                           stops: const [0.0, 0.7, 1.0],

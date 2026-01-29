@@ -752,19 +752,61 @@ class AuthController extends GetxController {
   /// Realiza logout do usuário e reseta flag de primeiro acesso
   Future<void> logout() async {
     try {
+      if (kDebugMode) {
+        debugPrint('🚪 Iniciando logout...');
+      }
+      
       // Limpar dados sensíveis do FlutterSecureStorage
       await _secureStorage.deleteAll();
 
       // Logout do Firebase Auth
       await _auth.signOut();
 
+      // Deletar TODOS os controllers do GetX para limpar dados da memória
+      if (Get.isRegistered<dynamic>(tag: 'GamificationController')) {
+        Get.delete<dynamic>(tag: 'GamificationController', force: true);
+      }
+      
+      // Deletar controllers de features
+      final controllersToDelete = [
+        'HomeController',
+        'LessonController',
+        'TreasureController',
+        'ShopController',
+        'LeaderboardController',
+        'ProfileController',
+        'FriendsController',
+      ];
+      
+      for (final controllerName in controllersToDelete) {
+        try {
+          Get.delete(tag: controllerName, force: true);
+        } catch (e) {
+          // Controller pode não estar registrado, não é crítico
+        }
+      }
+      
+      // Força limpeza de todos os controllers não-permanentes
+      try {
+        Get.deleteAll(force: true);
+      } catch (e) {
+        // Ignorar erros de limpeza
+      }
+
       // Resetar isFirstAccess para true para que o usuário volte ao welcome
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isFirstAccess', true);
 
-      // Navegar para onboarding (welcome)
+      // Navegar para onboarding (welcome) e limpar stack
       Get.offAllNamed('/onboarding');
+      
+      if (kDebugMode) {
+        debugPrint('✅ Logout completo!');
+      }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro no logout: $e');
+      }
       errorMessage.value = 'Erro ao fazer logout. Tente novamente.';
     }
   }

@@ -15,6 +15,7 @@ class HomeAppbar extends StatelessWidget {
   final StatType? selectedStat;
   final VoidCallback? onAvatarTap;
   final ValueChanged<StatType>? onStatTap;
+  final dynamic controller; // HomeController para observar selectedStat
 
   const HomeAppbar({
     super.key,
@@ -23,6 +24,7 @@ class HomeAppbar extends StatelessWidget {
     this.selectedStat,
     this.onAvatarTap,
     this.onStatTap,
+    required this.controller,
   });
 
   @override
@@ -76,33 +78,43 @@ class HomeAppbar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   // Flag (não reativo - mantém valor fixo)
-                  Flexible(child: _buildStatChip(flagAsset, 5, StatType.flag)),
+                  Flexible(
+                    child: _buildStatChip(
+                      flagAsset,
+                      5,
+                      StatType.flag,
+                      gamificationController,
+                    ),
+                  ),
                   
                   // Fire (Streak) - reativo
                   Flexible(
-                    child: Obx(() => _buildStatChip(
+                    child: _buildStatChip(
                       AppAssets.appbarFire,
-                      gamificationController.currentStreak.value,
+                      null, // será obtido do controller
                       StatType.fire,
-                    )),
+                      gamificationController,
+                    ),
                   ),
                   
                   // Gem (Gems) - reativo
                   Flexible(
-                    child: Obx(() => _buildStatChip(
+                    child: _buildStatChip(
                       AppAssets.appbarGem,
-                      gamificationController.gems.value,
+                      null, // será obtido do controller
                       StatType.gem,
-                    )),
+                      gamificationController,
+                    ),
                   ),
                   
                   // Ray (Energy) - reativo
                   Flexible(
-                    child: Obx(() => _buildStatChip(
+                    child: _buildStatChip(
                       AppAssets.appbarRay,
-                      gamificationController.currentEnergy.value,
+                      null, // será obtido do controller
                       StatType.ray,
-                    )),
+                      gamificationController,
+                    ),
                   ),
                 ],
               ),
@@ -114,9 +126,50 @@ class HomeAppbar extends StatelessWidget {
   }
 
   // Widgets
-  Widget _buildStatChip(String iconAsset, int count, StatType type) {
-    final isSelected = selectedStat == type;
-
+  Widget _buildStatChip(
+    String iconAsset,
+    int? fixedCount,
+    StatType type,
+    GamificationController gamificationController,
+  ) {
+    // Envolver APENAS o widget que precisa ser reativo
+    return Obx(() {
+      // Obter count (fixo ou reativo)
+      final count = fixedCount ?? _getCountForType(type, gamificationController);
+      
+      // Obter isSelected
+      final isSelected = controller.selectedStat.value == type;
+      
+      // Construir o widget
+      return _buildStatChipContent(
+        iconAsset: iconAsset,
+        count: count,
+        type: type,
+        isSelected: isSelected,
+      );
+    });
+  }
+  
+  /// Obtém o count para um tipo específico de stat
+  int _getCountForType(StatType type, GamificationController gamificationController) {
+    switch (type) {
+      case StatType.fire:
+        return gamificationController.currentStreak.value;
+      case StatType.gem:
+        return gamificationController.gems.value;
+      case StatType.ray:
+        return gamificationController.currentEnergy.value;
+      default:
+        return 0;
+    }
+  }
+  
+  Widget _buildStatChipContent({
+    required String iconAsset,
+    required int count,
+    required StatType type,
+    required bool isSelected,
+  }) {
     return GestureDetector(
       onTap: () => onStatTap?.call(type),
       child: Container(
@@ -144,14 +197,30 @@ class HomeAppbar extends StatelessWidget {
               height: type == StatType.flag ? 24 : 22,
             ),
             const SizedBox(width: 6),
-            Text(
-              count.toString(),
-              style: AppTheme.textMdBold.copyWith(color: _getTextColor(type)),
+            Flexible(
+              child: Text(
+                _formatCount(count),
+                style: AppTheme.textMdBold.copyWith(
+                  color: isSelected ? _getBorderColor(type) : _getTextColor(type),
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  // Formata números grandes (ex: 1000 → 1k, 1500 → 1.5k)
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(count % 1000000 == 0 ? 0 : 1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(count % 1000 == 0 ? 0 : 1)}k';
+    }
+    return count.toString();
   }
 
   // Métodos privados

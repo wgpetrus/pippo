@@ -1,10 +1,16 @@
 // Dart SDK
 import 'dart:async';
 
+// Flutter
+import 'package:flutter/foundation.dart';
+
 // Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+
+// Imports locais
+import '../../gamification/controllers/gamification_controller.dart';
 
 /// Controller de desafios (Treasure Challenges)
 /// 
@@ -128,7 +134,8 @@ class TreasureController extends GetxController {
       // Validação: usuário autenticado
       final user = _auth.currentUser;
       if (user == null) {
-        throw Exception('Você precisa estar autenticado para coletar recompensas.');
+        errorMessage.value = 'Você precisa estar autenticado para coletar recompensas.';
+        return;
       }
 
       // Buscar desafio na lista local
@@ -137,7 +144,8 @@ class TreasureController extends GetxController {
       );
 
       if (challengeData == null) {
-        throw Exception('Desafio não encontrado.');
+        errorMessage.value = 'Desafio não encontrado.';
+        return;
       }
 
       // Validação: desafio pertence ao usuário autenticado
@@ -145,18 +153,21 @@ class TreasureController extends GetxController {
       
       // Validação: desafio está completado
       if (!_isCompleted(challengeData)) {
-        throw Exception('Este desafio ainda não foi completado.');
+        errorMessage.value = 'Este desafio ainda não foi completado.';
+        return;
       }
 
       // Validação: recompensa não foi coletada
       final isClaimed = challengeData['isClaimed'] as bool? ?? false;
       if (isClaimed) {
-        throw Exception('Você já coletou esta recompensa.');
+        errorMessage.value = 'Você já coletou esta recompensa.';
+        return;
       }
 
       // Validação: desafio não está expirado
       if (_isExpired(challengeData)) {
-        throw Exception('Este desafio expirou.');
+        errorMessage.value = 'Este desafio expirou.';
+        return;
       }
 
       // Distribuir recompensa usando transação para atomicidade
@@ -165,10 +176,15 @@ class TreasureController extends GetxController {
       // Finalizar coleta: marcar como coletado e remover da lista
       await _finalizeClaim(user.uid, challengeId, challengeData);
       
+      // Forçar atualização da UI em todas as telas
+      debugPrint('🔄 Forçando atualização da UI...');
+      Get.forceAppUpdate();
+      debugPrint('✅ UI atualizada!');
+      
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
-      errorMessage.value = e.toString().replaceAll('Exception: ', '');
+      errorMessage.value = 'Erro ao coletar recompensa. Tente novamente.';
     } finally {
       isClaimingReward.value = false;
     }
@@ -208,13 +224,15 @@ class TreasureController extends GetxController {
     try {
       // Validação: amount não-negativo
       if (amount < 0) {
-        throw Exception('O progresso não pode ser negativo.');
+        errorMessage.value = 'O progresso não pode ser negativo.';
+        return;
       }
 
       // Verificar autenticação
       final user = _auth.currentUser;
       if (user == null) {
-        throw Exception('Usuário não autenticado. Faça login novamente.');
+        errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
+        return;
       }
 
       // Buscar desafios ativos que correspondem ao tipo
@@ -269,9 +287,13 @@ class TreasureController extends GetxController {
 
       // Atualizar lista observável para refletir mudanças
       challenges.refresh();
-    } catch (e) {
+    } on FirebaseException catch (e) {
       // Silenciosamente falhar para não interromper fluxo principal
       // Erros de progresso não devem bloquear ações do usuário
+      errorMessage.value = _handleFirestoreError(e);
+    } catch (e) {
+      // Silenciosamente falhar para não interromper fluxo principal
+      errorMessage.value = 'Erro ao atualizar progresso do desafio.';
     }
   }
 
@@ -318,64 +340,130 @@ class TreasureController extends GetxController {
     final rewardAmount = challengeData['rewardAmount'] as int?;
 
     if (rewardType == null || rewardAmount == null) {
-      throw Exception('Dados de recompensa inválidos.');
+      errorMessage.value = 'Dados de recompensa inválidos.';
+      return;
     }
 
-    // Usar transação para garantir atomicidade
-    await _firestore.runTransaction((transaction) async {
-      final userDocRef = _firestore.collection('users').doc(userId);
-      final userDoc = await transaction.get(userDocRef);
+    try {
+      // Usar transação para garantir atomicidade
+      await _firestore.runTransaction((transaction) async {
+        // Referência para o documento de gamificação (local correto)
+        final gamificationDocRef = _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('stats')
+            .doc('gamification');
+        
+        final gamificationDoc = await transaction.get(gamificationDocRef);
 
-      if (!userDoc.exists) {
-        throw Exception('Usuário não encontrado.');
-      }
+        if (!gamificationDoc.exists) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            code: 'not-found',
+            message: 'Estatísticas de gamificação não encontradas.',
+          );
+        }
 
-      final userData = userDoc.data()!;
+        // Atualizar gems ou XP baseado no tipo de recompensa
+        switch (rewardType) {
+          case 'gems':
+            // Atualizar gems e totalGemsEarned atomicamente usando FieldValue.increment
+            transaction.update(gamificationDocRef, {
+              'gems.gems': FieldValue.increment(rewardAmount),
+              'gems.totalGemsEarned': FieldValue.increment(rewardAmount),
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            break;
 
-      // Atualizar gems ou XP baseado no tipo de recompensa
-      switch (rewardType) {
-        case 'gems':
-          final currentGems = userData['gems'] as int? ?? 0;
-          final newGems = currentGems + rewardAmount;
-          transaction.update(userDocRef, {'gems': newGems});
+          case 'xp':
+            // Atualizar totalXp, weeklyXP e todayXp atomicamente usando FieldValue.increment
+            transaction.update(gamificationDocRef, {
+              'xp.totalXp': FieldValue.increment(rewardAmount),
+              'xp.weeklyXP': FieldValue.increment(rewardAmount),
+              'xp.todayXp': FieldValue.increment(rewardAmount),
+              'lastUpdated': FieldValue.serverTimestamp(),
+            });
+            break;
 
-          // Atualizar GamificationController se registrado
-          try {
-            final gamificationController = Get.find<dynamic>();
-            if (gamificationController.toString().contains('GamificationController')) {
-              // Atualizar estado do controller
-              gamificationController.gems?.value = newGems;
-            }
-          } catch (e) {
-            // GamificationController não registrado, continuar normalmente
+          case 'item':
+            // TODO: Implementar lógica de itens quando necessário
+            throw FirebaseException(
+              plugin: 'cloud_firestore',
+              code: 'unimplemented',
+              message: 'Recompensas de itens ainda não implementadas.',
+            );
+
+          default:
+            throw FirebaseException(
+              plugin: 'cloud_firestore',
+              code: 'invalid-argument',
+              message: 'Tipo de recompensa desconhecido: $rewardType',
+            );
+        }
+      });
+
+      // Atualizar valores localmente IMEDIATAMENTE (para UI instantânea)
+      try {
+        if (Get.isRegistered<GamificationController>()) {
+          final gamificationController = Get.find<GamificationController>();
+          
+          debugPrint('💎 Atualizando valores localmente no GamificationController...');
+          debugPrint('  Tipo de recompensa: $rewardType');
+          debugPrint('  Quantidade: $rewardAmount');
+          
+          switch (rewardType) {
+            case 'gems':
+              final oldGems = gamificationController.gems.value;
+              final oldTotal = gamificationController.totalGemsEarned.value;
+              
+              // Atualizar valores reativos EXPLICITAMENTE
+              gamificationController.gems.value = oldGems + rewardAmount;
+              gamificationController.totalGemsEarned.value = oldTotal + rewardAmount;
+              
+              debugPrint('  Gems: $oldGems → ${gamificationController.gems.value}');
+              debugPrint('  Total Gems: $oldTotal → ${gamificationController.totalGemsEarned.value}');
+              debugPrint('  ✅ Valores de GEMS atualizados localmente!');
+              break;
+              
+            case 'xp':
+              final oldTotalXp = gamificationController.totalXp.value;
+              final oldWeeklyXp = gamificationController.weeklyXP.value;
+              final oldTodayXp = gamificationController.todayXp.value;
+              
+              // Atualizar valores reativos EXPLICITAMENTE
+              gamificationController.totalXp.value = oldTotalXp + rewardAmount;
+              gamificationController.weeklyXP.value = oldWeeklyXp + rewardAmount;
+              gamificationController.todayXp.value = oldTodayXp + rewardAmount;
+              
+              debugPrint('  Total XP: $oldTotalXp → ${gamificationController.totalXp.value}');
+              debugPrint('  Weekly XP: $oldWeeklyXp → ${gamificationController.weeklyXP.value}');
+              debugPrint('  Today XP: $oldTodayXp → ${gamificationController.todayXp.value}');
+              debugPrint('  ✅ Valores de XP atualizados localmente!');
+              break;
           }
-          break;
-
-        case 'xp':
-          final currentXp = userData['xp'] as int? ?? 0;
-          final newXp = currentXp + rewardAmount;
-          transaction.update(userDocRef, {'xp': newXp});
-
-          // Atualizar GamificationController se registrado
-          try {
-            final gamificationController = Get.find<dynamic>();
-            if (gamificationController.toString().contains('GamificationController')) {
-              // Atualizar estado do controller
-              gamificationController.xp?.value = newXp;
-            }
-          } catch (e) {
-            // GamificationController não registrado, continuar normalmente
-          }
-          break;
-
-        case 'item':
-          // TODO: Implementar lógica de itens quando necessário
-          throw Exception('Recompensas de itens ainda não implementadas.');
-
-        default:
-          throw Exception('Tipo de recompensa desconhecido: $rewardType');
+          
+          debugPrint('✅ Valores atualizados localmente com sucesso!');
+          debugPrint('🔔 UI deve atualizar INSTANTANEAMENTE via Obx()');
+          
+          // Forçar refresh dos observadores
+          gamificationController.gems.refresh();
+          gamificationController.totalGemsEarned.refresh();
+          gamificationController.totalXp.refresh();
+          gamificationController.weeklyXP.refresh();
+          gamificationController.todayXp.refresh();
+          
+          debugPrint('🔄 Refresh forçado nos observadores!');
+        } else {
+          debugPrint('⚠️ GamificationController não está registrado!');
+        }
+      } catch (e) {
+        // GamificationController não registrado - não é crítico
+        debugPrint('⚠️ Erro ao atualizar GamificationController: $e');
       }
-    });
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
+      rethrow;
+    }
   }
 
   /// Finaliza coleta de recompensa
@@ -405,13 +493,13 @@ class TreasureController extends GetxController {
   /// Busca desafios do Firestore com retry logic
   Future<void> _fetchChallengesFromFirestore(String userId,
       {int retryCount = 0}) async {
-    print('🔍 _fetchChallengesFromFirestore() iniciado (retry: $retryCount)...');
+    debugPrint('🔍 _fetchChallengesFromFirestore() iniciado (retry: $retryCount)...');
     
     const maxRetries = 3;
     const retryDelay = Duration(seconds: 2);
 
     try {
-      print('📡 Buscando desafios no Firestore: users/$userId/challenges');
+      debugPrint('📡 Buscando desafios no Firestore: users/$userId/challenges');
       
       final snapshot = await _firestore
           .collection('users')
@@ -420,17 +508,17 @@ class TreasureController extends GetxController {
           .get()
           .timeout(const Duration(seconds: 30));
 
-      print('✅ Snapshot recebido: ${snapshot.docs.length} documentos');
+      debugPrint('✅ Snapshot recebido: ${snapshot.docs.length} documentos');
 
       // Converter documentos para Map<String, dynamic>
       final challengesList = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id; // Adicionar ID do documento
-        print('  📄 Documento ${doc.id}: ${data['title']}');
+        debugPrint('  📄 Documento ${doc.id}: ${data['title']}');
         return data;
       }).toList();
 
-      print('📋 Total de desafios convertidos: ${challengesList.length}');
+      debugPrint('📋 Total de desafios convertidos: ${challengesList.length}');
 
       // Ordenar por tipo e data de expiração
       challengesList.sort((a, b) {
@@ -452,27 +540,27 @@ class TreasureController extends GetxController {
         return aExpiration.compareTo(bExpiration);
       });
 
-      print('✅ Desafios ordenados');
+      debugPrint('✅ Desafios ordenados');
 
       challenges.value = challengesList;
       
-      print('✅ challenges.value atualizado: ${challenges.length} desafios');
+      debugPrint('✅ challenges.value atualizado: ${challenges.length} desafios');
     } on TimeoutException {
-      print('❌ Timeout ao buscar desafios');
+      debugPrint('❌ Timeout ao buscar desafios');
       // Retry em caso de timeout
       if (retryCount < maxRetries) {
-        print('🔄 Tentando novamente em 2 segundos...');
+        debugPrint('🔄 Tentando novamente em 2 segundos...');
         await Future.delayed(retryDelay);
         return _fetchChallengesFromFirestore(userId,
             retryCount: retryCount + 1);
       }
       rethrow;
     } on FirebaseException catch (e) {
-      print('❌ FirebaseException: ${e.code} - ${e.message}');
+      debugPrint('❌ FirebaseException: ${e.code} - ${e.message}');
       // Retry em caso de erro de rede ou indisponibilidade
       if ((e.code == 'unavailable' || e.code == 'deadline-exceeded') &&
           retryCount < maxRetries) {
-        print('🔄 Tentando novamente em 2 segundos...');
+        debugPrint('🔄 Tentando novamente em 2 segundos...');
         await Future.delayed(retryDelay);
         return _fetchChallengesFromFirestore(userId,
             retryCount: retryCount + 1);
@@ -646,7 +734,7 @@ class TreasureController extends GetxController {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      print('🗑️ Deletando todos os desafios...');
+      debugPrint('🗑️ Deletando todos os desafios...');
 
       final snapshot = await _firestore
           .collection('users')
@@ -654,20 +742,20 @@ class TreasureController extends GetxController {
           .collection('challenges')
           .get();
 
-      print('📋 Encontrados ${snapshot.docs.length} desafios para deletar');
+      debugPrint('📋 Encontrados ${snapshot.docs.length} desafios para deletar');
 
       // Deletar cada documento
       for (final doc in snapshot.docs) {
         await doc.reference.delete();
-        print('  ✅ Deletado: ${doc.id}');
+        debugPrint('  ✅ Deletado: ${doc.id}');
       }
 
       // Limpar lista local
       challenges.clear();
 
-      print('✅ Todos os desafios foram deletados!');
+      debugPrint('✅ Todos os desafios foram deletados!');
     } catch (e) {
-      print('❌ Erro ao deletar desafios: $e');
+      debugPrint('❌ Erro ao deletar desafios: $e');
     }
   }
 

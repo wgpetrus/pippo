@@ -275,7 +275,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
 
   /// Constrói desafios agrupados por tipo (daily, weekly, special)
   Widget _buildChallengesByType(TreasureController controller, ResponsiveUtils r) {
-    print('🎨 _buildChallengesByType() - Total de desafios: ${controller.challenges.length}');
+    debugPrint('🎨 _buildChallengesByType() - Total de desafios: ${controller.challenges.length}');
     
     // Agrupar desafios por tipo
     final dailyChallenges = controller.challenges
@@ -288,7 +288,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
         .where((c) => c['type'] == 'special')
         .toList();
 
-    print('📊 Diários: ${dailyChallenges.length}, Semanais: ${weeklyChallenges.length}, Especiais: ${specialChallenges.length}');
+    debugPrint('📊 Diários: ${dailyChallenges.length}, Semanais: ${weeklyChallenges.length}, Especiais: ${specialChallenges.length}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

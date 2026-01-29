@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../core/auth/controllers/auth_controller.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 import '../../leaderboard/controllers/leaderboard_controller.dart';
 import '../../shop/controllers/shop_controller.dart';
 import '../../treasure/controllers/treasure_controller.dart';
@@ -12,12 +13,15 @@ import '../controllers/home_controller.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
-    // Instanciar AuthController primeiro (se não estiver registrado)
+    // Garantir que AuthController está disponível
     if (!Get.isRegistered<AuthController>()) {
-      Get.lazyPut<AuthController>(() => AuthController());
+      Get.put(AuthController(), permanent: true);
     }
 
-    // GamificationController is already registered globally in main.dart
+    // Garantir que GamificationController está disponível
+    if (!Get.isRegistered<GamificationController>()) {
+      Get.put(GamificationController(), permanent: true);
+    }
 
     // Instanciar LessonController
     Get.lazyPut<LessonController>(() => LessonController());

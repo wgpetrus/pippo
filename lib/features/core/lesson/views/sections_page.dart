@@ -14,10 +14,12 @@ import 'lesson_exercise_container.dart';
 /// Página de seções de um curso (navegação interna via Get.to)
 class SectionsPage extends StatefulWidget {
   final String courseName;
+  final int buttonIndex;
 
   const SectionsPage({
     super.key,
     required this.courseName,
+    required this.buttonIndex,
   });
 
   @override
@@ -35,7 +37,8 @@ class _SectionsPageState extends State<SectionsPage> {
   }
 
   Future<void> _loadSections() async {
-    print('🔄 SectionsPage: Iniciando carregamento de seções...');
+    debugPrint('🔄 SectionsPage: Iniciando carregamento de seções...');
+    debugPrint('  📍 ButtonIndex recebido: ${widget.buttonIndex}');
     
     setState(() {
       _isLoading = true;
@@ -45,13 +48,13 @@ class _SectionsPageState extends State<SectionsPage> {
       final gamificationController = Get.find<GamificationController>();
       final userId = gamificationController.userId;
       
-      print('👤 UserId: $userId');
+      debugPrint('👤 UserId: $userId');
       
       if (userId == null) {
-        print('⚠️ UserId é null, usando seções estáticas');
-        // Fallback para seções estáticas
+        debugPrint('⚠️ UserId é null, usando seções estáticas');
+        // Fallback para seções estáticas do botão especificado
         setState(() {
-          _sections = LessonMocks.getSections();
+          _sections = LessonMocks.getSectionsForButton(widget.buttonIndex);
           _isLoading = false;
         });
         return;
@@ -71,14 +74,19 @@ class _SectionsPageState extends State<SectionsPage> {
         courseId = coursesSnapshot.docs.first.id;
       }
       
-      print('📚 CourseId: $courseId');
-
-      // Carregar seções com progresso dinâmico
-      final sections = await LessonMocks.getSectionsWithProgress(userId, courseId);
+      debugPrint('📚 CourseId: $courseId');
+      debugPrint('🎯 Carregando seções para botão ${widget.buttonIndex}');
       
-      print('✅ Seções carregadas: ${sections.length}');
+      // Carregar seções com progresso dinâmico para o botão especificado
+      final sections = await LessonMocks.getSectionsWithProgress(
+        userId,
+        courseId,
+        buttonIndex: widget.buttonIndex,
+      );
+      
+      debugPrint('✅ Seções carregadas: ${sections.length}');
       for (final section in sections) {
-        print('  - ${section['title']}: ${section['currentProgress']}/${section['totalProgress']} (${section['status']})');
+        debugPrint('  - ${section['title']}: ${section['currentProgress']}/${section['totalProgress']} (${section['status']})');
       }
       
       setState(() {
@@ -86,9 +94,9 @@ class _SectionsPageState extends State<SectionsPage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Erro ao carregar seções: $e');
+      debugPrint('❌ Erro ao carregar seções: $e');
       setState(() {
-        _sections = LessonMocks.getSections();
+        _sections = LessonMocks.getSectionsForButton(widget.buttonIndex);
         _isLoading = false;
       });
     }
@@ -135,41 +143,51 @@ class _SectionsPageState extends State<SectionsPage> {
         progressMap[doc.id] = status;
       }
 
-      // Encontrar a seção atual (primeira seção in_progress)
+      // Encontrar a seção atual (primeira seção in_progress OU not_started)
+      debugPrint('🔍 Procurando seção atual...');
       for (final section in _sections) {
-        if (section['status'] == 'in_progress') {
+        final sectionStatus = section['status'] as String;
+        debugPrint('  📋 Seção ${section['id']}: $sectionStatus');
+        
+        if (sectionStatus == 'in_progress' || sectionStatus == 'not_started') {
           final lessons = section['lessons'] as List<String>;
+          
+          debugPrint('  ✅ Seção ${section['id']} selecionada, procurando lição não completada...');
           
           // Encontrar primeira lição não completada DESTA SEÇÃO
           for (final lessonId in lessons) {
             final status = progressMap[lessonId];
+            debugPrint('    📖 Lição $lessonId: ${status ?? "not_started"}');
             
             if (status != 'completed') {
-              print('📍 Próxima lição a iniciar (seção ${section['id']}): $lessonId (status: $status)');
+              debugPrint('📍 Próxima lição a iniciar (seção ${section['id']}): $lessonId (status: ${status ?? "not_started"})');
               return lessonId;
             }
           }
+          
+          // Todas lições completadas, mas status da seção ainda não atualizado
+          debugPrint('Seção ${section['id']}: todas lições completadas, status=$sectionStatus');
         }
       }
 
       // Se não encontrou nenhuma lição in_progress, retorna a primeira lição
-      print('⚠️ Nenhuma lição in_progress encontrada, retornando lição 1');
+      debugPrint('⚠️ Nenhuma lição in_progress encontrada, retornando lição 1');
       return '1';
     } catch (e) {
-      print('❌ Erro ao determinar próxima lição: $e');
+      debugPrint('❌ Erro ao determinar próxima lição: $e');
       return '1';
     }
   }
 
   Future<void> _startLesson(BuildContext context) async {
-    print('🎮 Iniciando lição...');
+    debugPrint('🎮 Iniciando lição...');
     
     final lessonController = Get.find<LessonController>();
     final gamificationController = Get.find<GamificationController>();
 
     // Verifica se tem energia suficiente
     if (!gamificationController.canStartLesson()) {
-      print('⚠️ Sem energia suficiente');
+      debugPrint('⚠️ Sem energia suficiente');
       LowEnergyModal.show(
         context,
         currentEnergy: gamificationController.currentEnergy.value,
@@ -180,7 +198,7 @@ class _SectionsPageState extends State<SectionsPage> {
     // Determinar qual lição iniciar
     final lessonId = await _getNextLessonId();
     if (lessonId == null) {
-      print('❌ Não foi possível determinar qual lição iniciar');
+      debugPrint('❌ Não foi possível determinar qual lição iniciar');
       Get.snackbar(
         'Erro',
         'Não foi possível determinar qual lição iniciar.',
@@ -191,21 +209,21 @@ class _SectionsPageState extends State<SectionsPage> {
       return;
     }
 
-    print('🎯 Iniciando lição $lessonId');
+    debugPrint('🎯 Iniciando lição $lessonId');
 
     // Iniciar lição do curso ativo
     await lessonController.startLessonFromActiveCourse(lessonId);
     
     if (lessonController.errorMessage.value.isEmpty) {
-      print('✅ Lição iniciada, navegando para exercícios...');
+      debugPrint('✅ Lição iniciada, navegando para exercícios...');
       // Navegar para exercícios e aguardar retorno
       await Get.to(() => const LessonExerciseContainer());
       
-      print('🔄 Retornou dos exercícios, recarregando seções...');
+      debugPrint('🔄 Retornou dos exercícios, recarregando seções...');
       // Recarregar seções após completar lição
       await _loadSections();
     } else {
-      print('❌ Erro ao iniciar lição: ${lessonController.errorMessage.value}');
+      debugPrint('❌ Erro ao iniciar lição: ${lessonController.errorMessage.value}');
       Get.snackbar(
         'Erro',
         lessonController.errorMessage.value,
@@ -230,7 +248,7 @@ class _SectionsPageState extends State<SectionsPage> {
       );
     }
 
-    print('🎨 Reconstruindo UI com ${_sections.length} seções');
+    debugPrint('🎨 Reconstruindo UI com ${_sections.length} seções');
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -246,7 +264,8 @@ class _SectionsPageState extends State<SectionsPage> {
           final currentProgress = section['currentProgress'] as int? ?? 0;
           final totalProgress = section['totalProgress'] as int? ?? 0;
           
-          print('🎨 Renderizando seção ${section['id']}: $currentProgress/$totalProgress ($status)');
+          debugPrint('🎨 Renderizando seção ${section['id']}: $currentProgress/$totalProgress ($status)');
+          debugPrint('  📊 Dados brutos da seção: $section');
           
           SectionStatus sectionStatus;
           switch (status) {

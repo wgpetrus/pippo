@@ -88,11 +88,9 @@ class SectionCard extends StatelessWidget {
 
                       SizedBox(height: r.spacing12),
 
-                      // Barra de progresso ou START NOW
-                      // TODO: [etapa 8] mover lógica de exibição para controller (shouldShowProgress)
-                      if (status == SectionStatus.completed ||
-                          status == SectionStatus.inProgress ||
-                          (status == SectionStatus.notStarted && currentProgress > 0))
+                      // Barra de progresso
+                      // Mostra sempre que não estiver locked
+                      if (!isLocked)
                         _buildProgressBar(r),
                     ],
                   ),

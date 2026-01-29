@@ -341,9 +341,18 @@ class GamificationController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Validar gems suficientes
+      // Validar gems suficientes PRIMEIRO
       if (gems.value < 100) {
         errorMessage.value = 'Você precisa de ${100 - gems.value} gemas a mais.';
+        return;
+      }
+
+      // Calcular regeneração para ter valor atualizado
+      _calculateEnergyRegeneration();
+
+      // Validar se já está com energia máxima
+      if (currentEnergy.value >= 5) {
+        errorMessage.value = 'Você já está com energia máxima!';
         return;
       }
 
@@ -777,7 +786,7 @@ class GamificationController extends GetxController {
         }
       } catch (e) {
         // TreasureController não registrado ou erro - não é crítico
-        print('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de XP: $e');
+        debugPrint('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de XP: $e');
       }
 
       // 3. Adicionar gems (com multiplier se ativo)
@@ -807,7 +816,7 @@ class GamificationController extends GetxController {
           }
         } catch (e) {
           // TreasureController não registrado ou erro - não é crítico
-          print('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de streak: $e');
+          debugPrint('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de streak: $e');
         }
       }
 
