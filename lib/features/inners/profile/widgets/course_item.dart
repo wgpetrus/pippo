@@ -3,16 +3,20 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
 
-/// Item de curso com bandeira e botão de deletar
+/// Item de curso com bandeira e botões de ação
 class CourseItem extends StatelessWidget {
   final String flagAsset;
   final String name;
+  final bool isPrimary;
+  final VoidCallback? onSetPrimary;
   final VoidCallback? onDelete;
 
   const CourseItem({
     super.key,
     required this.flagAsset,
     required this.name,
+    this.isPrimary = false,
+    this.onSetPrimary,
     this.onDelete,
   });
 
@@ -23,7 +27,10 @@ class CourseItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.gray600, width: 1),
+        border: Border.all(
+          color: isPrimary ? AppTheme.primary : AppTheme.gray600,
+          width: isPrimary ? 2 : 1,
+        ),
       ),
       child: Row(
         children: [
@@ -39,13 +46,58 @@ class CourseItem extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // Nome do idioma
+          // Nome do idioma e badge de principal
           Expanded(
-            child: Text(
-              name,
-              style: AppTheme.textMdSemibold.copyWith(color: AppTheme.black),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: AppTheme.textMdSemibold.copyWith(color: AppTheme.black),
+                ),
+                if (isPrimary) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Principal',
+                      style: AppTheme.textXsRegular.copyWith(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
+
+          // Botão definir como principal (se não for principal)
+          if (!isPrimary && onSetPrimary != null) ...[
+            GestureDetector(
+              onTap: onSetPrimary,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.primary, width: 1),
+                ),
+                child: Text(
+                  'Definir',
+                  style: AppTheme.textXsRegular.copyWith(
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
 
           // Botão deletar
           GestureDetector(

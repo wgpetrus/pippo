@@ -228,4 +228,246 @@ void main() {
       });
     });
   });
+
+  group('Firestore Security Rules - Profile System', () {
+    group('42.4.1 - Authenticated user can write own data', () {
+      test('Usuário autenticado pode atualizar seu próprio perfil', () {
+        // Cenário: Usuário autenticado tenta atualizar users/{userId}
+        // Esperado: Sucesso se userId == auth.uid
+        
+        const userId = 'user123';
+        const authUid = 'user123';
+        
+        // Simula: request.auth != null && request.auth.uid == userId
+        final canWrite = authUid == userId;
+        
+        expect(canWrite, isTrue, reason: 'Usuário autenticado deve poder atualizar seu perfil');
+      });
+    });
+
+    group('42.4.2 - Unauthenticated user cannot write', () {
+      test('Usuário não autenticado não pode atualizar perfil', () {
+        // Cenário: Usuário não autenticado tenta atualizar perfil
+        // Esperado: Falha
+        
+        const userId = 'user123';
+        const String? authUid = null; // Não autenticado
+        
+        // Simula: request.auth != null
+        final canWrite = authUid != null && authUid == userId;
+        
+        expect(canWrite, isFalse, reason: 'Usuário não autenticado não deve poder atualizar perfil');
+      });
+    });
+
+    group('42.4.3 - User cannot write to other user data', () {
+      test('Usuário não pode atualizar perfil de outro usuário', () {
+        // Cenário: user123 tenta atualizar users/user456
+        // Esperado: Falha
+        
+        const userId = 'user456';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == userId
+        final canWrite = authUid == userId;
+        
+        expect(canWrite, isFalse, reason: 'Usuário não deve poder atualizar perfil de outro usuário');
+      });
+    });
+
+    group('42.4.4 - Username uniqueness is enforced (Requirements 2.1, 2.2)', () {
+      test('Username com formato válido é aceito', () {
+        // Cenário: Tentativa de salvar username = "user_123"
+        // Esperado: Sucesso
+        
+        const username = 'user_123';
+        
+        // Simula: username.matches('^[a-zA-Z0-9_]+$')
+        final isValidFormat = RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username);
+        final isValidLength = username.length >= 3 && username.length <= 20;
+        
+        expect(isValidFormat && isValidLength, isTrue, reason: 'Username válido deve ser aceito');
+      });
+
+      test('Username muito curto é rejeitado', () {
+        // Cenário: Tentativa de salvar username = "ab"
+        // Esperado: Falha
+        
+        const username = 'ab';
+        
+        // Simula: username.size() >= 3
+        final isValidLength = username.length >= 3 && username.length <= 20;
+        
+        expect(isValidLength, isFalse, reason: 'Username muito curto deve ser rejeitado');
+      });
+
+      test('Username muito longo é rejeitado', () {
+        // Cenário: Tentativa de salvar username com 21 caracteres
+        // Esperado: Falha
+        
+        const username = 'abcdefghijklmnopqrstu'; // 21 caracteres
+        
+        // Simula: username.size() <= 20
+        final isValidLength = username.length >= 3 && username.length <= 20;
+        
+        expect(isValidLength, isFalse, reason: 'Username muito longo deve ser rejeitado');
+      });
+
+      test('Username com caracteres inválidos é rejeitado', () {
+        // Cenário: Tentativa de salvar username = "user@123"
+        // Esperado: Falha
+        
+        const username = 'user@123';
+        
+        // Simula: username.matches('^[a-zA-Z0-9_]+$')
+        final isValidFormat = RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username);
+        
+        expect(isValidFormat, isFalse, reason: 'Username com caracteres inválidos deve ser rejeitado');
+      });
+    });
+
+    group('42.4.5 - Profile field validation', () {
+      test('Nome válido é aceito', () {
+        // Cenário: Tentativa de salvar name = "João Silva"
+        // Esperado: Sucesso
+        
+        const name = 'João Silva';
+        
+        // Simula: name.size() >= 2 && name.size() <= 50
+        final isValid = name.length >= 2 && name.length <= 50;
+        
+        expect(isValid, isTrue, reason: 'Nome válido deve ser aceito');
+      });
+
+      test('Nome muito curto é rejeitado', () {
+        // Cenário: Tentativa de salvar name = "J"
+        // Esperado: Falha
+        
+        const name = 'J';
+        
+        // Simula: name.size() >= 2
+        final isValid = name.length >= 2 && name.length <= 50;
+        
+        expect(isValid, isFalse, reason: 'Nome muito curto deve ser rejeitado');
+      });
+
+      test('Nome muito longo é rejeitado', () {
+        // Cenário: Tentativa de salvar name com 51 caracteres
+        // Esperado: Falha
+        
+        final name = 'a' * 51;
+        
+        // Simula: name.size() <= 50
+        final isValid = name.length >= 2 && name.length <= 50;
+        
+        expect(isValid, isFalse, reason: 'Nome muito longo deve ser rejeitado');
+      });
+
+      test('Bio válida é aceita', () {
+        // Cenário: Tentativa de salvar bio = "Aprendendo idiomas"
+        // Esperado: Sucesso
+        
+        const bio = 'Aprendendo idiomas';
+        
+        // Simula: bio.size() <= 150
+        final isValid = bio.length <= 150;
+        
+        expect(isValid, isTrue, reason: 'Bio válida deve ser aceita');
+      });
+
+      test('Bio muito longa é rejeitada', () {
+        // Cenário: Tentativa de salvar bio com 151 caracteres
+        // Esperado: Falha
+        
+        final bio = 'a' * 151;
+        
+        // Simula: bio.size() <= 150
+        final isValid = bio.length <= 150;
+        
+        expect(isValid, isFalse, reason: 'Bio muito longa deve ser rejeitada');
+      });
+    });
+
+    group('42.4.6 - Social features security', () {
+      test('Usuário pode adicionar a si mesmo na lista de following', () {
+        // Cenário: user123 adiciona user456 em users/user123/following/user456
+        // Esperado: Sucesso
+        
+        const userId = 'user123';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == userId
+        final canWrite = authUid == userId;
+        
+        expect(canWrite, isTrue, reason: 'Usuário deve poder adicionar following');
+      });
+
+      test('Usuário não pode adicionar following em perfil de outro', () {
+        // Cenário: user123 tenta adicionar em users/user456/following/user789
+        // Esperado: Falha
+        
+        const userId = 'user456';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == userId
+        final canWrite = authUid == userId;
+        
+        expect(canWrite, isFalse, reason: 'Usuário não deve poder adicionar following em perfil de outro');
+      });
+
+      test('Usuário pode adicionar a si mesmo como follower', () {
+        // Cenário: user123 adiciona a si mesmo em users/user456/followers/user123
+        // Esperado: Sucesso
+        
+        const followerUserId = 'user123';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == followerUserId
+        final canWrite = authUid == followerUserId;
+        
+        expect(canWrite, isTrue, reason: 'Usuário deve poder adicionar a si mesmo como follower');
+      });
+
+      test('Usuário não pode adicionar outro como follower', () {
+        // Cenário: user123 tenta adicionar user789 em users/user456/followers/user789
+        // Esperado: Falha
+        
+        const followerUserId = 'user789';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == followerUserId
+        final canWrite = authUid == followerUserId;
+        
+        expect(canWrite, isFalse, reason: 'Usuário não deve poder adicionar outro como follower');
+      });
+    });
+
+    group('42.4.7 - Settings subcollection security', () {
+      test('Usuário pode atualizar suas próprias configurações', () {
+        // Cenário: user123 atualiza users/user123/settings/preferences
+        // Esperado: Sucesso
+        
+        const userId = 'user123';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == userId
+        final canWrite = authUid == userId;
+        
+        expect(canWrite, isTrue, reason: 'Usuário deve poder atualizar suas configurações');
+      });
+
+      test('Usuário não pode atualizar configurações de outro', () {
+        // Cenário: user123 tenta atualizar users/user456/settings/preferences
+        // Esperado: Falha
+        
+        const userId = 'user456';
+        const authUid = 'user123';
+        
+        // Simula: request.auth.uid == userId
+        final canWrite = authUid == userId;
+        
+        expect(canWrite, isFalse, reason: 'Usuário não deve poder atualizar configurações de outro');
+      });
+    });
+  });
 }

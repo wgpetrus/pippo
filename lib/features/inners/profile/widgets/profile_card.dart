@@ -17,6 +17,7 @@ class ProfileCard extends StatelessWidget {
   final int coursesCount;
   final bool isOwnProfile;
   final bool showFollowButton;
+  final bool isFollowing;
   final VoidCallback? onSettingsTap;
   final VoidCallback? onFollowingTap;
   final VoidCallback? onFollowersTap;
@@ -34,6 +35,7 @@ class ProfileCard extends StatelessWidget {
     required this.coursesCount,
     this.isOwnProfile = true,
     this.showFollowButton = false,
+    this.isFollowing = false,
     this.onSettingsTap,
     this.onFollowingTap,
     this.onFollowersTap,
@@ -181,12 +183,12 @@ class ProfileCard extends StatelessWidget {
             ],
           ),
           
-          // Botão Follow back (se não for próprio perfil)
+          // Botão Follow/Following (se não for próprio perfil)
           if (showFollowButton) ...[
             const SizedBox(height: 16),
             AppButton(
-              text: 'Seguir de volta',
-              isPrimary: false,
+              text: isFollowing ? 'Seguindo' : 'Seguir',
+              isPrimary: !isFollowing,
               onPressed: onFollowTap,
             ),
           ],

@@ -34,6 +34,7 @@ class AppAssets {
   static const String flagSpain = 'lib/assets/images/flags/spanish-flag.png';
   static const String flagFrance = 'lib/assets/images/flags/french-flag.png';
   static const String flagSaudi = 'lib/assets/images/flags/saudit-flag.png';
+  static const String flagSaudit = 'lib/assets/images/flags/saudit-flag.png'; // Alias para compatibilidade
   static const String flagJapan = 'lib/assets/images/flags/japan-flag.png';
   static const String flagChina = 'lib/assets/images/flags/china-flag.png';
   static const String flagBrazil = 'lib/assets/images/flags/brazil-flag.png';

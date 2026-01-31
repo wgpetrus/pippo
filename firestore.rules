@@ -8,13 +8,35 @@ service cloud.firestore {
       allow read: if request.auth != null;
       
       // Permitir criação apenas se for o próprio usuário
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidUsername();
       
       // Permitir atualização apenas se for o próprio usuário
-      allow update: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidUsername()
+        && isValidProfileUpdate();
       
       // Não permitir deleção (usar Cloud Function para soft delete)
       allow delete: if false;
+      
+      // Função para validar formato do username
+      function isValidUsername() {
+        return !request.resource.data.keys().hasAny(['username']) 
+          || (request.resource.data.username is string
+            && request.resource.data.username.size() >= 3
+            && request.resource.data.username.size() <= 20
+            && request.resource.data.username.matches('^[a-zA-Z0-9_]+$'));
+      }
+      
+      // Função para validar atualização de perfil
+      function isValidProfileUpdate() {
+        let data = request.resource.data;
+        return (!data.keys().hasAny(['name']) || (data.name is string && data.name.size() >= 2 && data.name.size() <= 50))
+          && (!data.keys().hasAny(['bio']) || (data.bio is string && data.bio.size() <= 150))
+          && (!data.keys().hasAny(['email']) || data.email == resource.data.email); // Email não pode ser alterado
+      }
       
       // Subcoleções
       match /courses/{courseId} {
@@ -32,6 +54,24 @@ service cloud.firestore {
           // Validar que energy está entre 0-5 (Requirement 2.3)
           && request.resource.data.energy.currentEnergy >= 0
           && request.resource.data.energy.currentEnergy <= 5;
+      }
+      
+      // Subcoleção de configurações
+      match /settings/{settingId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Subcoleção de following (usuários que o user segue)
+      match /following/{targetUserId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Subcoleção de followers (usuários que seguem o user)
+      match /followers/{followerUserId} {
+        allow read: if request.auth != null;
+        // Apenas o follower pode adicionar/remover a si mesmo
+        allow write: if request.auth != null && request.auth.uid == followerUserId;
       }
     }
     

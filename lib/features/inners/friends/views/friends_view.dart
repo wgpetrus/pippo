@@ -116,10 +116,7 @@ class _FriendsViewState extends State<FriendsView> {
                   showFollowAction: !_isFollowing,
                   isMockData: true, // Indica que são dados de teste
                   onTap: () => Get.to(() => UserProfilePage(
-                        name: friend['name'] as String,
-                        username: (friend['name'] as String).toLowerCase(),
-                        avatarAsset: friend['avatar'] as String,
-                        xp: friend['xp'] as int,
+                        userId: 'mock_${friend['name']}', // Mock userId
                       )),
                 );
               },

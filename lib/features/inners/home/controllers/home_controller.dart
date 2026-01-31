@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/utils/app_assets.dart';
@@ -255,12 +256,16 @@ class HomeController extends GetxController {
     // 9-17 completadas = Botão 2 ativo (Unidade 2)
     // 18-26 completadas = Botão 3 ativo (Unidade 3)
     const lessonsPerButton = 9;
+    
+    // Calcular qual botão está ativo (em qual unidade o usuário está trabalhando)
+    // Se completou 0-8 lições, está na unidade 0 (index 0)
+    // Se completou 9-17 lições, está na unidade 1 (index 1)
+    // Se completou 18-26 lições, está na unidade 2 (index 2)
     final activeButtonIndex = completedCount ~/ lessonsPerButton;
     
-    // O header da unidade muda baseado em qual botão está ativo
-    // Botão 1 ativo (0-8 lições) = Header "Unidade 1"
-    // Botão 2 ativo (9-17 lições) = Header "Unidade 2"
-    // Botão 3 ativo (18-26 lições) = Header "Unidade 3"
+    // O header da unidade deve mostrar a unidade em que o usuário está TRABALHANDO
+    // Se o usuário completou todas as lições de uma unidade, avança para a próxima
+    // Mas se está no meio de uma unidade, mostra essa unidade
     currentUnitIndex.value = activeButtonIndex.clamp(0, _units.length - 1);
     
     debugPrint('📊 _updateCurrentUnit:');
@@ -334,8 +339,14 @@ class HomeController extends GetxController {
 
   /// Recarrega o progresso das lições (chamar após completar uma lição)
   Future<void> reloadProgress() async {
+    debugPrint('🔄 reloadProgress() CHAMADO');
+    debugPrint('  📊 currentUnitIndex ANTES: ${currentUnitIndex.value}');
+    
     await _loadLessonProgress();
     _checkInProgressLesson();
+    
+    debugPrint('  📊 currentUnitIndex DEPOIS: ${currentUnitIndex.value}');
+    debugPrint('✅ reloadProgress() CONCLUÍDO');
   }
   
   /// Determina o status de um botão de lição baseado no progresso

@@ -20,6 +20,7 @@ class AppTheme {
   static const Color gray300 = Color(0xFF888888);
   static const Color gray200 = Color(0xFF666666);
   static const Color gray100 = Color(0xFF444444);
+  static const Color gray = Color(0xFFAAAAAA); // Alias para gray400
   static const Color black = Color(0xFF171717);
 
   // ACCENT COLORS

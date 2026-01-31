@@ -816,6 +816,7 @@ class OnboardingController extends GetxController {
           // Atualizar documento existente (login social)
           batch.update(userRef, {
             'name': userName.value,
+            'searchName': userName.value.toLowerCase(), // Para busca case-insensitive
             'username': username,
             'age': userAge.value,
             'onboardingCompleted': true,
@@ -827,6 +828,7 @@ class OnboardingController extends GetxController {
             'id': user.uid,
             'email': userEmail.value,
             'name': userName.value,
+            'searchName': userName.value.toLowerCase(), // Para busca case-insensitive
             'username': username,
             'age': userAge.value,
             'authProvider': authProvider.value.isEmpty ? 'email' : authProvider.value,

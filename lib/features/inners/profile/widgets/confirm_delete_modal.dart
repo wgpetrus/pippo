@@ -4,16 +4,13 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../controllers/profile_controller.dart';
 
-/// Modal de confirmação de exclusão genérico
+/// Modal de confirmação final de exclusão de conta
 class ConfirmDeleteModal {
-  static void show(
-    BuildContext context, {
-    required String title,
-    required String description,
-    required String confirmText,
-    required VoidCallback onConfirm,
-  }) {
+  static void show(BuildContext context) {
+    final controller = Get.find<ProfileController>();
+
     WoltModalSheet.show(
       context: context,
       pageListBuilder: (context) => [
@@ -28,7 +25,7 @@ class ConfirmDeleteModal {
               children: [
                 // Título
                 Text(
-                  title,
+                  'Confirmação Final',
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.red),
                   textAlign: TextAlign.center,
                 ),
@@ -37,27 +34,66 @@ class ConfirmDeleteModal {
 
                 // Descrição
                 Text(
-                  description,
+                  'Esta é sua última chance!\n\nSua conta será excluída permanentemente e não poderá ser recuperada.',
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
 
+                const SizedBox(height: 8),
+
+                // Aviso adicional
+                Text(
+                  'Você tem certeza absoluta?',
+                  style: AppTheme.textMdBold.copyWith(color: AppTheme.red),
+                  textAlign: TextAlign.center,
+                ),
+
                 const SizedBox(height: 24),
+
+                // Mostrar mensagem de erro se houver
+                Obx(() {
+                  if (controller.errorMessage.value.isNotEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.red),
+                        ),
+                        child: Text(
+                          controller.errorMessage.value,
+                          style: AppTheme.textSmRegular.copyWith(color: AppTheme.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
 
                 // Botão Cancel
                 _CancelButton(onPressed: () => Get.back()),
 
                 const SizedBox(height: 12),
 
-                // Botão Confirmar
-                AppButton(
-                  text: confirmText,
+                // Botão Confirmar Exclusão
+                Obx(() => AppButton(
+                  text: controller.isLoading.value ? 'Excluindo...' : 'Confirmar Exclusão',
                   color: AppTheme.red,
-                  onPressed: () {
-                    Get.back();
-                    onConfirm();
-                  },
-                ),
+                  isLoading: controller.isLoading.value,
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () async {
+                          // Chamar deleteAccount do controller
+                          await controller.deleteAccount();
+                          
+                          // Se não houver erro, o modal será fechado automaticamente
+                          // pela navegação para /auth no controller
+                          // Se houver erro, a mensagem será exibida acima
+                        },
+                )),
               ],
             ),
           ),
@@ -67,7 +103,7 @@ class ConfirmDeleteModal {
   }
 }
 
-/// Botão Cancel com borda azul
+/// Botão Cancel com borda verde
 class _CancelButton extends StatefulWidget {
   final VoidCallback onPressed;
 

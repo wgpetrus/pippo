@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_list_item.dart';
+import '../controllers/profile_controller.dart';
 
 /// Página de controles de aprendizado
 class LearningControlsPage extends StatefulWidget {
@@ -14,16 +16,16 @@ class LearningControlsPage extends StatefulWidget {
 }
 
 class _LearningControlsPageState extends State<LearningControlsPage> {
-  // Estados dos switches
-  bool _soundEffect = false;
-  bool _feedbacks = true;
-  bool _motivationalMessages = true;
-  bool _listeningExperience = true;
-  bool _hintVisibility = true;
-  bool _wordDisplayMode = true;
+  late final ProfileController _controller;
 
   // Modo de exibição de palavras (0 = all words highlighted, 1 = new words only)
   int _displayModeIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<ProfileController>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +33,6 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
         title: 'Controles de Aprendizado',
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'Salvar',
-              style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -57,74 +50,67 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             const SizedBox(height: 8),
 
             // Sound effect
-            AppListItem(
+            Obx(() => AppListItem(
               icon: FontAwesomeIcons.volumeHigh,
               label: 'Efeitos sonoros',
               trailing: Switch(
-                value: _soundEffect,
-                onChanged: (value) => setState(() => _soundEffect = value),
+                value: _controller.soundEffects.value,
+                onChanged: (value) => _controller.updateSetting('soundEffects', value),
                 activeColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
               ),
-            ),
+            )),
 
-            // Feedbacks
-            AppListItem(
-              icon: FontAwesomeIcons.solidCommentDots,
-              label: 'Feedbacks',
-              trailing: Switch(
-                value: _feedbacks,
-                onChanged: (value) => setState(() => _feedbacks = value),
-                activeColor: AppTheme.primary,
-                activeTrackColor: AppTheme.primary30,
-                inactiveThumbColor: AppTheme.white,
-                inactiveTrackColor: AppTheme.gray500,
-              ),
-            ),
-
-            // Motivational messages
-            AppListItem(
-              icon: FontAwesomeIcons.solidBell,
-              label: 'Mensagens motivacionais',
-              trailing: Switch(
-                value: _motivationalMessages,
-                onChanged: (value) => setState(() => _motivationalMessages = value),
-                activeColor: AppTheme.primary,
-                activeTrackColor: AppTheme.primary30,
-                inactiveThumbColor: AppTheme.white,
-                inactiveTrackColor: AppTheme.gray500,
-              ),
-            ),
-
-            // Listening experience
-            AppListItem(
+            // Listening exercises
+            Obx(() => AppListItem(
               icon: FontAwesomeIcons.solidComment,
-              label: 'Experiência de escuta',
+              label: 'Exercícios de escuta',
               trailing: Switch(
-                value: _listeningExperience,
-                onChanged: (value) => setState(() => _listeningExperience = value),
+                value: _controller.listeningExercises.value,
+                onChanged: (value) => _controller.updateSetting('listeningExercises', value),
                 activeColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
               ),
+            )),
+
+            // Speaking exercises
+            Obx(() => AppListItem(
+              icon: FontAwesomeIcons.solidCommentDots,
+              label: 'Exercícios de fala',
+              trailing: Switch(
+                value: _controller.speakingExercises.value,
+                onChanged: (value) => _controller.updateSetting('speakingExercises', value),
+                activeColor: AppTheme.primary,
+                activeTrackColor: AppTheme.primary30,
+                inactiveThumbColor: AppTheme.white,
+                inactiveTrackColor: AppTheme.gray500,
+              ),
+            )),
+
+            const SizedBox(height: 24),
+
+            // Seção Daily Goal
+            Text(
+              'Meta Diária',
+              style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
             ),
 
-            // Hint Visibility
-            AppListItem(
-              icon: FontAwesomeIcons.solidImage,
-              label: 'Visibilidade de Dicas',
-              trailing: Switch(
-                value: _hintVisibility,
-                onChanged: (value) => setState(() => _hintVisibility = value),
-                activeColor: AppTheme.primary,
-                activeTrackColor: AppTheme.primary30,
-                inactiveThumbColor: AppTheme.white,
-                inactiveTrackColor: AppTheme.gray500,
+            const SizedBox(height: 8),
+
+            // Daily goal selector
+            Obx(() => AppListItem(
+              icon: FontAwesomeIcons.bullseye,
+              label: 'Meta diária',
+              trailing: Text(
+                '${_controller.dailyGoal.value} min',
+                style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
               ),
-            ),
+              onTap: () => _showDailyGoalModal(),
+            )),
 
             const SizedBox(height: 24),
 
@@ -141,8 +127,8 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
               icon: FontAwesomeIcons.solidUser,
               label: 'Modo de Exibição',
               trailing: Switch(
-                value: _wordDisplayMode,
-                onChanged: (value) => setState(() => _wordDisplayMode = value),
+                value: _displayModeIndex == 0,
+                onChanged: (value) => setState(() => _displayModeIndex = value ? 0 : 1),
                 activeColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
@@ -176,6 +162,44 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showDailyGoalModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Meta Diária',
+                style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
+              ),
+              const SizedBox(height: 16),
+              ...[5, 10, 15, 20, 30].map((minutes) {
+                return Obx(() => ListTile(
+                  title: Text('$minutes minutos'),
+                  trailing: _controller.dailyGoal.value == minutes
+                      ? const Icon(Icons.check, color: AppTheme.primary)
+                      : null,
+                  onTap: () {
+                    _controller.updateSetting('dailyGoal', minutes);
+                    Navigator.pop(context);
+                  },
+                ));
+              }).toList(),
+            ],
+          ),
+        );
+      },
     );
   }
 }

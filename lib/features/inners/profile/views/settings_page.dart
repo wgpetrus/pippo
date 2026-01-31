@@ -8,6 +8,8 @@ import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_list_item.dart';
 import '../../../core/auth/controllers/auth_controller.dart';
+import '../controllers/profile_controller.dart';
+import '../widgets/delete_account_modal.dart';
 import 'courses_page.dart';
 import 'edit_profile_page.dart';
 import 'learning_controls_page.dart';
@@ -22,15 +24,18 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // Estados
-  bool _notificationsEnabled = true;
   late final AuthController _authController;
+  late final ProfileController _profileController;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
     _authController = Get.find<AuthController>();
+    _profileController = Get.find<ProfileController>();
+    
+    // Carregar configurações ao abrir a página
+    _profileController.loadSettings();
   }
 
   // Build
@@ -42,17 +47,6 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
         title: 'Configurações',
-        actions: [
-          TextButton(
-            onPressed: () {
-              // TODO: Salvar configurações
-            },
-            child: Text(
-              'Salvar',
-              style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: r.spacing16),
@@ -75,22 +69,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: FontAwesomeIcons.solidBell,
                   label: 'Notificações',
                   onTap: () => Get.to(() => const NotificationsPage()),
-                  trailing: Transform.scale(
-                    scale: 0.8,
-                    child: Switch(
-                      value: _notificationsEnabled,
-                      onChanged: (value) {
-                        setState(() => _notificationsEnabled = value);
-                        if (value) {
-                          Get.to(() => const NotificationsPage());
-                        }
-                      },
-                      activeColor: AppTheme.white,
-                      activeTrackColor: AppTheme.primary,
-                      inactiveThumbColor: AppTheme.white,
-                      inactiveTrackColor: AppTheme.gray500,
-                    ),
-                  ),
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.graduationCap,
@@ -153,6 +131,17 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
 
+            SizedBox(height: r.spacing24),
+
+            // Danger Zone Section
+            _buildSection(
+              r: r,
+              title: 'Zona de Perigo',
+              children: [
+                _buildDeleteAccountItem(context),
+              ],
+            ),
+
             SizedBox(height: r.spacing32),
 
             // Logout Button
@@ -190,6 +179,54 @@ class _SettingsPageState extends State<SettingsPage> {
         SizedBox(height: r.spacing8),
         ...children,
       ],
+    );
+  }
+
+  Widget _buildDeleteAccountItem(BuildContext context) {
+    return GestureDetector(
+      onTap: () => DeleteAccountModal.show(context),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            // Ícone
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppTheme.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: FaIcon(
+                  FontAwesomeIcons.triangleExclamation,
+                  size: 16,
+                  color: AppTheme.red,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Label
+            Expanded(
+              child: Text(
+                'Excluir Conta',
+                style: AppTheme.textMdSemibold.copyWith(
+                  color: AppTheme.red,
+                ),
+              ),
+            ),
+
+            // Seta
+            const FaIcon(
+              FontAwesomeIcons.chevronRight,
+              size: 12,
+              color: AppTheme.red,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
