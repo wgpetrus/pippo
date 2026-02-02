@@ -913,6 +913,69 @@ class GamificationController extends GetxController {
     totalXp.value += xpToAdd;
     weeklyXP.value += xpToAdd; // ✅ Padronizado para weeklyXP
     todayXp.value += xpToAdd;
+    
+    // Salvar XP no histórico diário para o gráfico de progresso
+    _saveXpToHistory(xpToAdd);
+  }
+
+  /// Salva XP ganho no histórico diário para o gráfico de progresso semanal
+  Future<void> _saveXpToHistory(int xpGained) async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null || userId.isEmpty) {
+        debugPrint('⚠️ _saveXpToHistory: userId é null ou vazio');
+        return;
+      }
+
+      final now = DateTime.now();
+      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      debugPrint('📊 _saveXpToHistory: Salvando $xpGained XP para $dateStr (userId=$userId)');
+
+      // 1. Garantir que o documento dailyHistory existe (necessário para subcoleções)
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('stats')
+          .doc('dailyHistory')
+          .set({
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 2. Salvar no documento do dia (subcoleção)
+      final dayRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('stats')
+          .doc('dailyHistory')
+          .collection('days')
+          .doc(dateStr);
+
+      // Verificar se documento já existe
+      final dayDoc = await dayRef.get();
+      
+      if (dayDoc.exists) {
+        // Documento existe - incrementar XP
+        await dayRef.update({
+          'xp': FieldValue.increment(xpGained),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        debugPrint('✅ XP incrementado no histórico: +$xpGained XP em $dateStr (total agora: ${(dayDoc.data()?['xp'] ?? 0) + xpGained})');
+      } else {
+        // Documento não existe - criar com XP inicial
+        await dayRef.set({
+          'xp': xpGained,
+          'date': dateStr,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        debugPrint('✅ XP salvo no histórico (novo documento): $xpGained XP em $dateStr');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erro ao salvar XP no histórico: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Não propagar erro para não afetar o fluxo principal
+    }
   }
 
   /// Verifica e aplica resets de XP (semanal e diário)

@@ -11,6 +11,7 @@ import '../widgets/complete_profile_card.dart';
 import '../widgets/find_friends_card.dart';
 import '../widgets/overview_section.dart';
 import '../widgets/profile_header.dart';
+import '../widgets/weekly_progress_chart.dart';
 import 'edit_profile_page.dart';
 import 'settings_page.dart';
 
@@ -22,9 +23,12 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClientMixin {
   late final ProfileController _controller;
   late final GamificationController _gamification;
+
+  @override
+  bool get wantKeepAlive => true; // Manter estado da página
 
   @override
   void initState() {
@@ -32,12 +36,21 @@ class _ProfilePageState extends State<ProfilePage> {
     _controller = Get.find<ProfileController>();
     _gamification = Get.find<GamificationController>();
     
-    // Carregar perfil ao iniciar
+    // Carregar perfil e progresso semanal ao iniciar
     _controller.loadOwnProfile();
+    _controller.loadWeeklyProgress();
+  }
+
+  // Recarregar dados quando a página é exibida
+  void _refreshData() {
+    _controller.loadOwnProfile();
+    _controller.loadWeeklyProgress();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Necessário para AutomaticKeepAliveClientMixin
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: Obx(() {
@@ -76,42 +89,48 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         // Conteúdo do perfil
-        return CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Header com card azul (já é um Sliver, não precisa de SliverToBoxAdapter)
-            ProfileHeader(
-              title: 'Perfil',
-              avatarAsset: _getAvatarAsset(_controller.avatarId.value),
-              name: _controller.userName.value,
-              username: _controller.username.value,
-              following: _controller.followingCount.value,
-              followers: _controller.followersCount.value,
-              flagAsset: _getCountryFlag(_controller.country.value),
-              coursesCount: _controller.userCourses.length,
-              isOwnProfile: true,
-              showFollowButton: false,
-              onSettingsTap: () {
-                Get.to(() => const SettingsPage());
-              },
-              onFollowingTap: () {
-                Get.to(() => const FriendsView(), arguments: {'tab': 'following'});
-              },
-              onFollowersTap: () {
-                Get.to(() => const FriendsView(), arguments: {'tab': 'followers'});
-              },
-              onAvatarTap: () {
-                ChangeAvatarModal.show(
-                  context,
-                  currentAvatar: _getAvatarAsset(_controller.avatarId.value),
-                  onAvatarSelected: (avatar) {
-                    // Extrair avatarId do asset path
-                    final avatarId = _getAvatarIdFromAsset(avatar);
-                    _controller.updateProfile({'avatarId': avatarId});
-                  },
-                );
-              },
-            ),
+        return RefreshIndicator(
+          onRefresh: () async {
+            await _controller.loadOwnProfile();
+            await _controller.loadWeeklyProgress();
+          },
+          color: AppTheme.primary,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Header com card azul (já é um Sliver, não precisa de SliverToBoxAdapter)
+              ProfileHeader(
+                title: 'Perfil',
+                avatarAsset: _getAvatarAsset(_controller.avatarId.value),
+                name: _controller.userName.value,
+                username: _controller.username.value,
+                following: _controller.followingCount.value,
+                followers: _controller.followersCount.value,
+                flagAsset: _getCountryFlag(_controller.country.value),
+                coursesCount: _controller.userCourses.length,
+                isOwnProfile: true,
+                showFollowButton: false,
+                onSettingsTap: () {
+                  Get.to(() => const SettingsPage());
+                },
+                onFollowingTap: () {
+                  Get.to(() => const FriendsView(), arguments: {'tab': 'following'});
+                },
+                onFollowersTap: () {
+                  Get.to(() => const FriendsView(), arguments: {'tab': 'followers'});
+                },
+                onAvatarTap: () {
+                  ChangeAvatarModal.show(
+                    context,
+                    currentAvatar: _getAvatarAsset(_controller.avatarId.value),
+                    onAvatarSelected: (avatar) {
+                      // Extrair avatarId do asset path
+                      final avatarId = _getAvatarIdFromAsset(avatar);
+                      _controller.updateProfile({'avatarId': avatarId});
+                    },
+                  );
+                },
+              ),
 
             // Card "Finish your profile" (mostrar apenas se incompleto)
             if (_controller.profileCompletionPercentage.value < 100)
@@ -140,6 +159,43 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
 
+            // Gráfico de progresso semanal
+            SliverToBoxAdapter(
+              child: Obx(() {
+                // Converter dados do controller para ChartData
+                final weeklyProgressData = _controller.weeklyProgress
+                    .map((day) => ChartData(
+                          day['day'] as String,
+                          (day['xp'] as int).toDouble(),
+                        ))
+                    .toList();
+
+                // Se não houver dados, mostrar valores zerados
+                final hasData = weeklyProgressData.isNotEmpty;
+
+                return Column(
+                  children: [
+                    WeeklyProgressChart(
+                      userProgress: hasData
+                          ? weeklyProgressData
+                          : [
+                              ChartData('Sun', 0),
+                              ChartData('Mon', 0),
+                              ChartData('Tue', 0),
+                              ChartData('Wed', 0),
+                              ChartData('Thu', 0),
+                              ChartData('Fri', 0),
+                              ChartData('Sat', 0),
+                            ],
+                      otherProgress: [], // Não mostrar comparação no próprio perfil
+                      showOther: false,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              }),
+            ),
+
             // Overview - Reactive stats from GamificationController
             SliverToBoxAdapter(
               child: OverviewSection(
@@ -153,12 +209,13 @@ class _ProfilePageState extends State<ProfilePage> {
               child: SizedBox(height: 16),
             ),
           ],
+        ),
         );
       }),
     );
   }
 
-  // Helpers
+  // Auxiliares
 
   String _getAvatarAsset(String avatarId) {
     // Mapear avatarId para asset path

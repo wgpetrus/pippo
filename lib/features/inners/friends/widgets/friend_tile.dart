@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 
 /// Tile de amigo na lista
@@ -27,16 +28,23 @@ class FriendTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing12 = ResponsiveUtils.width(12, min: 8, max: 16);
+    final spacing4 = ResponsiveUtils.width(4, min: 2, max: 6);
+    final spacing16 = ResponsiveUtils.width(16, min: 12, max: 20);
+    final borderWidth = ResponsiveUtils.width(2, min: 1.5, max: 2.5);
+
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.only(bottom: spacing16),
         child: Row(
           children: [
             // Avatar
             Builder(
               builder: (context) {
                 final avatarSize = ResponsiveUtils.width(48, min: 40, max: 56);
+                final avatarAsset = _getAvatarAsset(avatar);
+                
                 return Stack(
                   children: [
                     Container(
@@ -47,7 +55,7 @@ class FriendTile extends StatelessWidget {
                         color: AppTheme.pink100,
                       ),
                       child: ClipOval(
-                        child: Image.asset(avatar, fit: BoxFit.cover),
+                        child: Image.asset(avatarAsset, fit: BoxFit.cover),
                       ),
                     ),
                     // Placeholder icon for mock data
@@ -61,7 +69,7 @@ class FriendTile extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppTheme.orange,
-                            border: Border.all(color: AppTheme.white, width: 2),
+                            border: Border.all(color: AppTheme.white, width: borderWidth),
                           ),
                           child: Center(
                             child: FaIcon(
@@ -76,7 +84,7 @@ class FriendTile extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: spacing12),
 
             // Nome e XP
             Expanded(
@@ -84,7 +92,7 @@ class FriendTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name, style: AppTheme.textMdBold),
-                  const SizedBox(height: 4),
+                  SizedBox(height: spacing4),
                   Text(
                     '$xp XP',
                     style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray400),
@@ -101,27 +109,57 @@ class FriendTile extends StatelessWidget {
     );
   }
 
+  // Helpers
+  String _getAvatarAsset(String avatarId) {
+    switch (avatarId) {
+      case 'avatar_01':
+        return AppAssets.charMara;
+      case 'avatar_02':
+        return AppAssets.charDafny;
+      case 'avatar_03':
+        return AppAssets.charDiogo;
+      case 'avatar_04':
+        return AppAssets.charFrancilene;
+      case 'avatar_05':
+        return AppAssets.charGlauciane;
+      case 'avatar_06':
+        return AppAssets.charLindoedson;
+      case 'avatar_07':
+        return AppAssets.charRenner;
+      default:
+        // Se já for um asset path, retornar como está (para compatibilidade com mock data)
+        if (avatarId.contains('AppAssets') || avatarId.contains('assets/')) {
+          return avatarId;
+        }
+        return AppAssets.charMara;
+    }
+  }
+
   // Widgets
   Widget _buildActionButton() {
+    final buttonSize = ResponsiveUtils.width(40, min: 36, max: 44);
+    final iconSize = ResponsiveUtils.width(16, min: 14, max: 18);
+    final iconSizeSmall = ResponsiveUtils.width(14, min: 12, max: 16);
+
     // Na aba Following: mostra seta para ir ao perfil
     if (!showFollowAction) {
       return Container(
-        width: 40,
-        height: 40,
+        width: buttonSize,
+        height: buttonSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: AppTheme.gray600),
         ),
-        child: const Center(
-          child: FaIcon(FontAwesomeIcons.chevronRight, color: AppTheme.gray400, size: 16),
+        child: Center(
+          child: FaIcon(FontAwesomeIcons.chevronRight, color: AppTheme.gray400, size: iconSize),
         ),
       );
     }
 
     // Followers - mostra estado de follow
     return Container(
-      width: 40,
-      height: 40,
+      width: buttonSize,
+      height: buttonSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isFollowed ? AppTheme.primary : AppTheme.white,
@@ -131,7 +169,7 @@ class FriendTile extends StatelessWidget {
         child: FaIcon(
           FontAwesomeIcons.userGroup,
           color: isFollowed ? AppTheme.white : AppTheme.green,
-          size: 14,
+          size: iconSizeSmall,
         ),
       ),
     );

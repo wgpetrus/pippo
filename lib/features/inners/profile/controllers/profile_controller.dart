@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+
+import '../widgets/reauthenticate_modal.dart';
 
 /// ProfileController - Manages all profile operations
 /// 
@@ -15,6 +18,7 @@ class ProfileController extends GetxController {
   // Firebase Instances
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
+
   // Profile Data States
   final userName = ''.obs;
   final username = ''.obs;
@@ -64,6 +68,11 @@ class ProfileController extends GetxController {
   final isSearching = false.obs;
   final searchErrorMessage = ''.obs;
 
+  // Weekly Progress States
+  final weeklyProgress = <Map<String, dynamic>>[].obs;
+  final viewedUserWeeklyProgress = <Map<String, dynamic>>[].obs;
+  final isLoadingProgress = false.obs;
+
   // UI States
   final isLoading = false.obs;
   final isLoadingProfile = false.obs;
@@ -77,17 +86,11 @@ class ProfileController extends GetxController {
   // Phone Verification
   String verificationId = '';
 
-  // Lifecycle
+  // Ciclo de vida
   @override
   void onInit() {
     super.onInit();
     // Controller initialization will be implemented in later tasks
-  }
-
-  @override
-  void onClose() {
-    // Cleanup if needed
-    super.onClose();
   }
 
   // ============================================================================
@@ -106,15 +109,25 @@ class ProfileController extends GetxController {
         return;
       }
 
+      if (kDebugMode) {
+        debugPrint('🔍 loadOwnProfile: Carregando perfil do usuário $userId');
+      }
+
       // Carregar documento do usuário
       final userDoc = await _firestore.collection('users').doc(userId).get();
 
       if (!userDoc.exists) {
         errorMessage.value = 'Perfil não encontrado.';
+        if (kDebugMode) {
+          debugPrint('⚠️ loadOwnProfile: Documento do usuário não existe');
+        }
         return;
       }
 
       final data = userDoc.data() as Map<String, dynamic>;
+      if (kDebugMode) {
+        debugPrint('✅ loadOwnProfile: Documento do usuário carregado');
+      }
 
       // Atualizar estados observáveis
       userName.value = data['name'] ?? '';
@@ -126,17 +139,41 @@ class ProfileController extends GetxController {
       phone.value = data['phone'] ?? '';
       phoneVerified.value = data['phoneVerified'] ?? false;
 
+      if (kDebugMode) {
+        debugPrint('✅ loadOwnProfile: Estados básicos atualizados');
+      }
+
       // Carregar stats da gamificação
       await _loadProfileStats(userId);
+      if (kDebugMode) {
+        debugPrint('✅ loadOwnProfile: Stats carregadas');
+      }
 
       // Calcular completude do perfil
       _calculateProfileCompletion(data);
+      if (kDebugMode) {
+        debugPrint('✅ loadOwnProfile: Completude calculada');
+      }
 
       // Carregar contadores sociais
       await _loadSocialCounts(userId);
+      if (kDebugMode) {
+        debugPrint('✅ loadOwnProfile: Contadores sociais carregados');
+      }
+
+      if (kDebugMode) {
+        debugPrint('🎉 loadOwnProfile: Perfil carregado com sucesso');
+      }
     } on FirebaseException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ loadOwnProfile: FirebaseException - ${e.code}: ${e.message}');
+      }
       errorMessage.value = _handleFirestoreError(e);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('❌ loadOwnProfile: Erro genérico - $e');
+        debugPrint('Stack trace: $stackTrace');
+      }
       errorMessage.value = 'Erro ao carregar perfil. Tente novamente.';
     } finally {
       isLoadingProfile.value = false;
@@ -164,7 +201,12 @@ class ProfileController extends GetxController {
         return;
       }
 
-      viewedUserData.value = userDoc.data() as Map<String, dynamic>;
+      if (kDebugMode) {
+        debugPrint('👤 User doc data keys: ${userDoc.data()?.keys.toList()}');
+      }
+
+      // Criar mapa com dados do usuário
+      final userData = Map<String, dynamic>.from(userDoc.data() as Map<String, dynamic>);
 
       // Carregar stats
       final statsDoc = await _firestore
@@ -174,11 +216,90 @@ class ProfileController extends GetxController {
           .doc('gamification')
           .get();
 
+      if (kDebugMode) {
+        debugPrint('📊 Stats doc exists: ${statsDoc.exists}');
+        if (statsDoc.exists) {
+          debugPrint('📊 Stats doc data: ${statsDoc.data()}');
+        }
+      }
+
       if (statsDoc.exists) {
         final stats = statsDoc.data() as Map<String, dynamic>;
-        viewedUserData['totalXp'] = stats['totalXp'] ?? 0;
-        viewedUserData['currentStreak'] = stats['currentStreak'] ?? 0;
-        viewedUserData['level'] = stats['level'] ?? 1;
+        
+        // Suportar duas estruturas diferentes:
+        // Estrutura 1 (nova): { xp: { totalXp: 0, level: 1 }, streak: { currentStreak: 0, longestStreak: 0 } }
+        // Estrutura 2 (antiga): { xp: 0, level: 1, streak: 0 }
+        
+        if (stats['xp'] is Map) {
+          // Estrutura nova (aninhada)
+          final xpData = stats['xp'] as Map<String, dynamic>?;
+          final streakData = stats['streak'] as Map<String, dynamic>?;
+          
+          userData['totalXp'] = xpData?['totalXp'] ?? 0;
+          userData['level'] = xpData?['level'] ?? 1;
+          userData['currentStreak'] = streakData?['currentStreak'] ?? 0;
+          userData['longestStreak'] = streakData?['longestStreak'] ?? 0;
+          
+          if (kDebugMode) {
+            debugPrint('📊 Parsed stats (estrutura nova): totalXp=${userData['totalXp']}, currentStreak=${userData['currentStreak']}, longestStreak=${userData['longestStreak']}, level=${userData['level']}');
+          }
+        } else {
+          // Estrutura antiga (flat)
+          userData['totalXp'] = stats['xp'] ?? 0;
+          userData['level'] = stats['level'] ?? 1;
+          userData['currentStreak'] = stats['streak'] ?? 0;
+          userData['longestStreak'] = stats['longestStreak'] ?? 0;
+          
+          if (kDebugMode) {
+            debugPrint('📊 Parsed stats (estrutura antiga): totalXp=${userData['totalXp']}, currentStreak=${userData['currentStreak']}, longestStreak=${userData['longestStreak']}, level=${userData['level']}');
+          }
+        }
+      } else {
+        if (kDebugMode) {
+          debugPrint('⚠️ Stats document does NOT exist for user $userId');
+        }
+        // Se não existir stats, definir valores padrão
+        userData['totalXp'] = 0;
+        userData['currentStreak'] = 0;
+        userData['longestStreak'] = 0;
+        userData['level'] = 1;
+      }
+
+      // Carregar contadores de following/followers
+      final followingSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .count()
+          .get();
+
+      final followersSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('followers')
+          .count()
+          .get();
+
+      userData['followingCount'] = followingSnapshot.count ?? 0;
+      userData['followersCount'] = followersSnapshot.count ?? 0;
+
+      // Contar cursos ativos
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .count()
+          .get();
+
+      userData['coursesCount'] = coursesSnapshot.count ?? 0;
+
+      // Atualizar viewedUserData de uma vez (força reatividade)
+      viewedUserData.value = userData;
+
+      // Debug: verificar dados carregados
+      if (kDebugMode) {
+        debugPrint('🔍 UserProfile loaded: totalXp=${userData['totalXp']}, currentStreak=${userData['currentStreak']}, longestStreak=${userData['longestStreak']}, level=${userData['level']}');
       }
 
       // Verificar se o usuário atual segue este usuário
@@ -446,7 +567,7 @@ class ProfileController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
 
-      Get.offAllNamed('/profile/phone-linked');
+      Get.toNamed('/profile/phone-linked');
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseAuthError(e);
     } catch (e) {
@@ -508,6 +629,13 @@ class ProfileController extends GetxController {
       // Atualizar estados locais
       isFollowingViewedUser.value = true;
       followingCount.value++;
+      
+      // Atualizar contador de followers no viewedUserData (para atualizar ProfileCard)
+      if (viewedUserId.value == targetUserId && viewedUserData.isNotEmpty) {
+        final currentFollowers = viewedUserData['followersCount'] ?? 0;
+        viewedUserData['followersCount'] = currentFollowers + 1;
+        viewedUserData.refresh(); // Força reatividade
+      }
 
       Get.snackbar(
         'Sucesso',
@@ -560,6 +688,13 @@ class ProfileController extends GetxController {
       // Atualizar estados locais
       isFollowingViewedUser.value = false;
       followingCount.value--;
+      
+      // Atualizar contador de followers no viewedUserData (para atualizar ProfileCard)
+      if (viewedUserId.value == targetUserId && viewedUserData.isNotEmpty) {
+        final currentFollowers = viewedUserData['followersCount'] ?? 0;
+        viewedUserData['followersCount'] = (currentFollowers - 1).clamp(0, double.infinity).toInt();
+        viewedUserData.refresh(); // Força reatividade
+      }
 
       Get.snackbar(
         'Sucesso',
@@ -605,6 +740,23 @@ class ProfileController extends GetxController {
         if (userDoc.exists) {
           final userData = userDoc.data() as Map<String, dynamic>;
           userData['userId'] = followedUserId;
+          
+          // Carregar stats para obter XP
+          final statsDoc = await _firestore
+              .collection('users')
+              .doc(followedUserId)
+              .collection('stats')
+              .doc('gamification')
+              .get();
+          
+          if (statsDoc.exists) {
+            final stats = statsDoc.data() as Map<String, dynamic>;
+            final xpData = stats['xp'] as Map<String, dynamic>?;
+            userData['totalXp'] = xpData?['totalXp'] ?? 0;
+          } else {
+            userData['totalXp'] = 0;
+          }
+          
           followingList.add(userData);
         }
       }
@@ -650,6 +802,23 @@ class ProfileController extends GetxController {
         if (userDoc.exists) {
           final userData = userDoc.data() as Map<String, dynamic>;
           userData['userId'] = followerUserId;
+          
+          // Carregar stats para obter XP
+          final statsDoc = await _firestore
+              .collection('users')
+              .doc(followerUserId)
+              .collection('stats')
+              .doc('gamification')
+              .get();
+          
+          if (statsDoc.exists) {
+            final stats = statsDoc.data() as Map<String, dynamic>;
+            final xpData = stats['xp'] as Map<String, dynamic>?;
+            userData['totalXp'] = xpData?['totalXp'] ?? 0;
+          } else {
+            userData['totalXp'] = 0;
+          }
+          
           followersList.add(userData);
         }
       }
@@ -663,6 +832,127 @@ class ProfileController extends GetxController {
     } finally {
       isLoadingSocial.value = false;
     }
+  }
+
+  /// Carrega lista de usuários que um usuário específico segue
+  Future<void> loadUserFollowing(String userId) async {
+    isLoadingSocial.value = true;
+    errorMessage.value = '';
+
+    try {
+      final followingSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .get();
+
+      final followingList = <Map<String, dynamic>>[];
+
+      for (final doc in followingSnapshot.docs) {
+        final followedUserId = doc.data()['userId'] as String;
+
+        // Carregar dados do usuário
+        final userDoc =
+            await _firestore.collection('users').doc(followedUserId).get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          userData['userId'] = followedUserId;
+          
+          // Carregar stats para obter XP
+          final statsDoc = await _firestore
+              .collection('users')
+              .doc(followedUserId)
+              .collection('stats')
+              .doc('gamification')
+              .get();
+          
+          if (statsDoc.exists) {
+            final stats = statsDoc.data() as Map<String, dynamic>;
+            final xpData = stats['xp'] as Map<String, dynamic>?;
+            userData['totalXp'] = xpData?['totalXp'] ?? 0;
+          } else {
+            userData['totalXp'] = 0;
+          }
+          
+          followingList.add(userData);
+        }
+      }
+
+      following.value = followingList;
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
+    } catch (e) {
+      errorMessage.value = 'Erro ao carregar seguindo. Tente novamente.';
+    } finally {
+      isLoadingSocial.value = false;
+    }
+  }
+
+  /// Carrega lista de usuários que seguem um usuário específico
+  Future<void> loadUserFollowers(String userId) async {
+    isLoadingSocial.value = true;
+    errorMessage.value = '';
+
+    try {
+      final followersSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('followers')
+          .get();
+
+      final followersList = <Map<String, dynamic>>[];
+
+      for (final doc in followersSnapshot.docs) {
+        final followerUserId = doc.data()['userId'] as String;
+
+        // Carregar dados do usuário
+        final userDoc =
+            await _firestore.collection('users').doc(followerUserId).get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          userData['userId'] = followerUserId;
+          
+          // Carregar stats para obter XP
+          final statsDoc = await _firestore
+              .collection('users')
+              .doc(followerUserId)
+              .collection('stats')
+              .doc('gamification')
+              .get();
+          
+          if (statsDoc.exists) {
+            final stats = statsDoc.data() as Map<String, dynamic>;
+            final xpData = stats['xp'] as Map<String, dynamic>?;
+            userData['totalXp'] = xpData?['totalXp'] ?? 0;
+          } else {
+            userData['totalXp'] = 0;
+          }
+          
+          followersList.add(userData);
+        }
+      }
+
+      followers.value = followersList;
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
+    } catch (e) {
+      errorMessage.value = 'Erro ao carregar seguidores. Tente novamente.';
+    } finally {
+      isLoadingSocial.value = false;
+    }
+  }
+
+  /// Verifica se o usuário atual está seguindo um usuário específico
+  bool isUserFollowed(String targetUserId) {
+    final currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null || currentUserId.isEmpty) {
+      return false;
+    }
+
+    // Verificar na lista de following se o targetUserId está presente
+    return following.any((user) => user['userId'] == targetUserId);
   }
 
   // ============================================================================
@@ -831,23 +1121,38 @@ class ProfileController extends GetxController {
 
       final userId = user.uid;
 
-      // Deletar dados do usuário do Firestore
-      final batch = _firestore.batch();
+      if (kDebugMode) {
+        debugPrint('🗑️ Iniciando exclusão da conta do usuário $userId');
+      }
 
-      // Deletar documento principal do usuário
-      final userRef = _firestore.collection('users').doc(userId);
-      batch.delete(userRef);
+      // 1. Deletar todas as subcoleções primeiro
+      if (kDebugMode) {
+        debugPrint('🗑️ Deletando subcoleções...');
+      }
+      await _deleteUserSubcollections(userId);
+      if (kDebugMode) {
+        debugPrint('✅ Subcoleções deletadas');
+      }
 
-      // Nota: Subcoleções (courses, stats, history, following, followers)
-      // devem ser deletadas via Cloud Function trigger na exclusão do usuário
-      // para evitar exceder limites de batch write
+      // 2. Deletar documento principal do usuário
+      if (kDebugMode) {
+        debugPrint('🗑️ Deletando documento principal...');
+      }
+      await _firestore.collection('users').doc(userId).delete();
+      if (kDebugMode) {
+        debugPrint('✅ Documento principal deletado');
+      }
 
-      await batch.commit();
-
-      // Deletar conta do Firebase Auth
+      // 3. Deletar conta do Firebase Auth
+      if (kDebugMode) {
+        debugPrint('🗑️ Deletando conta do Firebase Auth...');
+      }
       await user.delete();
+      if (kDebugMode) {
+        debugPrint('✅ Conta Auth deletada');
+      }
 
-      // Navegar para tela de autenticação
+      // 4. Navegar para tela de autenticação
       Get.offAllNamed('/auth');
 
       Get.snackbar(
@@ -856,20 +1161,158 @@ class ProfileController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ FirebaseAuthException: ${e.code}');
+      }
       if (e.code == 'requires-recent-login') {
         errorMessage.value =
             'Por segurança, faça login novamente antes de excluir sua conta.';
-        // Acionar fluxo de reautenticação
+        // Acionar fluxo de reautenticação baseado no provider
         await _reauthenticateForDeletion();
       } else {
         errorMessage.value = _handleFirebaseAuthError(e);
       }
     } on FirebaseException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ FirebaseException: ${e.code} - ${e.message}');
+      }
       errorMessage.value = _handleFirestoreError(e);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro ao excluir conta: $e');
+        debugPrint('Stack trace: $stackTrace');
+      }
       errorMessage.value = 'Erro ao excluir conta. Tente novamente.';
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Deleta todas as subcoleções do usuário
+  Future<void> _deleteUserSubcollections(String userId) async {
+    try {
+      // Lista de subcoleções simples (sem subcoleções aninhadas)
+      final simpleSubcollections = ['courses', 'following', 'followers', 'settings'];
+      
+      for (final subcollection in simpleSubcollections) {
+        if (kDebugMode) {
+          debugPrint('🗑️ Deletando subcoleção: $subcollection');
+        }
+        await _deleteSubcollection(userId, subcollection);
+        if (kDebugMode) {
+          debugPrint('✅ Subcoleção $subcollection deletada');
+        }
+      }
+      
+      // Deletar stats (tem subcoleção aninhada dailyHistory/days)
+      if (kDebugMode) {
+        debugPrint('🗑️ Deletando subcoleção: stats (com aninhamento)');
+      }
+      await _deleteStatsSubcollection(userId);
+      if (kDebugMode) {
+        debugPrint('✅ Subcoleção stats deletada');
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro ao deletar subcoleções: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Deleta uma subcoleção simples
+  Future<void> _deleteSubcollection(String userId, String subcollectionName) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection(subcollectionName)
+        .get();
+    
+    if (snapshot.docs.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Subcoleção $subcollectionName está vazia');
+      }
+      return;
+    }
+    
+    if (kDebugMode) {
+      debugPrint('📊 Encontrados ${snapshot.docs.length} documentos em $subcollectionName');
+    }
+    
+    // Deletar em batches de 500 (limite do Firestore)
+    final batches = <Future>[];
+    WriteBatch batch = _firestore.batch();
+    int count = 0;
+    
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+      count++;
+      
+      if (count == 500) {
+        batches.add(batch.commit());
+        batch = _firestore.batch();
+        count = 0;
+      }
+    }
+    
+    if (count > 0) {
+      batches.add(batch.commit());
+    }
+    
+    await Future.wait(batches);
+  }
+
+  /// Deleta a subcoleção stats (com subcoleção aninhada)
+  Future<void> _deleteStatsSubcollection(String userId) async {
+    // 1. Deletar dailyHistory/days (subcoleção aninhada)
+    if (kDebugMode) {
+      debugPrint('🗑️ Deletando stats/dailyHistory/days...');
+    }
+    final daysSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('stats')
+        .doc('dailyHistory')
+        .collection('days')
+        .get();
+    
+    if (daysSnapshot.docs.isNotEmpty) {
+      if (kDebugMode) {
+        debugPrint('📊 Encontrados ${daysSnapshot.docs.length} dias no histórico');
+      }
+      final daysBatch = _firestore.batch();
+      for (final doc in daysSnapshot.docs) {
+        daysBatch.delete(doc.reference);
+      }
+      await daysBatch.commit();
+      if (kDebugMode) {
+        debugPrint('✅ Dias do histórico deletados');
+      }
+    }
+    
+    // 2. Deletar todos os documentos em stats
+    if (kDebugMode) {
+      debugPrint('🗑️ Deletando documentos em stats...');
+    }
+    final statsSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('stats')
+        .get();
+    
+    if (statsSnapshot.docs.isNotEmpty) {
+      if (kDebugMode) {
+        debugPrint('📊 Encontrados ${statsSnapshot.docs.length} documentos em stats');
+      }
+      final statsBatch = _firestore.batch();
+      for (final doc in statsSnapshot.docs) {
+        statsBatch.delete(doc.reference);
+      }
+      await statsBatch.commit();
+      if (kDebugMode) {
+        debugPrint('✅ Documentos stats deletados');
+      }
     }
   }
 
@@ -879,31 +1322,80 @@ class ProfileController extends GetxController {
 
   /// Carrega estatísticas de gamificação do perfil
   Future<void> _loadProfileStats(String userId) async {
-    final statsDoc = await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('stats')
-        .doc('gamification')
-        .get();
+    try {
+      if (kDebugMode) {
+        debugPrint('🔍 _loadProfileStats: Carregando stats para $userId');
+      }
+      
+      final statsDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('stats')
+          .doc('gamification')
+          .get();
 
-    if (statsDoc.exists) {
-      final stats = statsDoc.data() as Map<String, dynamic>;
-      totalXp.value = stats['totalXp'] ?? 0;
-      currentStreak.value = stats['currentStreak'] ?? 0;
-      level.value = stats['level'] ?? 1;
+      if (statsDoc.exists) {
+        final stats = statsDoc.data() as Map<String, dynamic>;
+        if (kDebugMode) {
+          debugPrint('✅ _loadProfileStats: Stats doc existe');
+        }
+        
+        // Suportar duas estruturas diferentes:
+        // Estrutura 1 (nova): { xp: { totalXp: 0, level: 1 }, streak: { currentStreak: 0 } }
+        // Estrutura 2 (antiga): { xp: 0, level: 1, streak: 0 }
+        
+        if (stats['xp'] is Map) {
+          // Estrutura nova (aninhada)
+          final xpData = stats['xp'] as Map<String, dynamic>?;
+          final streakData = stats['streak'] as Map<String, dynamic>?;
+          
+          totalXp.value = xpData?['totalXp'] ?? 0;
+          level.value = xpData?['level'] ?? 1;
+          currentStreak.value = streakData?['currentStreak'] ?? 0;
+          
+          if (kDebugMode) {
+            debugPrint('📊 _loadProfileStats (estrutura nova): totalXp=${totalXp.value}, level=${level.value}, streak=${currentStreak.value}');
+          }
+        } else {
+          // Estrutura antiga (flat)
+          totalXp.value = stats['xp'] ?? 0;
+          level.value = stats['level'] ?? 1;
+          currentStreak.value = stats['streak'] ?? 0;
+          
+          if (kDebugMode) {
+            debugPrint('📊 _loadProfileStats (estrutura antiga): totalXp=${totalXp.value}, level=${level.value}, streak=${currentStreak.value}');
+          }
+        }
+      } else {
+        if (kDebugMode) {
+          debugPrint('⚠️ _loadProfileStats: Stats doc NÃO existe');
+        }
+      }
+
+      // Contar lições completadas em todos os cursos
+      if (kDebugMode) {
+        debugPrint('🔍 _loadProfileStats: Carregando cursos...');
+      }
+      final coursesSnapshot =
+          await _firestore.collection('users').doc(userId).collection('courses').get();
+
+      int totalLessons = 0;
+      for (final courseDoc in coursesSnapshot.docs) {
+        final courseData = courseDoc.data();
+        totalLessons += (courseData['lessonsCompleted'] ?? 0) as int;
+      }
+
+      lessonsCompleted.value = totalLessons;
+      if (kDebugMode) {
+        debugPrint('✅ _loadProfileStats: Lições completadas: $totalLessons');
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('❌ _loadProfileStats: Erro - $e');
+        debugPrint('Stack trace: $stackTrace');
+      }
+      rethrow; // Propagar erro para ser capturado no loadOwnProfile
     }
-
-    // Contar lições completadas em todos os cursos
-    final coursesSnapshot =
-        await _firestore.collection('users').doc(userId).collection('courses').get();
-
-    int totalLessons = 0;
-    for (final courseDoc in coursesSnapshot.docs) {
-      final courseData = courseDoc.data();
-      totalLessons += (courseData['lessonsCompleted'] ?? 0) as int;
-    }
-
-    lessonsCompleted.value = totalLessons;
   }
 
   /// Calcula porcentagem de completude do perfil
@@ -960,13 +1452,250 @@ class ProfileController extends GetxController {
 
   /// Reautentica o usuário antes de exclusão de conta
   Future<void> _reauthenticateForDeletion() async {
-    // Esta função seria chamada quando o erro 'requires-recent-login' ocorre
-    // A implementação depende do fluxo de UI (modal/dialog para senha)
-    // Por enquanto, apenas mostra mensagem para o usuário fazer login novamente
-    errorMessage.value = 'Por segurança, faça login novamente antes de excluir sua conta.';
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        errorMessage.value = 'Usuário não autenticado.';
+        return;
+      }
+
+      if (kDebugMode) {
+        debugPrint('🔐 Reautenticação necessária para exclusão de conta');
+      }
+
+      // Detectar provider do usuário
+      final providers = user.providerData.map((p) => p.providerId).toList();
+      if (kDebugMode) {
+        debugPrint('🔐 Providers detectados: $providers');
+      }
+
+      // Verificar se usuário usa Google
+      if (providers.contains('google.com')) {
+        if (kDebugMode) {
+          debugPrint('🔐 Usuário autenticado com Google - reautenticação não necessária');
+        }
+        errorMessage.value = 'Por favor, faça login novamente com o Google para excluir sua conta.';
+        
+        // Fazer logout e redirecionar para auth
+        await _auth.signOut();
+        Get.offAllNamed('/auth');
+        
+        Get.snackbar(
+          'Reautenticação Necessária',
+          'Faça login novamente com o Google e tente excluir sua conta.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 5),
+        );
+        return;
+      }
+
+      // Verificar se usuário tem email/senha
+      if (!providers.contains('password')) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Usuário não tem provider de senha');
+        }
+        errorMessage.value = 'Método de autenticação não suportado. Entre em contato com o suporte.';
+        return;
+      }
+
+      // Usuário com email/senha - pedir senha
+      if (user.email == null) {
+        errorMessage.value = 'E-mail não encontrado.';
+        return;
+      }
+
+      if (kDebugMode) {
+        debugPrint('🔐 Usuário autenticado com email/senha - solicitando senha');
+      }
+
+      // Mostrar modal pedindo senha
+      final password = await ReauthenticateModal.show(Get.context!);
+      
+      if (password == null || password.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Reautenticação cancelada pelo usuário');
+        }
+        errorMessage.value = 'Reautenticação cancelada.';
+        return;
+      }
+
+      if (kDebugMode) {
+        debugPrint('🔐 Tentando reautenticar com email/senha...');
+      }
+
+      // Reautenticar com email e senha
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      
+      await user.reauthenticateWithCredential(credential);
+      if (kDebugMode) {
+        debugPrint('✅ Reautenticação bem-sucedida');
+      }
+
+      // Limpar erro anterior
+      errorMessage.value = '';
+      
+      // Tentar deletar novamente
+      if (kDebugMode) {
+        debugPrint('🔄 Tentando deletar conta novamente após reautenticação...');
+      }
+      await deleteAccount();
+      
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro na reautenticação: ${e.code}');
+      }
+      if (e.code == 'wrong-password') {
+        errorMessage.value = 'Senha incorreta. Tente novamente.';
+      } else if (e.code == 'too-many-requests') {
+        errorMessage.value = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+      } else {
+        errorMessage.value = _handleFirebaseAuthError(e);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Erro inesperado na reautenticação: $e');
+      }
+      errorMessage.value = 'Erro ao reautenticar. Tente novamente.';
+    }
+  }
+
+  // ============================================================================
+  // Métodos Públicos - Weekly Progress
+  // ============================================================================
+
+  /// Carrega progresso semanal do usuário atual
+  Future<void> loadWeeklyProgress() async {
+    isLoadingProgress.value = true;
+
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null || userId.isEmpty) {
+        errorMessage.value = 'Usuário não autenticado.';
+        return;
+      }
+
+      final progressData = await _loadUserWeeklyProgress(userId);
+      weeklyProgress.value = progressData;
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
+    } catch (e) {
+      errorMessage.value = 'Erro ao carregar progresso. Tente novamente.';
+    } finally {
+      isLoadingProgress.value = false;
+    }
+  }
+
+  /// Carrega progresso semanal de outro usuário
+  Future<void> loadUserWeeklyProgress(String userId) async {
+    isLoadingProgress.value = true;
+
+    try {
+      final progressData = await _loadUserWeeklyProgress(userId);
+      viewedUserWeeklyProgress.value = progressData;
+    } on FirebaseException catch (e) {
+      errorMessage.value = _handleFirestoreError(e);
+    } catch (e) {
+      errorMessage.value = 'Erro ao carregar progresso. Tente novamente.';
+    } finally {
+      isLoadingProgress.value = false;
+    }
+  }
+
+  /// Carrega dados de progresso semanal de um usuário específico
+  Future<List<Map<String, dynamic>>> _loadUserWeeklyProgress(String userId) async {
+    if (kDebugMode) {
+      debugPrint('📊 _loadUserWeeklyProgress: Carregando progresso para userId=$userId');
+    }
     
-    // TODO: Implementar modal/dialog de reautenticação quando a UI estiver pronta
-    // Após reautenticação bem-sucedida, chamar deleteAccount() novamente
+    // Obter domingo da semana atual (início da semana)
+    final now = DateTime.now();
+    final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
+    
+    // Calcular quantos dias voltar para chegar no domingo
+    // Se hoje é domingo (7), voltar 0 dias
+    // Se hoje é segunda (1), voltar 1 dia
+    // Se hoje é terça (2), voltar 2 dias, etc
+    final daysToSunday = currentWeekday == 7 ? 0 : currentWeekday;
+    final sunday = now.subtract(Duration(days: daysToSunday));
+    
+    if (kDebugMode) {
+      debugPrint('📊 Hoje: ${now.weekday} (${_getDayAbbreviation(now.weekday)})');
+      debugPrint('📊 Domingo da semana: ${sunday.day}/${sunday.month}');
+    }
+    
+    final weekDays = <Map<String, dynamic>>[];
+
+    // Iterar de domingo (0) até sábado (6)
+    for (int i = 0; i < 7; i++) {
+      final date = sunday.add(Duration(days: i));
+      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      
+      if (kDebugMode) {
+        debugPrint('📊 Buscando dados para $dateStr (${_getDayAbbreviation(date.weekday)})...');
+      }
+      
+      // Tentar carregar dados do dia
+      final dayDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('stats')
+          .doc('dailyHistory')
+          .collection('days')
+          .doc(dateStr)
+          .get();
+
+      int xp = 0;
+      if (dayDoc.exists) {
+        final data = dayDoc.data() as Map<String, dynamic>;
+        xp = data['xp'] ?? 0;
+        if (kDebugMode) {
+          debugPrint('✅ Dados encontrados para $dateStr: xp=$xp');
+        }
+      } else {
+        if (kDebugMode) {
+          debugPrint('⚠️ Nenhum dado para $dateStr');
+        }
+      }
+
+      // Adicionar dia à lista
+      weekDays.add({
+        'date': dateStr,
+        'day': _getDayAbbreviation(date.weekday),
+        'xp': xp,
+      });
+    }
+
+    if (kDebugMode) {
+      debugPrint('📊 Total de dias carregados: ${weekDays.length}');
+      debugPrint('📊 Ordem dos dias: ${weekDays.map((d) => d['day']).join(', ')}');
+    }
+    
+    return weekDays;
+  }
+
+  /// Retorna abreviação do dia da semana
+  String _getDayAbbreviation(int weekday) {
+    switch (weekday) {
+      case DateTime.monday:
+        return 'Mon';
+      case DateTime.tuesday:
+        return 'Tue';
+      case DateTime.wednesday:
+        return 'Wed';
+      case DateTime.thursday:
+        return 'Thu';
+      case DateTime.friday:
+        return 'Fri';
+      case DateTime.saturday:
+        return 'Sat';
+      case DateTime.sunday:
+        return 'Sun';
+      default:
+        return '';
+    }
   }
 
   // ============================================================================

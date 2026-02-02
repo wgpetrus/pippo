@@ -21,10 +21,10 @@ class FindFriendsCard extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: r.spacing16),
         padding: EdgeInsets.all(r.spacing16),
         decoration: BoxDecoration(
-          color: AppTheme.primary100,
+          color: AppTheme.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.primary30,
+            color: AppTheme.gray600,
             width: 1,
           ),
         ),
@@ -63,7 +63,7 @@ class FindFriendsCard extends StatelessWidget {
                   Text(
                     'Busque por username ou nome',
                     style: AppTheme.textSm.copyWith(
-                      color: AppTheme.gray600,
+                      color: AppTheme.primary,
                     ),
                   ),
                 ],

@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_lesson_button.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../profile/controllers/profile_controller.dart';
 import '../../treasure/controllers/treasure_controller.dart';
 import '../widgets/home_appbar.dart';
 
@@ -283,6 +284,11 @@ class HomeController extends GetxController {
     if (index == 3 && previousIndex != 3) {
       _refreshTreasurePage();
     }
+    
+    // Se navegando para a tab Profile (index 4), recarregar perfil e progresso
+    if (index == 4 && previousIndex != 4) {
+      _refreshProfilePage();
+    }
   }
 
   /// Recarrega dados da página Treasure quando usuário retorna à tab
@@ -294,6 +300,20 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       // TreasureController não registrado - não é crítico
+    }
+  }
+
+  /// Recarrega dados da página Profile quando usuário retorna à tab
+  void _refreshProfilePage() {
+    try {
+      // Importar ProfileController no topo do arquivo se necessário
+      final profileController = Get.find<ProfileController>();
+      profileController.loadOwnProfile();
+      profileController.loadWeeklyProgress();
+      debugPrint('🔄 Profile atualizado ao trocar de aba');
+    } catch (e) {
+      debugPrint('⚠️ Erro ao atualizar Profile: $e');
+      // ProfileController não registrado - não é crítico
     }
   }
 

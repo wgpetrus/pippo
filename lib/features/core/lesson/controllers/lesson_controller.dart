@@ -1362,39 +1362,57 @@ class LessonController extends GetxController {
     
     final todayDate = _getTodayDateString();
     
-    final historyRef = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('history')
-        .doc(todayDate);
+    // Salvar no mesmo local que GamificationController
+    // users/{userId}/stats/dailyHistory/days/{date}
     
     try {
+      // 1. Garantir que o documento dailyHistory existe
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('stats')
+          .doc('dailyHistory')
+          .set({
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 2. Salvar/atualizar no documento do dia
+      final dayRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('stats')
+          .doc('dailyHistory')
+          .collection('days')
+          .doc(todayDate);
+
       await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(historyRef);
+        final snapshot = await transaction.get(dayRef);
         
         if (!snapshot.exists) {
           // Criar novo documento de histórico
-          transaction.set(historyRef, {
+          transaction.set(dayRef, {
             'date': todayDate,
+            'xp': xp,
             'lessonsCompleted': 1,
-            'xpEarned': xp,
             'gemsEarned': gems,
             'timeSpent': timeSpent,
             'exercisesCorrect': correctAnswers.value,
             'exercisesTotal': totalAnswers.value,
-            'streakMaintained': true,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
           });
         } else {
           // Atualizar documento existente
           final data = snapshot.data()!;
           
-          transaction.update(historyRef, {
+          transaction.update(dayRef, {
+            'xp': (data['xp'] as int? ?? 0) + xp,
             'lessonsCompleted': (data['lessonsCompleted'] as int? ?? 0) + 1,
-            'xpEarned': (data['xpEarned'] as int? ?? 0) + xp,
             'gemsEarned': (data['gemsEarned'] as int? ?? 0) + gems,
             'timeSpent': (data['timeSpent'] as int? ?? 0) + timeSpent,
             'exercisesCorrect': (data['exercisesCorrect'] as int? ?? 0) + correctAnswers.value,
             'exercisesTotal': (data['exercisesTotal'] as int? ?? 0) + totalAnswers.value,
+            'updatedAt': FieldValue.serverTimestamp(),
           });
         }
       });

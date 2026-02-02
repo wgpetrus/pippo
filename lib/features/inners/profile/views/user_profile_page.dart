@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
+import '../../friends/views/friends_view.dart';
 import '../controllers/profile_controller.dart';
 import '../widgets/overview_section.dart';
 import '../widgets/profile_card.dart';
@@ -25,17 +27,29 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
   late final ProfileController _controller;
 
+  // Ciclo de vida
+
   @override
   void initState() {
     super.initState();
     _controller = Get.find<ProfileController>();
     
-    // Carregar perfil do usuário ao iniciar
-    _controller.loadUserProfile(widget.userId);
+    // Limpar dados anteriores e carregar perfil do usuário
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.viewedUserData.clear();
+      _controller.errorMessage.value = '';
+      _controller.loadUserProfile(widget.userId);
+      _controller.loadUserWeeklyProgress(widget.userId);
+      _controller.loadWeeklyProgress(); // Carregar progresso do usuário atual para comparação
+    });
   }
+
+  // Construção
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: const AppAppbar(title: 'Perfil'),
@@ -89,7 +103,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
+              SizedBox(height: r.spacing8),
 
               // Card azul do perfil
               ProfileCard(
@@ -103,6 +117,24 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 isOwnProfile: false,
                 showFollowButton: true,
                 isFollowing: _controller.isFollowingViewedUser.value,
+                onFollowingTap: () {
+                  Get.to(
+                    () => const FriendsView(),
+                    arguments: {
+                      'tab': 'following',
+                      'userId': widget.userId,
+                    },
+                  );
+                },
+                onFollowersTap: () {
+                  Get.to(
+                    () => const FriendsView(),
+                    arguments: {
+                      'tab': 'followers',
+                      'userId': widget.userId,
+                    },
+                  );
+                },
                 onFollowTap: () {
                   if (_controller.isFollowingViewedUser.value) {
                     _controller.unfollowUser(widget.userId);
@@ -111,43 +143,66 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   }
                 },
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: r.spacing24),
 
               // Gráfico de progresso semanal
-              // TODO: [future] Implementar dados reais do gráfico
-              WeeklyProgressChart(
-                userProgress: [
-                  ChartData('Mon', 50),
-                  ChartData('Tue', 100),
-                  ChartData('Wed', 150),
-                  ChartData('Thu', 200),
-                  ChartData('Fri', 250),
-                  ChartData('Sat', 500),
-                  ChartData('Sun', 1200),
-                ],
-                otherProgress: [
-                  ChartData('Mon', 30),
-                  ChartData('Tue', 80),
-                  ChartData('Wed', 50),
-                  ChartData('Thu', 200),
-                  ChartData('Fri', 250),
-                  ChartData('Sat', 300),
-                  ChartData('Sun', 350),
-                ],
-                showOther: true,
-              ),
-              const SizedBox(height: 24),
+              Obx(() {
+                // Converter dados do controller para ChartData
+                final currentUserProgress = _controller.weeklyProgress
+                    .map((day) => ChartData(
+                          day['day'] as String,
+                          (day['xp'] as int).toDouble(),
+                        ))
+                    .toList();
 
-              // Overview - passar dados do usuário específico
+                final viewedUserProgress = _controller.viewedUserWeeklyProgress
+                    .map((day) => ChartData(
+                          day['day'] as String,
+                          (day['xp'] as int).toDouble(),
+                        ))
+                    .toList();
+
+                // Se não houver dados, mostrar valores zerados
+                final hasCurrentUserData = currentUserProgress.isNotEmpty;
+                final hasViewedUserData = viewedUserProgress.isNotEmpty;
+
+                return WeeklyProgressChart(
+                  userProgress: hasCurrentUserData
+                      ? currentUserProgress
+                      : [
+                          ChartData('Sun', 0),
+                          ChartData('Mon', 0),
+                          ChartData('Tue', 0),
+                          ChartData('Wed', 0),
+                          ChartData('Thu', 0),
+                          ChartData('Fri', 0),
+                          ChartData('Sat', 0),
+                        ],
+                  otherProgress: hasViewedUserData
+                      ? viewedUserProgress
+                      : [
+                          ChartData('Sun', 0),
+                          ChartData('Mon', 0),
+                          ChartData('Tue', 0),
+                          ChartData('Wed', 0),
+                          ChartData('Thu', 0),
+                          ChartData('Fri', 0),
+                          ChartData('Sat', 0),
+                        ],
+                  showOther: true,
+                );
+              }),
+              SizedBox(height: r.spacing24),
+
+              // Overview
               OverviewSection(
                 flagAsset: _getCountryFlag(userData['country'] ?? 'BR'),
                 totalXp: userData['totalXp'] ?? 0,
                 currentStreak: userData['currentStreak'] ?? 0,
                 longestStreak: userData['longestStreak'] ?? 0,
                 level: userData['level'] ?? 1,
-                useOwnStats: false, // Não usar stats do GamificationController
+                useOwnStats: false,
               ),
-              const SizedBox(height: 32),
             ],
           ),
         );
@@ -155,7 +210,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  // Helpers
+  // Auxiliares
 
   String _getAvatarAsset(String avatarId) {
     switch (avatarId) {

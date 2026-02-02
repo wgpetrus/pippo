@@ -4,7 +4,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../../shared/theme/theme.dart';
 
 /// Gráfico de progresso semanal
-class WeeklyProgressChart extends StatelessWidget {
+class WeeklyProgressChart extends StatefulWidget {
   final List<ChartData> userProgress;
   final List<ChartData> otherProgress;
   final bool showOther;
@@ -17,7 +17,16 @@ class WeeklyProgressChart extends StatelessWidget {
   });
 
   @override
+  State<WeeklyProgressChart> createState() => _WeeklyProgressChartState();
+}
+
+class _WeeklyProgressChartState extends State<WeeklyProgressChart> {
+  @override
   Widget build(BuildContext context) {
+    // Extrair nome do usuário da primeira palavra (ou usar username se não houver nome)
+    final userName = widget.userProgress.isNotEmpty ? 'Você' : 'Você';
+    final otherName = widget.showOther ? 'Este usuário' : '';
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
@@ -36,9 +45,9 @@ class WeeklyProgressChart extends StatelessWidget {
           // Legenda
           Row(
             children: [
-              _buildLegendItem('Sam', AppTheme.primary, true),
+              _buildLegendItem(userName, AppTheme.primary, true),
               const SizedBox(width: 16),
-              if (showOther) _buildLegendItem('Me', AppTheme.gray400, false),
+              if (widget.showOther) _buildLegendItem(otherName, AppTheme.gray400, false),
             ],
           ),
           const SizedBox(height: 16),
@@ -62,32 +71,32 @@ class WeeklyProgressChart extends StatelessWidget {
                 axisLine: const AxisLine(width: 0),
                 labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
                 minimum: 0,
-                maximum: 1200,
+                maximum: 1000,
                 interval: 250,
               ),
               series: <CartesianSeries>[
                 // Linha do outro usuário (cinza)
-                if (showOther)
+                if (widget.showOther)
                   SplineSeries<ChartData, String>(
-                    dataSource: otherProgress,
+                    dataSource: widget.otherProgress,
                     xValueMapper: (ChartData data, _) => data.day,
                     yValueMapper: (ChartData data, _) => data.xp,
                     color: AppTheme.gray400,
-                    width: 3,
+                    width: 2,
                     splineType: SplineType.natural,
                     markerSettings: const MarkerSettings(
                       isVisible: true,
                       shape: DataMarkerType.circle,
-                      width: 10,
-                      height: 10,
-                      borderWidth: 3,
-                      borderColor: AppTheme.white,
+                      width: 5,
+                      height: 5,
+                      borderWidth: 1,
+                      borderColor: AppTheme.gray400,
                     ),
                   ),
 
                 // Linha do usuário (azul) com gradiente
                 SplineAreaSeries<ChartData, String>(
-                  dataSource: userProgress,
+                  dataSource: widget.userProgress,
                   xValueMapper: (ChartData data, _) => data.day,
                   yValueMapper: (ChartData data, _) => data.xp,
                   gradient: const LinearGradient(
@@ -99,14 +108,14 @@ class WeeklyProgressChart extends StatelessWidget {
                     end: Alignment.bottomCenter,
                   ),
                   borderColor: AppTheme.primary,
-                  borderWidth: 3,
+                  borderWidth: 2,
                   splineType: SplineType.natural,
                   markerSettings: const MarkerSettings(
                     isVisible: true,
                     shape: DataMarkerType.circle,
-                    width: 10,
-                    height: 10,
-                    borderWidth: 3,
+                    width: 5,
+                    height: 5,
+                    borderWidth: 1,
                     borderColor: AppTheme.white,
                     color: AppTheme.primary,
                   ),
