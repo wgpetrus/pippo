@@ -20,9 +20,23 @@ class WeeklyProgressChart extends StatefulWidget {
   State<WeeklyProgressChart> createState() => _WeeklyProgressChartState();
 }
 
-class _WeeklyProgressChartState extends State<WeeklyProgressChart> {
+class _WeeklyProgressChartState extends State<WeeklyProgressChart>
+    with AutomaticKeepAliveClientMixin {
+  bool _isDisposed = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Necessário para AutomaticKeepAliveClientMixin
+    if (_isDisposed) return const SizedBox.shrink();
     // Extrair nome do usuário da primeira palavra (ou usar username se não houver nome)
     final userName = widget.userProgress.isNotEmpty ? 'Você' : 'Você';
     final otherName = widget.showOther ? 'Este usuário' : '';
@@ -55,34 +69,61 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart> {
           // Gráfico
           SizedBox(
             height: 200,
-            child: SfCartesianChart(
-              plotAreaBorderWidth: 0,
-              primaryXAxis: CategoryAxis(
-                majorGridLines: const MajorGridLines(width: 0),
-                axisLine: const AxisLine(width: 0),
-                labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
-              ),
-              primaryYAxis: NumericAxis(
-                isVisible: true,
-                majorGridLines: const MajorGridLines(
-                  width: 1,
-                  color: AppTheme.gray600_30,
+            child: RepaintBoundary(
+              child: SfCartesianChart(
+                plotAreaBorderWidth: 0,
+                primaryXAxis: CategoryAxis(
+                  majorGridLines: const MajorGridLines(width: 0),
+                  axisLine: const AxisLine(width: 0),
+                  labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
                 ),
-                axisLine: const AxisLine(width: 0),
-                labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
-                minimum: 0,
-                maximum: 1000,
-                interval: 250,
-              ),
-              series: <CartesianSeries>[
-                // Linha do outro usuário (cinza)
-                if (widget.showOther)
-                  SplineSeries<ChartData, String>(
-                    dataSource: widget.otherProgress,
+                primaryYAxis: NumericAxis(
+                  isVisible: true,
+                  majorGridLines: const MajorGridLines(
+                    width: 1,
+                    color: AppTheme.gray600_30,
+                  ),
+                  axisLine: const AxisLine(width: 0),
+                  labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
+                  minimum: 0,
+                  maximum: 1000,
+                  interval: 250,
+                ),
+                series: <CartesianSeries>[
+                  // Linha do outro usuário (cinza)
+                  if (widget.showOther)
+                    SplineSeries<ChartData, String>(
+                      dataSource: widget.otherProgress,
+                      xValueMapper: (ChartData data, _) => data.day,
+                      yValueMapper: (ChartData data, _) => data.xp,
+                      color: AppTheme.gray400,
+                      width: 2,
+                      splineType: SplineType.natural,
+                      markerSettings: const MarkerSettings(
+                        isVisible: true,
+                        shape: DataMarkerType.circle,
+                        width: 5,
+                        height: 5,
+                        borderWidth: 1,
+                        borderColor: AppTheme.gray400,
+                      ),
+                    ),
+
+                  // Linha do usuário (azul) com gradiente
+                  SplineAreaSeries<ChartData, String>(
+                    dataSource: widget.userProgress,
                     xValueMapper: (ChartData data, _) => data.day,
                     yValueMapper: (ChartData data, _) => data.xp,
-                    color: AppTheme.gray400,
-                    width: 2,
+                    gradient: const LinearGradient(
+                      colors: [
+                        AppTheme.primary30,
+                        AppTheme.primary05,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderColor: AppTheme.primary,
+                    borderWidth: 2,
                     splineType: SplineType.natural,
                     markerSettings: const MarkerSettings(
                       isVisible: true,
@@ -90,37 +131,12 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart> {
                       width: 5,
                       height: 5,
                       borderWidth: 1,
-                      borderColor: AppTheme.gray400,
+                      borderColor: AppTheme.white,
+                      color: AppTheme.primary,
                     ),
                   ),
-
-                // Linha do usuário (azul) com gradiente
-                SplineAreaSeries<ChartData, String>(
-                  dataSource: widget.userProgress,
-                  xValueMapper: (ChartData data, _) => data.day,
-                  yValueMapper: (ChartData data, _) => data.xp,
-                  gradient: const LinearGradient(
-                    colors: [
-                      AppTheme.primary30,
-                      AppTheme.primary05,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderColor: AppTheme.primary,
-                  borderWidth: 2,
-                  splineType: SplineType.natural,
-                  markerSettings: const MarkerSettings(
-                    isVisible: true,
-                    shape: DataMarkerType.circle,
-                    width: 5,
-                    height: 5,
-                    borderWidth: 1,
-                    borderColor: AppTheme.white,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

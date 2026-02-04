@@ -112,7 +112,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 username: userData['username'] ?? '',
                 following: userData['followingCount'] ?? 0,
                 followers: userData['followersCount'] ?? 0,
-                flagAsset: _getCountryFlag(userData['country'] ?? 'BR'),
+                flagAsset: userData['primaryCourseFlag'] ?? _getCountryFlag(userData['country'] ?? 'BR'),
                 coursesCount: userData['coursesCount'] ?? 0,
                 isOwnProfile: false,
                 showFollowButton: true,
@@ -196,7 +196,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
               // Overview
               OverviewSection(
-                flagAsset: _getCountryFlag(userData['country'] ?? 'BR'),
+                flagAsset: userData['primaryCourseFlag'] ?? _getCountryFlag(userData['country'] ?? 'BR'),
                 totalXp: userData['totalXp'] ?? 0,
                 currentStreak: userData['currentStreak'] ?? 0,
                 longestStreak: userData['longestStreak'] ?? 0,

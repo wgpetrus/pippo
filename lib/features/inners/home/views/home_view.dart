@@ -153,13 +153,15 @@ class HomeView extends StatelessWidget {
 
         // AppBar
         Builder(
-          builder: (appBarContext) => HomeAppbar(
+          builder: (appBarContext) => Obx(() => HomeAppbar(
             avatarAsset: AppAssets.charDiogo,
-            flagAsset: AppAssets.flagFrance,
+            flagAsset: controller.activeCourseFlag.value.isEmpty 
+                ? AppAssets.flagFrance 
+                : controller.activeCourseFlag.value,
             selectedStat: controller.selectedStat.value,
             onStatTap: (stat) => _onStatTap(appBarContext, controller, stat),
             controller: controller,
-          ),
+          )),
         ),
 
         // Unit Header
@@ -347,22 +349,52 @@ class HomeView extends StatelessWidget {
   }
 
   void _showCoursesModal(BuildContext context, HomeController controller) {
-    CoursesModal.show(
-      context,
-      courses: const [
-        CourseData(flagAsset: AppAssets.flagFrance, name: 'Francês', isSelected: true),
-        CourseData(flagAsset: AppAssets.flagUsa, name: 'Inglês'),
-      ],
-      selectedCourseName: 'Francês',
-      currentLevel: 10,
-      maxLevel: 15,
-      onAddCourse: controller.onAddCourse,
-      onCourseSelected: (course) {
-        // TODO: Trocar curso ativo
-      },
-    ).then((_) {
-      // Limpar seleção quando modal fechar
-      controller.clearStatSelection();
+    // Carregar cursos antes de abrir modal
+    controller.loadUserCourses().then((_) {
+      // Se não há cursos carregados, usar dados mockados como fallback
+      final courses = controller.userCourses.isEmpty
+          ? [
+              CourseData(
+                flagAsset: controller.activeCourseFlag.value.isEmpty 
+                    ? AppAssets.flagFrance 
+                    : controller.activeCourseFlag.value,
+                name: controller.activeCourseName.value.isEmpty 
+                    ? 'Francês' 
+                    : controller.activeCourseName.value,
+                isSelected: true,
+              ),
+            ]
+          : controller.userCourses.map((course) {
+              return CourseData(
+                flagAsset: course['flagAsset'] as String,
+                name: course['languageName'] as String,
+                isSelected: course['isActive'] as bool,
+              );
+            }).toList();
+      
+      CoursesModal.show(
+        context,
+        courses: courses,
+        selectedCourseName: controller.activeCourseName.value.isEmpty 
+            ? 'Francês' 
+            : controller.activeCourseName.value,
+        currentLevel: controller.activeCourseLevel.value,
+        maxLevel: 15,
+        onAddCourse: controller.onAddCourse,
+        onCourseSelected: (course) {
+          // Encontrar ID do curso selecionado
+          final selectedCourse = controller.userCourses.firstWhereOrNull(
+            (c) => c['languageName'] == course.name,
+          );
+          
+          if (selectedCourse != null) {
+            controller.switchActiveCourse(selectedCourse['id'] as String);
+          }
+        },
+      ).then((_) {
+        // Limpar seleção quando modal fechar
+        controller.clearStatSelection();
+      });
     });
   }
 

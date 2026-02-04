@@ -77,11 +77,11 @@ class HomeAppbar extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Flag (não reativo - mantém valor fixo)
+                  // Flag (nível do curso) - reativo
                   Flexible(
                     child: _buildStatChip(
                       flagAsset,
-                      5,
+                      null, // será obtido do controller
                       StatType.flag,
                       gamificationController,
                     ),
@@ -153,6 +153,8 @@ class HomeAppbar extends StatelessWidget {
   /// Obtém o count para um tipo específico de stat
   int _getCountForType(StatType type, GamificationController gamificationController) {
     switch (type) {
+      case StatType.flag:
+        return gamificationController.level.value;
       case StatType.fire:
         return gamificationController.currentStreak.value;
       case StatType.gem:

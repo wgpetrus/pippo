@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/widgets/app_appbar.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../controllers/profile_controller.dart';
-import '../widgets/confirm_delete_modal.dart';
 import '../widgets/course_item.dart';
 
 /// Página de cursos/idiomas do usuário
@@ -53,13 +54,9 @@ class _CoursesPageState extends State<CoursesPage> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
+                  AppButton(
+                    text: 'Tentar Novamente',
                     onPressed: () => _controller.loadUserCourses(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: AppTheme.white,
-                    ),
-                    child: const Text('Tentar Novamente'),
                   ),
                 ],
               ),
@@ -88,7 +85,7 @@ class _CoursesPageState extends State<CoursesPage> {
           itemBuilder: (context, index) {
             final course = _controller.userCourses[index];
             final courseId = course['id'] as String;
-            final languageCode = course['languageCode'] as String? ?? 'en';
+            final languageCode = course['language'] as String? ?? 'en'; // Mudado de 'languageCode' para 'language'
             final languageName = course['languageName'] as String? ?? 'Unknown';
             final isPrimary = course['isPrimary'] as bool? ?? false;
 
@@ -135,30 +132,18 @@ class _CoursesPageState extends State<CoursesPage> {
   }
 
   /// Exclui curso com confirmação
-  void _deleteCourse(String courseId, String courseName) {
-    // TODO: Implementar modal de confirmação específico para cursos
-    // Por enquanto, usar showDialog simples
-    showDialog(
+  Future<void> _deleteCourse(String courseId, String courseName) async {
+    final confirm = await AppDialog.confirm(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Dizer Adeus a Este Curso?'),
-        content: Text(
-          'Excluir "$courseName" significa que você perderá seu progresso, sequência e recompensas.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              _controller.removeCourse(courseId);
-            },
-            child: const Text('Excluir', style: TextStyle(color: AppTheme.red)),
-          ),
-        ],
-      ),
+      title: 'Dizer Adeus a Este Curso?',
+      message: 'Você perderá todo o progresso de $courseName.',
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      confirmColor: AppTheme.red,
     );
+
+    if (confirm == true) {
+      _controller.removeCourse(courseId);
+    }
   }
 }

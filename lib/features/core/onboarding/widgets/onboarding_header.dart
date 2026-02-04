@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import '../controllers/onboarding_controller.dart';
@@ -154,51 +155,24 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   // Métodos
-  void _showExitDialog(BuildContext context) {
-    final r = ResponsiveUtils(context);
-    
-    showDialog(
+  Future<void> _showExitDialog(BuildContext context) async {
+    final confirm = await AppDialog.confirm(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        contentPadding: EdgeInsets.all(r.spacing16),
-        title: Text(
-          'Sair do cadastro?',
-          style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
-        ),
-        content: Text(
-          'Seu progresso será perdido e você precisará começar novamente.',
-          style: AppTheme.textMd.copyWith(color: AppTheme.black),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancelar',
-              style: AppTheme.textMdBold.copyWith(color: AppTheme.gray700),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              try {
-                final controller = Get.find<OnboardingController>();
-                controller.exitOnboarding();
-              } catch (e) {
-                // Controller não encontrado, apenas voltar
-                Get.offAllNamed('/onboarding');
-              }
-            },
-            child: Text(
-              'Sair',
-              style: AppTheme.textMdBold.copyWith(color: AppTheme.error),
-            ),
-          ),
-        ],
-      ),
+      title: 'Sair do Cadastro?',
+      message: 'Você perderá todo o progresso do cadastro.',
+      confirmText: 'Sair',
+      cancelText: 'Continuar Cadastro',
+      confirmColor: AppTheme.red,
     );
+
+    if (confirm == true) {
+      try {
+        final controller = Get.find<OnboardingController>();
+        controller.exitOnboarding();
+      } catch (e) {
+        // Controller não encontrado, apenas voltar
+        Get.offAllNamed('/onboarding');
+      }
+    }
   }
 }

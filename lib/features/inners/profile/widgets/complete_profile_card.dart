@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_button.dart';
 
-/// Card "Finish your profile!"
+/// Card "Complete seu perfil!"
 class CompleteProfileCard extends StatelessWidget {
   final int stepsLeft;
   final VoidCallback? onTap;
@@ -18,29 +19,69 @@ class CompleteProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.white,
+        gradient: const LinearGradient(
+          colors: [AppTheme.primary, AppTheme.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.gray600, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título
-          Text('Complete seu perfil!', style: AppTheme.textLgBold),
-          const SizedBox(height: 4),
-
-          // Steps left
-          Text(
-            '$stepsLeft passo restante',
-            style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
+          // Ícone e título
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const FaIcon(
+                  FontAwesomeIcons.solidStar,
+                  color: AppTheme.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complete seu perfil!',
+                      style: AppTheme.textLgBold.copyWith(color: AppTheme.white),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      stepsLeft == 1
+                          ? '$stepsLeft passo restante'
+                          : '$stepsLeft passos restantes',
+                      style: AppTheme.textSmRegular.copyWith(
+                        color: AppTheme.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          
+          const SizedBox(height: 16),
 
-          // Botão usando AppButton
+          // Botão
           AppButton(
-            text: 'Completar perfil',
+            text: 'Completar agora',
             isPrimary: false,
             onPressed: onTap,
           ),

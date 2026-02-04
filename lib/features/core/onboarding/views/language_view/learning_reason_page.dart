@@ -28,6 +28,11 @@ class LearningReasonPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<OnboardingController>();
+    
+    // Obter nome do idioma
+    final languageName = controller.selectedLanguage.value.isNotEmpty
+        ? _getLanguageName(controller.selectedLanguage.value)
+        : '';
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -35,7 +40,7 @@ class LearningReasonPage extends StatelessWidget {
         slivers: [
           OnboardingHeader(
             title: 'Motivo para Aprender',
-            bubbleText: 'Por que você quer aprender ${controller.selectedLanguage.value}?',
+            bubbleText: 'Por que você quer aprender $languageName?',
             progress: 33,
           ),
           _buildReasonList(context, controller),
@@ -174,5 +179,20 @@ class LearningReasonPage extends StatelessWidget {
         ),
       ],
     );
+  }
+  
+  // Helper para obter nome do idioma
+  String _getLanguageName(String code) {
+    const languageNames = {
+      'en': 'Inglês',
+      'es': 'Espanhol',
+      'de': 'Alemão',
+      'fr': 'Francês',
+      'ar': 'Árabe',
+      'ja': 'Japonês',
+      'zh': 'Chinês',
+      'pt': 'Português',
+    };
+    return languageNames[code] ?? code;
   }
 }

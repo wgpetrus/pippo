@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/utils/app_assets.dart';
 import '../widgets/reauthenticate_modal.dart';
 
 /// ProfileController - Manages all profile operations
@@ -161,6 +162,12 @@ class ProfileController extends GetxController {
         debugPrint('✅ loadOwnProfile: Contadores sociais carregados');
       }
 
+      // Carregar cursos do usuário
+      await loadUserCourses();
+      if (kDebugMode) {
+        debugPrint('✅ loadOwnProfile: Cursos carregados');
+      }
+
       if (kDebugMode) {
         debugPrint('🎉 loadOwnProfile: Perfil carregado com sucesso');
       }
@@ -293,6 +300,25 @@ class ProfileController extends GetxController {
           .get();
 
       userData['coursesCount'] = coursesSnapshot.count ?? 0;
+
+      // Carregar curso primário do usuário
+      final primaryCourseSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isPrimary', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (primaryCourseSnapshot.docs.isNotEmpty) {
+        final courseData = primaryCourseSnapshot.docs.first.data();
+        final languageCode = courseData['language'] as String;
+        userData['primaryCourseLanguage'] = languageCode;
+        userData['primaryCourseFlag'] = _getLanguageFlag(languageCode);
+      } else {
+        // Fallback: usar país do usuário
+        userData['primaryCourseFlag'] = null;
+      }
 
       // Atualizar viewedUserData de uma vez (força reatividade)
       viewedUserData.value = userData;
@@ -971,11 +997,11 @@ class ProfileController extends GetxController {
         return;
       }
 
+      // Buscar TODOS os cursos (não filtrar por isActive)
       final coursesSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
-          .where('isActive', isEqualTo: true)
           .get();
 
       final coursesList = <Map<String, dynamic>>[];
@@ -983,8 +1009,21 @@ class ProfileController extends GetxController {
 
       for (final doc in coursesSnapshot.docs) {
         final courseData = doc.data();
-        courseData['id'] = doc.id;
-        coursesList.add(courseData);
+        final languageCode = courseData['language'] as String;
+        
+        // Criar mapa com dados traduzidos usando LanguageHelper
+        final courseMap = {
+          'id': doc.id,
+          'language': languageCode,
+          'languageName': _getLanguageName(languageCode),
+          'flagAsset': _getLanguageFlag(languageCode),
+          'level': courseData['level'],
+          'studyTime': courseData['studyTime'],
+          'isPrimary': courseData['isPrimary'] ?? false,
+          'isActive': courseData['isActive'] ?? false,
+        };
+        
+        coursesList.add(courseMap);
 
         if (courseData['isPrimary'] == true) {
           primaryId = doc.id;
@@ -993,17 +1032,48 @@ class ProfileController extends GetxController {
 
       userCourses.value = coursesList;
       primaryCourseId.value = primaryId ?? '';
+      
+      if (kDebugMode) {
+        debugPrint('✅ loadUserCourses: ${coursesList.length} cursos carregados');
+        debugPrint('   Curso primário ID: $primaryId');
+        for (final course in coursesList) {
+          debugPrint('   - ${course['languageName']} (${course['language']}): isPrimary=${course['isPrimary']}, isActive=${course['isActive']}, flag=${course['flagAsset']}');
+        }
+      }
+
+      // Se não há curso primário mas há cursos, definir o primeiro curso ativo como primário
+      if (primaryId == null && coursesList.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Nenhum curso primário encontrado. Definindo primeiro curso ativo como primário...');
+        }
+        
+        // Buscar primeiro curso ativo
+        final firstActiveCourse = coursesList.firstWhere(
+          (course) => course['isActive'] == true,
+          orElse: () => coursesList.first,
+        );
+        
+        // Definir como primário
+        await setPrimaryCourse(firstActiveCourse['id'] as String, showSnackbar: false);
+        
+        if (kDebugMode) {
+          debugPrint('✅ Curso ${firstActiveCourse['languageName']} definido como primário');
+        }
+      }
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
       errorMessage.value = 'Erro ao carregar cursos. Tente novamente.';
+      if (kDebugMode) {
+        debugPrint('❌ loadUserCourses: Erro - $e');
+      }
     } finally {
       isLoadingCourses.value = false;
     }
   }
 
   /// Define um curso como principal (apenas um pode ser principal)
-  Future<void> setPrimaryCourse(String courseId) async {
+  Future<void> setPrimaryCourse(String courseId, {bool showSnackbar = true}) async {
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -1045,11 +1115,13 @@ class ProfileController extends GetxController {
       }
       userCourses.refresh();
 
-      Get.snackbar(
-        'Sucesso',
-        'Curso principal atualizado!',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      if (showSnackbar) {
+        Get.snackbar(
+          'Sucesso',
+          'Curso principal atualizado!',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -1319,6 +1391,46 @@ class ProfileController extends GetxController {
   // ============================================================================
   // Métodos Privados
   // ============================================================================
+
+  /// Retorna o nome do idioma em português usando LanguageHelper
+  String _getLanguageName(String code) {
+    const languageNames = {
+      'en': 'Inglês',
+      'es': 'Espanhol',
+      'fr': 'Francês',
+      'de': 'Alemão',
+      'it': 'Italiano',
+      'pt': 'Português',
+      'zh': 'Chinês',
+      'ja': 'Japonês',
+      'ar': 'Árabe',
+    };
+    return languageNames[code] ?? code;
+  }
+
+  /// Retorna o asset da bandeira do idioma usando AppAssets
+  String _getLanguageFlag(String code) {
+    switch (code.toLowerCase()) {
+      case 'en':
+        return AppAssets.flagUsa;
+      case 'es':
+        return AppAssets.flagSpain;
+      case 'fr':
+        return AppAssets.flagFrance;
+      case 'de':
+        return AppAssets.flagGermany;
+      case 'pt':
+        return AppAssets.flagBrazil;
+      case 'zh':
+        return AppAssets.flagChina;
+      case 'ja':
+        return AppAssets.flagJapan;
+      case 'ar':
+        return AppAssets.flagSaudi;
+      default:
+        return AppAssets.flagUsa;
+    }
+  }
 
   /// Carrega estatísticas de gamificação do perfil
   Future<void> _loadProfileStats(String userId) async {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -99,14 +100,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               // Header com card azul (já é um Sliver, não precisa de SliverToBoxAdapter)
-              ProfileHeader(
+              Obx(() => ProfileHeader(
                 title: 'Perfil',
                 avatarAsset: _getAvatarAsset(_controller.avatarId.value),
                 name: _controller.userName.value,
                 username: _controller.username.value,
                 following: _controller.followingCount.value,
                 followers: _controller.followersCount.value,
-                flagAsset: _getCountryFlag(_controller.country.value),
+                flagAsset: _getPrimaryCourseFlag(),
                 coursesCount: _controller.userCourses.length,
                 isOwnProfile: true,
                 showFollowButton: false,
@@ -130,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                     },
                   );
                 },
-              ),
+              )),
 
             // Card "Finish your profile" (mostrar apenas se incompleto)
             if (_controller.profileCompletionPercentage.value < 100)
@@ -198,10 +199,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
 
             // Overview - Reactive stats from GamificationController
             SliverToBoxAdapter(
-              child: OverviewSection(
-                flagAsset: _getCountryFlag(_controller.country.value),
+              child: Obx(() => OverviewSection(
+                flagAsset: _getPrimaryCourseFlag(),
                 useOwnStats: true, // Usar stats do GamificationController
-              ),
+              )),
             ),
 
             // Espaço para bottom bar
@@ -273,5 +274,37 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       default:
         return AppAssets.flagBrazil;
     }
+  }
+
+  String _getPrimaryCourseFlag() {
+    if (kDebugMode) {
+      debugPrint('🔍 _getPrimaryCourseFlag: Buscando curso primário');
+      debugPrint('   Total de cursos: ${_controller.userCourses.length}');
+    }
+
+    // Buscar curso primário
+    final primaryCourse = _controller.userCourses.firstWhere(
+      (course) => course['isPrimary'] == true,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (kDebugMode) {
+      debugPrint('   Curso primário encontrado: ${primaryCourse.isNotEmpty}');
+      if (primaryCourse.isNotEmpty) {
+        debugPrint('   - Idioma: ${primaryCourse['languageName']}');
+        debugPrint('   - Bandeira: ${primaryCourse['flagAsset']}');
+      }
+    }
+
+    // Se encontrou curso primário, retornar sua bandeira
+    if (primaryCourse.isNotEmpty && primaryCourse['flagAsset'] != null) {
+      return primaryCourse['flagAsset'] as String;
+    }
+
+    // Fallback: usar bandeira do país do usuário
+    if (kDebugMode) {
+      debugPrint('   ⚠️ Usando fallback: bandeira do país ${_controller.country.value}');
+    }
+    return _getCountryFlag(_controller.country.value);
   }
 }

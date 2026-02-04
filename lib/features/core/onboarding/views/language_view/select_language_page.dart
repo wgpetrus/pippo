@@ -14,14 +14,14 @@ class SelectLanguagePage extends StatelessWidget {
 
   // Dados
   static const _languages = [
-    {'flag': AppAssets.flagUsa, 'name': 'Inglês'},
-    {'flag': AppAssets.flagGermany, 'name': 'Alemão'},
-    {'flag': AppAssets.flagSpain, 'name': 'Espanhol'},
-    {'flag': AppAssets.flagFrance, 'name': 'Francês'},
-    {'flag': AppAssets.flagSaudi, 'name': 'Árabe'},
-    {'flag': AppAssets.flagJapan, 'name': 'Japonês'},
-    {'flag': AppAssets.flagChina, 'name': 'Chinês'},
-    {'flag': AppAssets.flagBrazil, 'name': 'Português'},
+    {'code': 'en', 'flag': AppAssets.flagUsa, 'name': 'Inglês'},
+    {'code': 'de', 'flag': AppAssets.flagGermany, 'name': 'Alemão'},
+    {'code': 'es', 'flag': AppAssets.flagSpain, 'name': 'Espanhol'},
+    {'code': 'fr', 'flag': AppAssets.flagFrance, 'name': 'Francês'},
+    {'code': 'ar', 'flag': AppAssets.flagSaudi, 'name': 'Árabe'},
+    {'code': 'ja', 'flag': AppAssets.flagJapan, 'name': 'Japonês'},
+    {'code': 'zh', 'flag': AppAssets.flagChina, 'name': 'Chinês'},
+    {'code': 'pt', 'flag': AppAssets.flagBrazil, 'name': 'Português'},
   ];
 
   // Build
@@ -58,8 +58,8 @@ class SelectLanguagePage extends StatelessWidget {
             child: Obx(() => OptionCard(
               iconAsset: lang['flag']!,
               label: lang['name']!,
-              isSelected: controller.selectedLanguage.value == lang['name'],
-              onTap: () => controller.selectedLanguage.value = lang['name']!,
+              isSelected: controller.selectedLanguage.value == lang['code'],
+              onTap: () => controller.selectedLanguage.value = lang['code']!,
             )),
           );
         },

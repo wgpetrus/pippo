@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/language_helper.dart';
 import '../../../../shared/widgets/app_lesson_button.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
@@ -26,6 +27,15 @@ class HomeController extends GetxController {
   final currentNavIndex = 0.obs;
   final selectedStat = Rxn<StatType>();
   final showContinue = false.obs;
+  
+  // Estados do curso ativo
+  final activeCourseId = ''.obs;
+  final activeCourseName = ''.obs;
+  final activeCourseLanguage = ''.obs;
+  final activeCourseFlag = ''.obs;
+  final activeCourseLevel = 0.obs;
+  final userCourses = <Map<String, dynamic>>[].obs;
+  final isLoadingCourses = false.obs;
 
   // Estados de progresso das lições
   final completedLessons = <String>[].obs; // IDs das lições completadas
@@ -37,6 +47,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadActiveCourse();
     _loadLessonProgress();
   }
   
@@ -152,6 +163,103 @@ class HomeController extends GetxController {
   ];
 
   // Métodos privados
+  
+  /// Carrega o curso ativo do usuário
+  Future<void> _loadActiveCourse() async {
+    debugPrint('🔄 _loadActiveCourse() INICIADO');
+    isLoadingCourses.value = true;
+
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        debugPrint('  ❌ Usuário não autenticado');
+        return;
+      }
+      
+      debugPrint('  👤 UserId: $userId');
+
+      // Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('  ⚠️ Nenhum curso ativo encontrado - usando valores padrão');
+        // Definir valores padrão para evitar problemas na UI
+        activeCourseId.value = '';
+        activeCourseLanguage.value = 'fr';
+        activeCourseName.value = 'Francês';
+        activeCourseFlag.value = AppAssets.flagFrance;
+        activeCourseLevel.value = 0;
+        return;
+      }
+
+      final courseData = coursesSnapshot.docs.first.data();
+      final languageCode = courseData['language'] as String;
+      
+      activeCourseId.value = coursesSnapshot.docs.first.id;
+      activeCourseLanguage.value = languageCode;
+      activeCourseName.value = LanguageHelper.getLanguageName(languageCode);
+      activeCourseFlag.value = LanguageHelper.getLanguageFlag(languageCode);
+      activeCourseLevel.value = courseData['level'] ?? 1; // Usar nível do Firestore
+      
+      debugPrint('  ✅ Curso ativo carregado:');
+      debugPrint('    ID: ${activeCourseId.value}');
+      debugPrint('    Idioma: ${activeCourseName.value} ($languageCode)');
+      debugPrint('    Bandeira: ${activeCourseFlag.value}');
+      debugPrint('    Nível: ${activeCourseLevel.value}');
+    } catch (e) {
+      debugPrint('  ❌ Erro ao carregar curso ativo: $e');
+    } finally {
+      isLoadingCourses.value = false;
+      debugPrint('✅ _loadActiveCourse() CONCLUÍDO');
+    }
+  }
+  
+  /// Carrega todos os cursos do usuário
+  Future<void> loadUserCourses() async {
+    debugPrint('🔄 loadUserCourses() INICIADO');
+    
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        debugPrint('  ❌ Usuário não autenticado');
+        return;
+      }
+      
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .get();
+      
+      userCourses.value = coursesSnapshot.docs.map((doc) {
+        final data = doc.data();
+        final languageCode = data['language'] as String;
+        
+        return {
+          'id': doc.id,
+          'language': languageCode,
+          'languageName': LanguageHelper.getLanguageName(languageCode),
+          'flagAsset': LanguageHelper.getLanguageFlag(languageCode),
+          'isActive': data['isActive'] ?? false,
+          'level': data['level'],
+          'studyTime': data['studyTime'],
+        };
+      }).toList();
+      
+      debugPrint('  ✅ ${userCourses.length} cursos carregados');
+    } catch (e) {
+      debugPrint('  ❌ Erro ao carregar cursos: $e');
+    } finally {
+      debugPrint('✅ loadUserCourses() CONCLUÍDO');
+    }
+  }
+  
   Future<void> _loadLessonProgress() async {
     debugPrint('🔄 _loadLessonProgress() INICIADO');
     isLoadingProgress.value = true;
@@ -220,6 +328,7 @@ class HomeController extends GetxController {
       _updateCurrentUnit();
       
       debugPrint('  ✅ Unidade atual: ${currentUnitIndex.value}');
+      debugPrint('  ✅ Nível do curso: ${activeCourseLevel.value}');
     } catch (e) {
       // Silenciosamente falhar - não é crítico
       debugPrint('  ❌ Erro ao carregar progresso: $e');
@@ -341,7 +450,7 @@ class HomeController extends GetxController {
     
     // Navegar para as seções do botão clicado
     Get.to(() => SectionsPage(
-      courseName: 'French',
+      courseName: activeCourseName.value.isEmpty ? 'French' : activeCourseName.value,
       buttonIndex: buttonIndex,
     ));
   }
@@ -351,6 +460,72 @@ class HomeController extends GetxController {
     final onboardingController = Get.find<OnboardingController>();
     onboardingController.isAddingCourse.value = true;
     onboardingController.nav.goToSelectLanguage();
+  }
+  
+  /// Troca o curso ativo
+  Future<void> switchActiveCourse(String newCourseId) async {
+    debugPrint('🔄 switchActiveCourse() INICIADO: $newCourseId');
+    isLoading.value = true;
+    errorMessage.value = '';
+    
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        errorMessage.value = 'Usuário não autenticado.';
+        debugPrint('  ❌ Usuário não autenticado');
+        return;
+      }
+      
+      // Não trocar se já é o curso ativo
+      if (activeCourseId.value == newCourseId) {
+        debugPrint('  ⚠️ Curso já está ativo');
+        return;
+      }
+      
+      final batch = _firestore.batch();
+      
+      // Desativar curso atual
+      if (activeCourseId.value.isNotEmpty) {
+        final currentCourseRef = _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('courses')
+            .doc(activeCourseId.value);
+        
+        batch.update(currentCourseRef, {'isActive': false});
+        debugPrint('  📝 Desativando curso atual: ${activeCourseId.value}');
+      }
+      
+      // Ativar novo curso
+      final newCourseRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(newCourseId);
+      
+      batch.update(newCourseRef, {'isActive': true});
+      debugPrint('  📝 Ativando novo curso: $newCourseId');
+      
+      await batch.commit();
+      debugPrint('  ✅ Batch commit realizado');
+      
+      // Recarregar curso ativo e progresso
+      await _loadActiveCourse();
+      await _loadLessonProgress();
+      
+      Get.snackbar(
+        'Sucesso',
+        'Curso alterado para ${activeCourseName.value}!',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      
+      debugPrint('✅ switchActiveCourse() CONCLUÍDO');
+    } catch (e) {
+      errorMessage.value = 'Erro ao trocar curso. Tente novamente.';
+      debugPrint('❌ Erro ao trocar curso: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void goToShop() {
@@ -362,6 +537,7 @@ class HomeController extends GetxController {
     debugPrint('🔄 reloadProgress() CHAMADO');
     debugPrint('  📊 currentUnitIndex ANTES: ${currentUnitIndex.value}');
     
+    await _loadActiveCourse();
     await _loadLessonProgress();
     _checkInProgressLesson();
     

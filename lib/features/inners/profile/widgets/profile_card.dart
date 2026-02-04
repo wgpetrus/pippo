@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -47,169 +48,311 @@ class ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.blueDark,
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF1E3A5F), // Azul escuro mais rico
+            Color(0xFF2C5282), // Azul médio
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          // Header: Avatar, nome e settings
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Avatar
-              GestureDetector(
-                onTap: isOwnProfile ? onAvatarTap : null,
-                child: Builder(
-                  builder: (context) {
-                    final avatarSize = ResponsiveUtils.width(64, min: 48, max: 72);
-                    return Container(
-                      width: avatarSize,
-                      height: avatarSize,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.pink100,
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(avatarAsset, fit: BoxFit.cover),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Nome e username
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    Text(
-                      name,
-                      style: AppTheme.displayXsBold.copyWith(color: AppTheme.white),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '@$username',
-                      style: AppTheme.textMdRegular.copyWith(
-                        color: AppTheme.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Ícone de configurações (próprio perfil) ou follow (outro perfil)
-              if (isOwnProfile)
-                GestureDetector(
-                  onTap: onSettingsTap,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: SvgPicture.asset(
-                      AppAssets.profileSettings,
-                      width: 28,
-                      height: 28,
-                      colorFilter: const ColorFilter.mode(
-                        AppTheme.white,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: SvgPicture.asset(
-                    AppAssets.profileFollow,
-                    width: 28,
-                    height: 28,
-                  ),
-                ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.blueDark.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          const SizedBox(height: 28),
-
-          // Stats: Following, Followers, Courses
-          Row(
-            children: [
-              // Following
-              Expanded(
-                child: GestureDetector(
-                  onTap: onFollowingTap,
-                  child: _buildStat('$following', 'Seguindo'),
-                ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Padrão decorativo de fundo
+          Positioned(
+            top: -20,
+            right: -20,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.white.withOpacity(0.05),
               ),
-
-              // Followers
-              Expanded(
-                child: GestureDetector(
-                  onTap: onFollowersTap,
-                  child: _buildStat('$followers', 'Seguidores'),
-                ),
+            ),
+          ),
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.white.withOpacity(0.03),
               ),
-
-              // Courses
-              Expanded(
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.asset(flagAsset, width: 28, height: 20, fit: BoxFit.cover),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '+$coursesCount',
-                          style: AppTheme.displayXsBold.copyWith(color: AppTheme.white),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Cursos',
-                      style: AppTheme.textMdRegular.copyWith(
-                        color: AppTheme.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
           
-          // Botão Follow/Following (se não for próprio perfil)
-          if (showFollowButton) ...[
-            const SizedBox(height: 16),
-            AppButton(
-              text: isFollowing ? 'Seguindo' : 'Seguir',
-              isPrimary: !isFollowing,
-              onPressed: onFollowTap,
+          // Conteúdo principal
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Header: Avatar, nome e settings
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Avatar com borda e sombra
+                    GestureDetector(
+                      onTap: isOwnProfile ? onAvatarTap : null,
+                      child: Builder(
+                        builder: (context) {
+                          final avatarSize = ResponsiveUtils.width(72, min: 56, max: 80);
+                          return Container(
+                            width: avatarSize,
+                            height: avatarSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.white.withOpacity(0.3),
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppTheme.pink100,
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(avatarAsset, fit: BoxFit.cover),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Nome e username
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          Text(
+                            name,
+                            style: AppTheme.displayXsBold.copyWith(
+                              color: AppTheme.white,
+                              fontSize: 20,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '@$username',
+                            style: AppTheme.textMdRegular.copyWith(
+                              color: AppTheme.white.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Botão de configurações com fundo
+                    if (isOwnProfile)
+                      GestureDetector(
+                        onTap: onSettingsTap,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SvgPicture.asset(
+                            AppAssets.profileSettings,
+                            width: 20,
+                            height: 20,
+                            colorFilter: const ColorFilter.mode(
+                              AppTheme.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: SvgPicture.asset(
+                          AppAssets.profileFollow,
+                          width: 20,
+                          height: 20,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Divisor sutil
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.white.withOpacity(0),
+                        AppTheme.white.withOpacity(0.2),
+                        AppTheme.white.withOpacity(0),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Stats: Following, Followers, Courses
+                Row(
+                  children: [
+                    // Following
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onFollowingTap,
+                        child: _buildStat(
+                          '$following',
+                          'Seguindo',
+                          FontAwesomeIcons.userGroup,
+                        ),
+                      ),
+                    ),
+
+                    // Divisor vertical
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: AppTheme.white.withOpacity(0.2),
+                    ),
+
+                    // Followers
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onFollowersTap,
+                        child: _buildStat(
+                          '$followers',
+                          'Seguidores',
+                          FontAwesomeIcons.users,
+                        ),
+                      ),
+                    ),
+
+                    // Divisor vertical
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: AppTheme.white.withOpacity(0.2),
+                    ),
+
+                    // Courses
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: AppTheme.white.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(3),
+                                  child: Image.asset(
+                                    flagAsset,
+                                    width: 28,
+                                    height: 20,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '+$coursesCount',
+                                style: AppTheme.displayXsBold.copyWith(
+                                  color: AppTheme.white,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Cursos',
+                            style: AppTheme.textSmRegular.copyWith(
+                              color: AppTheme.white.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                // Botão Follow/Following (se não for próprio perfil)
+                if (showFollowButton) ...[
+                  const SizedBox(height: 20),
+                  AppButton(
+                    text: isFollowing ? 'Seguindo' : 'Seguir',
+                    isPrimary: !isFollowing,
+                    onPressed: onFollowTap,
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
   // Widgets
-  Widget _buildStat(String value, String label) {
+  Widget _buildStat(String value, String label, IconData icon) {
     return Column(
       children: [
-        Text(
-          value,
-          style: AppTheme.displayXsBold.copyWith(color: AppTheme.white),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FaIcon(
+              icon,
+              size: 14,
+              color: AppTheme.white.withOpacity(0.6),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              value,
+              style: AppTheme.displayXsBold.copyWith(
+                color: AppTheme.white,
+                fontSize: 18,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         Text(
           label,
-          style: AppTheme.textMdRegular.copyWith(
-            color: AppTheme.white70,
+          style: AppTheme.textSmRegular.copyWith(
+            color: AppTheme.white.withOpacity(0.7),
           ),
         ),
       ],

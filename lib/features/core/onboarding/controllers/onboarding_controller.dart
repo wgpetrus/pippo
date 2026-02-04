@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Imports locais
+import '../../../../shared/utils/language_helper.dart';
 import '../../../../shared/utils/validation_helper.dart';
 import '../navigation/onboarding_navigation.dart';
 
@@ -1134,18 +1135,7 @@ class OnboardingController extends GetxController {
 
   /// Retorna o nome do idioma a partir do código
   String _getLanguageName(String code) {
-    final languageMap = {
-      'en': 'English',
-      'es': 'Spanish',
-      'fr': 'French',
-      'de': 'German',
-      'it': 'Italian',
-      'pt': 'Portuguese',
-      'zh': 'Chinese',
-      'ja': 'Japanese',
-      'ar': 'Arabic',
-    };
-    return languageMap[code] ?? code;
+    return LanguageHelper.getLanguageName(code);
   }
 
   /// Gera código OTP de 5 dígitos

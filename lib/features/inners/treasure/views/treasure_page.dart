@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../controllers/treasure_controller.dart';
 import '../widgets/challenge_card.dart';
@@ -165,38 +166,21 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   /// Deleta todos os desafios (para limpar dados incorretos)
   Future<void> _deleteAllChallenges(TreasureController controller) async {
     // Confirmar ação
-    final confirm = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('Deletar Todos os Desafios?'),
-        content: const Text(
-          'Esta ação irá remover TODOS os desafios do Firestore. '
-          'Use apenas para limpar dados incorretos durante desenvolvimento.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
-            child: const Text('Deletar Tudo'),
-          ),
-        ],
-      ),
+    final confirm = await AppDialog.confirm(
+      context: context,
+      title: 'Deletar Todos os Desafios?',
+      message: 'Esta ação não pode ser desfeita.',
+      confirmText: 'Deletar',
+      cancelText: 'Cancelar',
+      confirmColor: AppTheme.red,
     );
 
     if (confirm != true) return;
 
-    try {
-      // Mostrar loading
-      Get.dialog(
-        const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
-        ),
-        barrierDismissible: false,
-      );
+    // Mostrar loading
+    AppDialog.loading(context: context, message: 'Deletando...');
 
+    try {
       // Deletar todos os desafios
       await controller.deleteAllChallenges();
 
@@ -204,41 +188,30 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       Get.back();
 
       // Mostrar sucesso
-      Get.snackbar(
-        'Sucesso! 🗑️',
-        'Todos os desafios foram deletados.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppTheme.green,
-        colorText: AppTheme.white,
-        duration: const Duration(seconds: 3),
+      AppDialog.success(
+        context: context,
+        title: 'Sucesso',
+        message: 'Todos os desafios foram deletados.',
       );
     } catch (e) {
       // Fechar loading
       Get.back();
 
       // Mostrar erro
-      Get.snackbar(
-        'Erro',
-        'Não foi possível deletar desafios. Tente novamente.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppTheme.error,
-        colorText: AppTheme.white,
-        duration: const Duration(seconds: 3),
+      AppDialog.error(
+        context: context,
+        title: 'Erro',
+        message: 'Não foi possível deletar os desafios.',
       );
     }
   }
 
   /// Gera desafios diários e semanais para desenvolvimento/testes
   Future<void> _generateChallenges(TreasureController controller) async {
-    try {
-      // Mostrar loading
-      Get.dialog(
-        const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
-        ),
-        barrierDismissible: false,
-      );
+    // Mostrar loading
+    AppDialog.loading(context: context, message: 'Gerando desafios...');
 
+    try {
       // Gerar desafios
       await controller.generateDailyChallenges();
       await controller.generateWeeklyChallenges();
@@ -247,26 +220,20 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       Get.back();
 
       // Mostrar sucesso
-      Get.snackbar(
-        'Sucesso! 🎉',
-        'Desafios diários e semanais foram gerados.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppTheme.green,
-        colorText: AppTheme.white,
-        duration: const Duration(seconds: 3),
+      AppDialog.success(
+        context: context,
+        title: 'Sucesso',
+        message: 'Desafios diários e semanais foram gerados.',
       );
     } catch (e) {
       // Fechar loading
       Get.back();
 
       // Mostrar erro
-      Get.snackbar(
-        'Erro',
-        'Não foi possível gerar desafios. Tente novamente.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppTheme.error,
-        colorText: AppTheme.white,
-        duration: const Duration(seconds: 3),
+      AppDialog.error(
+        context: context,
+        title: 'Erro',
+        message: 'Não foi possível gerar desafios. Tente novamente.',
       );
     }
   }

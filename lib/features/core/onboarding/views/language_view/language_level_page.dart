@@ -48,7 +48,11 @@ class LanguageLevelPage extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final level = _levels[index];
-          final label = level['label']!.replaceAll('{lang}', controller.selectedLanguage.value);
+          // Usar LanguageHelper para obter o nome do idioma
+          final languageName = controller.selectedLanguage.value.isNotEmpty
+              ? _getLanguageName(controller.selectedLanguage.value)
+              : '';
+          final label = level['label']!.replaceAll('{lang}', languageName);
 
           return Container(
             color: AppTheme.white,
@@ -65,6 +69,21 @@ class LanguageLevelPage extends StatelessWidget {
         childCount: _levels.length,
       ),
     );
+  }
+
+  // Helper para obter nome do idioma
+  String _getLanguageName(String code) {
+    const languageNames = {
+      'en': 'Inglês',
+      'es': 'Espanhol',
+      'de': 'Alemão',
+      'fr': 'Francês',
+      'ar': 'Árabe',
+      'ja': 'Japonês',
+      'zh': 'Chinês',
+      'pt': 'Português',
+    };
+    return languageNames[code] ?? code;
   }
 
   Widget _buildBottomButton(OnboardingController controller) {
