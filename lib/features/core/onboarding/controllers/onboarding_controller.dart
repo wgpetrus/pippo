@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Imports locais
 import '../../../../shared/utils/language_helper.dart';
 import '../../../../shared/utils/validation_helper.dart';
+import '../../../inners/home/controllers/home_controller.dart';
 import '../navigation/onboarding_navigation.dart';
 
 /// Controller do fluxo de onboarding
@@ -852,16 +853,41 @@ class OnboardingController extends GetxController {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // 3. Estatísticas de gamificação
-        final statsRef = userRef.collection('stats').doc('gamification');
+        // 3. Estatísticas de gamificação (POR CURSO)
+        final statsRef = courseRef.collection('stats').doc('gamification');
         batch.set(statsRef, {
-          'xp': 0,
-          'level': 1,
-          'streak': 0,
-          'energy': 5,
-          'gems': 0,
-          'hearts': 5,
-          'lastActiveAt': FieldValue.serverTimestamp(),
+          'streak': {
+            'currentStreak': 0,
+            'longestStreak': 0,
+            'lastStreakDate': '',
+            'streakFreezeAvailable': false,
+            'streakFreezeUsedToday': false,
+            'milestonesReached': [],
+          },
+          'energy': {
+            'currentEnergy': 5,
+            'maxEnergy': 5,
+            'lastEnergyRegenAt': FieldValue.serverTimestamp(),
+            'unlimitedEnergyUntil': null,
+          },
+          'xp': {
+            'totalXp': 0,
+            'weeklyXP': 0,
+            'todayXp': 0,
+            'level': 1,
+            'xpToNextLevel': 100,
+            'xpBoosterUntil': null,
+            'lastWeeklyResetDate': '',
+            'lastDailyResetDate': '',
+          },
+          'gems': {
+            'gems': 0,
+            'totalGemsEarned': 0,
+            'totalGemsSpent': 0,
+            'gemMultiplierUntil': null,
+          },
+          'currentLeague': 'bronze',
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
 
         // Commit batch - se qualquer operação falhar, nenhuma é aplicada
@@ -889,6 +915,7 @@ class OnboardingController extends GetxController {
 
   /// Adiciona novo curso para usuário existente (modo add course)
   Future<void> addNewCourse() async {
+    debugPrint('📚 addNewCourse: INICIANDO...');
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -897,18 +924,28 @@ class OnboardingController extends GetxController {
       final user = _auth.currentUser;
       if (user == null) {
         errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
+        debugPrint('  ❌ Usuário não autenticado');
         return;
       }
 
       final userId = user.uid;
+      debugPrint('  👤 UserId: $userId');
 
       // Extrair número da string studyTime (ex: "10 min / dia" → 10)
       final studyTimeMatch = RegExp(r'(\d+)').firstMatch(studyTime.value);
       final studyTimeValue = studyTimeMatch != null ? int.tryParse(studyTimeMatch.group(1)!) : null;
       if (studyTimeValue == null || studyTimeValue <= 0) {
         errorMessage.value = 'Tempo de estudo inválido.';
+        debugPrint('  ❌ Tempo de estudo inválido: ${studyTime.value}');
         return;
       }
+
+      debugPrint('  📊 Dados do novo curso:');
+      debugPrint('    - Idioma: ${selectedLanguage.value}');
+      debugPrint('    - Nome: ${_getLanguageName(selectedLanguage.value)}');
+      debugPrint('    - Nível: ${languageLevel.value}');
+      debugPrint('    - Motivo: ${learningReason.value}');
+      debugPrint('    - Tempo: $studyTimeValue min/dia');
 
       // Gerar ID do curso usando Firestore auto-generated ID
       final courseRef = _firestore
@@ -918,18 +955,90 @@ class OnboardingController extends GetxController {
           .doc();
       
       final courseId = courseRef.id;
+      debugPrint('  🆔 Novo courseId: $courseId');
 
-      // Criar documento do curso em users/{userId}/courses/{courseId}
-      await courseRef.set({
+      // Usar batch para operação atômica
+      final batch = _firestore.batch();
+
+      // 1. Desativar curso atual
+      debugPrint('  🔄 Desativando curso atual...');
+      final currentCoursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .get();
+      
+      if (currentCoursesSnapshot.docs.isNotEmpty) {
+        for (var doc in currentCoursesSnapshot.docs) {
+          batch.update(doc.reference, {'isActive': false});
+          debugPrint('    📝 Marcando curso ${doc.id} para desativar');
+        }
+      }
+
+      // 2. Criar documento do curso
+      // IMPORTANTE: Novo curso JÁ é ativo (usuário começa a usar imediatamente)
+      final courseData = {
         'id': courseId,
         'language': selectedLanguage.value,
         'languageName': _getLanguageName(selectedLanguage.value),
         'level': languageLevel.value,
         'reason': learningReason.value,
         'studyTime': studyTimeValue,
-        'isActive': true,
+        'isActive': true, // Novo curso já é ativo
         'createdAt': FieldValue.serverTimestamp(),
-      }).timeout(const Duration(seconds: 30));
+      };
+      
+      debugPrint('  💾 Criando curso no Firestore...');
+      debugPrint('    Path: users/$userId/courses/$courseId');
+      
+      batch.set(courseRef, courseData);
+
+      // 3. Criar estatísticas de gamificação do novo curso (POR CURSO)
+      final statsRef = courseRef.collection('stats').doc('gamification');
+      debugPrint('  💾 Criando stats do novo curso...');
+      debugPrint('    Path: users/$userId/courses/$courseId/stats/gamification');
+      
+      batch.set(statsRef, {
+        'streak': {
+          'currentStreak': 0,
+          'longestStreak': 0,
+          'lastStreakDate': '',
+          'streakFreezeAvailable': false,
+          'streakFreezeUsedToday': false,
+          'milestonesReached': [],
+        },
+        'energy': {
+          'currentEnergy': 5,
+          'maxEnergy': 5,
+          'lastEnergyRegenAt': FieldValue.serverTimestamp(),
+          'unlimitedEnergyUntil': null,
+        },
+        'xp': {
+          'totalXp': 0,
+          'weeklyXP': 0,
+          'todayXp': 0,
+          'level': 1,
+          'xpToNextLevel': 100,
+          'xpBoosterUntil': null,
+          'lastWeeklyResetDate': '',
+          'lastDailyResetDate': '',
+        },
+        'gems': {
+          'gems': 0,
+          'totalGemsEarned': 0,
+          'totalGemsSpent': 0,
+          'gemMultiplierUntil': null,
+        },
+        'currentLeague': 'bronze',
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+
+      // Commit batch - se qualquer operação falhar, nenhuma é aplicada
+      debugPrint('  🔄 Executando batch commit...');
+      await batch.commit().timeout(const Duration(seconds: 30));
+      
+      debugPrint('  ✅ Curso e stats salvos com sucesso!');
 
       // NÃO modificar documento do usuário
       // NÃO modificar estatísticas de gamificação
@@ -938,12 +1047,16 @@ class OnboardingController extends GetxController {
       // Sucesso - não navega aqui, deixa completeOnboarding() navegar
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      debugPrint('  ❌ Timeout ao salvar curso');
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
+      debugPrint('  ❌ FirebaseException: ${e.code} - ${e.message}');
     } catch (e) {
       errorMessage.value = 'Erro ao adicionar curso. Tente novamente.';
+      debugPrint('  ❌ Erro ao adicionar curso: $e');
     } finally {
       isLoading.value = false;
+      debugPrint('✅ addNewCourse: CONCLUÍDO (erro: ${errorMessage.value.isEmpty ? "nenhum" : errorMessage.value})');
     }
   }
 
@@ -956,6 +1069,18 @@ class OnboardingController extends GetxController {
       debugPrint('📚 completeOnboarding: Modo add course');
       // Modo add course: apenas criar novo curso
       await addNewCourse();
+      
+      // Recarregar dados do HomeController após adicionar curso
+      if (errorMessage.value.isEmpty) {
+        debugPrint('🔄 completeOnboarding: Recarregando HomeController...');
+        try {
+          final homeController = Get.find<HomeController>();
+          await homeController.reloadAfterAddCourse();
+          debugPrint('✅ completeOnboarding: HomeController recarregado');
+        } catch (e) {
+          debugPrint('⚠️ completeOnboarding: Erro ao recarregar HomeController: $e');
+        }
+      }
     } else {
       debugPrint('👤 completeOnboarding: Modo novo usuário');
       // Modo novo usuário: criar documento do usuário, primeiro curso e stats

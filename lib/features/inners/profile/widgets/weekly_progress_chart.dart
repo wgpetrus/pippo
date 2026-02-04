@@ -35,8 +35,14 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Necessário para AutomaticKeepAliveClientMixin
+    // Proteção: não renderizar se já foi disposed
     if (_isDisposed) return const SizedBox.shrink();
+
+    // Verificar se está montado antes de chamar super.build
+    if (!mounted) return const SizedBox.shrink();
+
+    super.build(context); // Necessário para AutomaticKeepAliveClientMixin
+
     // Extrair nome do usuário da primeira palavra (ou usar username se não houver nome)
     final userName = widget.userProgress.isNotEmpty ? 'Você' : 'Você';
     final otherName = widget.showOther ? 'Este usuário' : '';
@@ -61,82 +67,21 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart>
             children: [
               _buildLegendItem(userName, AppTheme.primary, true),
               const SizedBox(width: 16),
-              if (widget.showOther) _buildLegendItem(otherName, AppTheme.gray400, false),
+              if (widget.showOther)
+                _buildLegendItem(otherName, AppTheme.gray400, false),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Gráfico
+          // Gráfico com proteção contra disposed
           SizedBox(
             height: 200,
-            child: RepaintBoundary(
-              child: SfCartesianChart(
-                plotAreaBorderWidth: 0,
-                primaryXAxis: CategoryAxis(
-                  majorGridLines: const MajorGridLines(width: 0),
-                  axisLine: const AxisLine(width: 0),
-                  labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
-                ),
-                primaryYAxis: NumericAxis(
-                  isVisible: true,
-                  majorGridLines: const MajorGridLines(
-                    width: 1,
-                    color: AppTheme.gray600_30,
-                  ),
-                  axisLine: const AxisLine(width: 0),
-                  labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
-                  minimum: 0,
-                  maximum: 1000,
-                  interval: 250,
-                ),
-                series: <CartesianSeries>[
-                  // Linha do outro usuário (cinza)
-                  if (widget.showOther)
-                    SplineSeries<ChartData, String>(
-                      dataSource: widget.otherProgress,
-                      xValueMapper: (ChartData data, _) => data.day,
-                      yValueMapper: (ChartData data, _) => data.xp,
-                      color: AppTheme.gray400,
-                      width: 2,
-                      splineType: SplineType.natural,
-                      markerSettings: const MarkerSettings(
-                        isVisible: true,
-                        shape: DataMarkerType.circle,
-                        width: 5,
-                        height: 5,
-                        borderWidth: 1,
-                        borderColor: AppTheme.gray400,
-                      ),
-                    ),
-
-                  // Linha do usuário (azul) com gradiente
-                  SplineAreaSeries<ChartData, String>(
-                    dataSource: widget.userProgress,
-                    xValueMapper: (ChartData data, _) => data.day,
-                    yValueMapper: (ChartData data, _) => data.xp,
-                    gradient: const LinearGradient(
-                      colors: [
-                        AppTheme.primary30,
-                        AppTheme.primary05,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                    borderColor: AppTheme.primary,
-                    borderWidth: 2,
-                    splineType: SplineType.natural,
-                    markerSettings: const MarkerSettings(
-                      isVisible: true,
-                      shape: DataMarkerType.circle,
-                      width: 5,
-                      height: 5,
-                      borderWidth: 1,
-                      borderColor: AppTheme.white,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                ],
-              ),
+            child: _SafeChartWidget(
+              isDisposed: _isDisposed,
+              mounted: mounted,
+              userProgress: widget.userProgress,
+              otherProgress: widget.otherProgress,
+              showOther: widget.showOther,
             ),
           ),
         ],
@@ -165,6 +110,114 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart>
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Widget wrapper que protege o gráfico contra atualizações após dispose
+class _SafeChartWidget extends StatefulWidget {
+  final bool isDisposed;
+  final bool mounted;
+  final List<ChartData> userProgress;
+  final List<ChartData> otherProgress;
+  final bool showOther;
+
+  const _SafeChartWidget({
+    required this.isDisposed,
+    required this.mounted,
+    required this.userProgress,
+    required this.otherProgress,
+    required this.showOther,
+  });
+
+  @override
+  State<_SafeChartWidget> createState() => _SafeChartWidgetState();
+}
+
+class _SafeChartWidgetState extends State<_SafeChartWidget> {
+  @override
+  Widget build(BuildContext context) {
+    // Proteção: não renderizar se já foi disposed ou não está montado
+    if (widget.isDisposed || !widget.mounted || !mounted) {
+      return const SizedBox.shrink();
+    }
+
+    // Proteção extra: verificar novamente antes de criar o chart
+    if (!mounted) {
+      return const SizedBox.shrink();
+    }
+
+    // Criar chave única baseada nos dados para forçar reconstrução completa quando mudar
+    final dataKey = ValueKey(
+      'chart-${widget.userProgress.length}-${widget.userProgress.map((d) => '${d.day}-${d.xp}').join(',')}',
+    );
+
+    return RepaintBoundary(
+      child: SfCartesianChart(
+        key: dataKey,
+        plotAreaBorderWidth: 0,
+        primaryXAxis: CategoryAxis(
+          majorGridLines: const MajorGridLines(width: 0),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
+        ),
+        primaryYAxis: NumericAxis(
+          isVisible: true,
+          majorGridLines: const MajorGridLines(
+            width: 1,
+            color: AppTheme.gray600_30,
+          ),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: AppTheme.textSmRegular.copyWith(color: AppTheme.gray300),
+          minimum: 0,
+          maximum: 1000,
+          interval: 250,
+        ),
+        series: <CartesianSeries>[
+          // Linha do outro usuário (cinza)
+          if (widget.showOther)
+            SplineSeries<ChartData, String>(
+              dataSource: widget.otherProgress,
+              xValueMapper: (ChartData data, _) => data.day,
+              yValueMapper: (ChartData data, _) => data.xp,
+              color: AppTheme.gray400,
+              width: 2,
+              splineType: SplineType.natural,
+              markerSettings: const MarkerSettings(
+                isVisible: true,
+                shape: DataMarkerType.circle,
+                width: 5,
+                height: 5,
+                borderWidth: 1,
+                borderColor: AppTheme.gray400,
+              ),
+            ),
+
+          // Linha do usuário (azul) com gradiente
+          SplineAreaSeries<ChartData, String>(
+            dataSource: widget.userProgress,
+            xValueMapper: (ChartData data, _) => data.day,
+            yValueMapper: (ChartData data, _) => data.xp,
+            gradient: const LinearGradient(
+              colors: [AppTheme.primary30, AppTheme.primary05],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderColor: AppTheme.primary,
+            borderWidth: 2,
+            splineType: SplineType.natural,
+            markerSettings: const MarkerSettings(
+              isVisible: true,
+              shape: DataMarkerType.circle,
+              width: 5,
+              height: 5,
+              borderWidth: 1,
+              borderColor: AppTheme.white,
+              color: AppTheme.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

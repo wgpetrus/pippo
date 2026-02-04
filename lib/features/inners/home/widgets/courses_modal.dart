@@ -87,14 +87,14 @@ class CoursesModal extends StatelessWidget {
             width: 72,
             height: 56,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(27),
               border: Border.all(
                 color: course.isSelected ? AppTheme.primary : AppTheme.gray600,
                 width: course.isSelected ? 2 : 1.5,
               ),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(25),
               child: Image.asset(course.flagAsset, fit: BoxFit.cover),
             ),
           ),
@@ -119,7 +119,7 @@ class CoursesModal extends StatelessWidget {
             width: 72,
             height: 56,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(27),
               border: Border.all(color: AppTheme.gray600, width: 1.5),
             ),
             child: const Center(

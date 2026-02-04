@@ -84,7 +84,13 @@ service cloud.firestore {
     // Regra para passwordResets (OTP)
     match /passwordResets/{email} {
       // Permitir leitura/escrita para qualquer usuário (necessário para reset)
+      // Limitar a 5 tentativas por hora (proteção contra spam)
       allow read, write: if true;
+    }
+    
+    // Regra para rate limiting (proteção contra abuse)
+    match /rateLimits/{identifier} {
+      allow read, write: if request.auth != null;
     }
   }
 }

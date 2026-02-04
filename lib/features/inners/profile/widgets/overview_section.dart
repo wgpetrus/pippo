@@ -4,10 +4,11 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../gamification/controllers/gamification_controller.dart';
+import '../../home/controllers/home_controller.dart';
 import 'overview_card.dart';
 
 /// Seção de overview do perfil (Total XP, Day streak, etc)
-/// 
+///
 /// Suporta dois modos:
 /// - useOwnStats = true: dados reativos do GamificationController
 /// - useOwnStats = false: dados estáticos passados por parâmetro
@@ -55,29 +56,34 @@ class OverviewSection extends StatelessWidget {
 
   Widget _buildReactiveStats() {
     final gamification = Get.find<GamificationController>();
+    final homeController = Get.find<HomeController>();
 
     return Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: Obx(() => OverviewCard(
-                iconAsset: AppAssets.treasureXpCoin,
-                value: '${gamification.totalXp.value}',
-                label: 'XP Total',
-                iconSize: 45,
-                starColor: AppTheme.gold,
-              )),
+              child: Obx(
+                () => OverviewCard(
+                  iconAsset: AppAssets.treasureXpCoin,
+                  value: '${gamification.totalXp.value}',
+                  label: 'XP Total',
+                  iconSize: 45,
+                  starColor: AppTheme.gold,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Obx(() => OverviewCard(
-                iconAsset: AppAssets.appbarFire,
-                value: '${gamification.currentStreak.value}',
-                label: 'Dias de sequência',
-                iconSize: 45,
-                starColor: AppTheme.orange,
-              )),
+              child: Obx(
+                () => OverviewCard(
+                  iconAsset: AppAssets.appbarFire,
+                  value: '${gamification.currentStreak.value}',
+                  label: 'Dias de sequência',
+                  iconSize: 45,
+                  starColor: AppTheme.orange,
+                ),
+              ),
             ),
           ],
         ),
@@ -85,23 +91,28 @@ class OverviewSection extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Obx(() => OverviewCard(
-                iconAsset: AppAssets.appbarFire,
-                value: '${gamification.longestStreak.value}',
-                label: 'Maior sequência',
-                iconSize: 45,
-                starColor: AppTheme.red,
-              )),
+              child: Obx(
+                () => OverviewCard(
+                  iconAsset: AppAssets.appbarFire,
+                  value: '${gamification.longestStreak.value}',
+                  label: 'Maior sequência',
+                  iconSize: 45,
+                  starColor: AppTheme.red,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Obx(() => OverviewCard(
-                iconAsset: flagAsset,
-                value: '${gamification.level.value}',
-                label: 'Nível de Francês',
-                iconSize: 30,
-                starColor: AppTheme.blue,
-              )),
+              child: Obx(
+                () => OverviewCard(
+                  iconAsset: flagAsset,
+                  value: '${gamification.level.value}',
+                  label:
+                      'Nível de ${homeController.activeCourseName.value.isNotEmpty ? homeController.activeCourseName.value : 'Idioma'}',
+                  iconSize: 30,
+                  starColor: AppTheme.blue,
+                ),
+              ),
             ),
           ],
         ),

@@ -5,9 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import '../../profile/controllers/profile_controller.dart';
 
 /// Controller de gamificação
-/// 
+///
 /// Gerencia os sistemas de:
 /// - Streak (dias consecutivos)
 /// - Energy (energia para lições)
@@ -80,12 +81,12 @@ class GamificationController extends GetxController {
   /// Retorna string vazia se não ativo ou expirado
   String getXpBoosterTimeRemaining() {
     if (_xpBoosterUntil == null) return '';
-    
+
     final now = DateTime.now();
     if (now.isAfter(_xpBoosterUntil!)) return '';
-    
+
     final diff = _xpBoosterUntil!.difference(now);
-    
+
     if (diff.inMinutes < 60) {
       return '${diff.inMinutes}min restantes';
     } else {
@@ -97,12 +98,12 @@ class GamificationController extends GetxController {
   /// Retorna string vazia se não ativo ou expirado
   String getGemMultiplierTimeRemaining() {
     if (_gemMultiplierUntil == null) return '';
-    
+
     final now = DateTime.now();
     if (now.isAfter(_gemMultiplierUntil!)) return '';
-    
+
     final diff = _gemMultiplierUntil!.difference(now);
-    
+
     if (diff.inMinutes < 60) {
       return '${diff.inMinutes}min restantes';
     } else {
@@ -118,7 +119,7 @@ class GamificationController extends GetxController {
   }
 
   // Métodos públicos
-  /// Carrega estatísticas do Firestore
+  /// Carrega estatísticas do Firestore (do curso ativo)
   Future<void> loadStats() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -132,20 +133,56 @@ class GamificationController extends GetxController {
         return;
       }
 
-      final doc = await _retryOperation(() => _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('stats')
-          .doc('gamification')
-          .get()
-          .timeout(const Duration(seconds: 30)));
+      // LIMPAR DADOS ANTIGOS antes de carregar novos (evita compartilhamento entre cursos)
+      debugPrint('  🧹 Limpando dados antigos antes de carregar novo curso...');
+      _resetStatsToDefaults();
 
-      if (!doc.exists) {
-        // Criar documento inicial com valores padrão
-        await _createInitialStats(userId);
+      // 1. Buscar curso ativo
+      debugPrint(
+        '🔍 GamificationController.loadStats: Buscando curso ativo...',
+      );
+      final coursesSnapshot = await _retryOperation(
+        () => _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('courses')
+            .where('isActive', isEqualTo: true)
+            .limit(1)
+            .get()
+            .timeout(const Duration(seconds: 30)),
+      );
+
+      if (coursesSnapshot.docs.isEmpty) {
+        errorMessage.value = 'Nenhum curso ativo encontrado.';
+        debugPrint('  ❌ Nenhum curso ativo encontrado');
         return;
       }
 
+      final courseId = coursesSnapshot.docs.first.id;
+      debugPrint('  ✅ Curso ativo: $courseId');
+
+      // 2. Buscar stats do curso ativo
+      debugPrint('  🔍 Buscando stats do curso ativo...');
+      final doc = await _retryOperation(
+        () => _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('courses')
+            .doc(courseId)
+            .collection('stats')
+            .doc('gamification')
+            .get()
+            .timeout(const Duration(seconds: 30)),
+      );
+
+      if (!doc.exists) {
+        debugPrint('  ⚠️ Stats não existem, criando...');
+        // Criar documento inicial com valores padrão
+        await _createInitialStats(userId, courseId);
+        return;
+      }
+
+      debugPrint('  ✅ Stats encontrados, carregando...');
       final data = doc.data()!;
 
       // Carregar streak
@@ -155,16 +192,19 @@ class GamificationController extends GetxController {
       _lastStreakDate = streakData['lastStreakDate'] ?? '';
       _streakFreezeAvailable = streakData['streakFreezeAvailable'] ?? false;
       _streakFreezeUsedToday = streakData['streakFreezeUsedToday'] ?? false;
-      _milestonesReached =
-          List<int>.from(streakData['milestonesReached'] ?? []);
+      _milestonesReached = List<int>.from(
+        streakData['milestonesReached'] ?? [],
+      );
 
       // Carregar energy
       final energyData = data['energy'] as Map<String, dynamic>? ?? {};
       currentEnergy.value = energyData['currentEnergy'] ?? 5;
-      _lastEnergyRegenAt =
-          _timestampToDateTime(energyData['lastEnergyRegenAt']);
-      _unlimitedEnergyUntil =
-          _timestampToDateTime(energyData['unlimitedEnergyUntil']);
+      _lastEnergyRegenAt = _timestampToDateTime(
+        energyData['lastEnergyRegenAt'],
+      );
+      _unlimitedEnergyUntil = _timestampToDateTime(
+        energyData['unlimitedEnergyUntil'],
+      );
 
       // Carregar XP
       final xpData = data['xp'] as Map<String, dynamic>? ?? {};
@@ -182,8 +222,9 @@ class GamificationController extends GetxController {
       gems.value = gemsData['gems'] ?? 0;
       totalGemsEarned.value = gemsData['totalGemsEarned'] ?? 0;
       totalGemsSpent.value = gemsData['totalGemsSpent'] ?? 0;
-      _gemMultiplierUntil =
-          _timestampToDateTime(gemsData['gemMultiplierUntil']);
+      _gemMultiplierUntil = _timestampToDateTime(
+        gemsData['gemMultiplierUntil'],
+      );
 
       // ✅ NOVO: Carregar currentLeague
       currentLeague.value = data['currentLeague'] ?? 'bronze';
@@ -191,7 +232,8 @@ class GamificationController extends GetxController {
       // Calcular regeneração de energia após carregar
       _calculateEnergyRegeneration();
     } on TimeoutException {
-      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      errorMessage.value =
+          'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
@@ -201,111 +243,165 @@ class GamificationController extends GetxController {
     }
   }
 
-  /// Salva estatísticas no Firestore
+  /// Salva estatísticas no Firestore (no curso ativo)
   Future<void> _saveStats(String userId) async {
-    await _retryOperation(() => _firestore
+    // 1. Buscar curso ativo
+    final coursesSnapshot = await _firestore
         .collection('users')
         .doc(userId)
-        .collection('stats')
-        .doc('gamification')
-        .set({
-          'streak': {
-            'currentStreak': currentStreak.value,
-            'longestStreak': longestStreak.value,
-            'lastStreakDate': _lastStreakDate,
-            'streakFreezeAvailable': _streakFreezeAvailable,
-            'streakFreezeUsedToday': _streakFreezeUsedToday,
-            'milestonesReached': _milestonesReached,
-          },
-          'energy': {
-            'currentEnergy': currentEnergy.value,
-            'maxEnergy': 5,
-            'lastEnergyRegenAt': _dateTimeToTimestamp(_lastEnergyRegenAt),
-            'unlimitedEnergyUntil': _unlimitedEnergyUntil != null
-                ? _dateTimeToTimestamp(_unlimitedEnergyUntil!)
-                : null,
-          },
-          'xp': {
-            'totalXp': totalXp.value,
-            'weeklyXP': weeklyXP.value, // ✅ Padronizado para weeklyXP
-            'todayXp': todayXp.value,
-            'level': level.value,
-            'xpToNextLevel': xpToNextLevel.value,
-            'xpBoosterUntil': _xpBoosterUntil != null
-                ? _dateTimeToTimestamp(_xpBoosterUntil!)
-                : null,
-            'lastWeeklyResetDate': _lastWeeklyResetDate,
-            'lastDailyResetDate': _lastDailyResetDate,
-          },
-          'gems': {
-            'gems': gems.value,
-            'totalGemsEarned': totalGemsEarned.value,
-            'totalGemsSpent': totalGemsSpent.value,
-            'gemMultiplierUntil': _gemMultiplierUntil != null
-                ? _dateTimeToTimestamp(_gemMultiplierUntil!)
-                : null,
-          },
-          'currentLeague': currentLeague.value, // ✅ NOVO: Salvar currentLeague
-          'lastUpdated': FieldValue.serverTimestamp(),
-        })
-        .timeout(const Duration(seconds: 30)));
+        .collection('courses')
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get()
+        .timeout(const Duration(seconds: 30));
+
+    if (coursesSnapshot.docs.isEmpty) {
+      throw Exception('Nenhum curso ativo encontrado.');
+    }
+
+    final courseId = coursesSnapshot.docs.first.id;
+
+    // 2. Salvar stats no curso ativo
+    await _retryOperation(
+      () => _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('stats')
+          .doc('gamification')
+          .set({
+            'streak': {
+              'currentStreak': currentStreak.value,
+              'longestStreak': longestStreak.value,
+              'lastStreakDate': _lastStreakDate,
+              'streakFreezeAvailable': _streakFreezeAvailable,
+              'streakFreezeUsedToday': _streakFreezeUsedToday,
+              'milestonesReached': _milestonesReached,
+            },
+            'energy': {
+              'currentEnergy': currentEnergy.value,
+              'maxEnergy': 5,
+              'lastEnergyRegenAt': _dateTimeToTimestamp(_lastEnergyRegenAt),
+              'unlimitedEnergyUntil': _unlimitedEnergyUntil != null
+                  ? _dateTimeToTimestamp(_unlimitedEnergyUntil!)
+                  : null,
+            },
+            'xp': {
+              'totalXp': totalXp.value,
+              'weeklyXP': weeklyXP.value, // ✅ Padronizado para weeklyXP
+              'todayXp': todayXp.value,
+              'level': level.value,
+              'xpToNextLevel': xpToNextLevel.value,
+              'xpBoosterUntil': _xpBoosterUntil != null
+                  ? _dateTimeToTimestamp(_xpBoosterUntil!)
+                  : null,
+              'lastWeeklyResetDate': _lastWeeklyResetDate,
+              'lastDailyResetDate': _lastDailyResetDate,
+            },
+            'gems': {
+              'gems': gems.value,
+              'totalGemsEarned': totalGemsEarned.value,
+              'totalGemsSpent': totalGemsSpent.value,
+              'gemMultiplierUntil': _gemMultiplierUntil != null
+                  ? _dateTimeToTimestamp(_gemMultiplierUntil!)
+                  : null,
+            },
+            'currentLeague':
+                currentLeague.value, // ✅ NOVO: Salvar currentLeague
+            'lastUpdated': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 30)),
+    );
   }
 
-  /// Cria estatísticas iniciais para novo usuário
-  /// 
-  /// IMPORTANTE: Só cria stats se o documento do usuário já existir no Firestore.
-  /// Isso previne criação de usuários vazios durante o onboarding.
-  Future<void> _createInitialStats(String userId) async {
-    // Verificar se documento do usuário existe antes de criar stats
-    final userDoc = await _firestore.collection('users').doc(userId).get();
-    
-    if (!userDoc.exists) {
-      // Usuário ainda não completou onboarding - não criar stats
-      debugPrint('⚠️ GamificationController: Documento do usuário não existe. Aguardando onboarding.');
-      return;
-    }
-    
-    // Usuário existe - criar stats
-    await _retryOperation(() => _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('stats')
-        .doc('gamification')
-        .set({
-          'streak': {
-            'currentStreak': 0,
-            'longestStreak': 0,
-            'lastStreakDate': '',
-            'streakFreezeAvailable': false,
-            'streakFreezeUsedToday': false,
-            'milestonesReached': [],
-          },
-          'energy': {
-            'currentEnergy': 5,
-            'maxEnergy': 5,
-            'lastEnergyRegenAt': FieldValue.serverTimestamp(),
-            'unlimitedEnergyUntil': null,
-          },
-          'xp': {
-            'totalXp': 0,
-            'weeklyXP': 0, // ✅ Padronizado para weeklyXP
-            'todayXp': 0,
-            'level': 1,
-            'xpToNextLevel': 100,
-            'xpBoosterUntil': null,
-            'lastWeeklyResetDate': '',
-            'lastDailyResetDate': '',
-          },
-          'gems': {
-            'gems': 0,
-            'totalGemsEarned': 0,
-            'totalGemsSpent': 0,
-            'gemMultiplierUntil': null,
-          },
-          'currentLeague': 'bronze', // ✅ NOVO: Inicializar como bronze
-          'lastUpdated': FieldValue.serverTimestamp(),
-        })
-        .timeout(const Duration(seconds: 30)));
+  /// Reseta todas as estatísticas para valores padrão
+  ///
+  /// Usado antes de carregar dados de um novo curso para evitar compartilhamento de dados.
+  void _resetStatsToDefaults() {
+    // Resetar streak
+    currentStreak.value = 0;
+    longestStreak.value = 0;
+    _lastStreakDate = '';
+    _streakFreezeAvailable = false;
+    _streakFreezeUsedToday = false;
+    _milestonesReached = [];
+
+    // Resetar energy
+    currentEnergy.value = 5;
+    _lastEnergyRegenAt = DateTime.now();
+    _unlimitedEnergyUntil = null;
+
+    // Resetar XP
+    totalXp.value = 0;
+    weeklyXP.value = 0;
+    todayXp.value = 0;
+    level.value = 1;
+    xpToNextLevel.value = 100;
+    _xpBoosterUntil = null;
+    _lastWeeklyResetDate = '';
+    _lastDailyResetDate = '';
+
+    // Resetar gems
+    gems.value = 0;
+    totalGemsEarned.value = 0;
+    totalGemsSpent.value = 0;
+    _gemMultiplierUntil = null;
+
+    // Resetar league
+    currentLeague.value = 'bronze';
+  }
+
+  /// Cria estatísticas iniciais para novo curso
+  ///
+  /// IMPORTANTE: Recebe courseId como parâmetro para criar stats no curso correto.
+  Future<void> _createInitialStats(String userId, String courseId) async {
+    debugPrint('  💾 Criando stats iniciais para curso $courseId...');
+
+    await _retryOperation(
+      () => _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('stats')
+          .doc('gamification')
+          .set({
+            'streak': {
+              'currentStreak': 0,
+              'longestStreak': 0,
+              'lastStreakDate': '',
+              'streakFreezeAvailable': false,
+              'streakFreezeUsedToday': false,
+              'milestonesReached': [],
+            },
+            'energy': {
+              'currentEnergy': 5,
+              'maxEnergy': 5,
+              'lastEnergyRegenAt': FieldValue.serverTimestamp(),
+              'unlimitedEnergyUntil': null,
+            },
+            'xp': {
+              'totalXp': 0,
+              'weeklyXP': 0, // ✅ Padronizado para weeklyXP
+              'todayXp': 0,
+              'level': 1,
+              'xpToNextLevel': 100,
+              'xpBoosterUntil': null,
+              'lastWeeklyResetDate': '',
+              'lastDailyResetDate': '',
+            },
+            'gems': {
+              'gems': 0,
+              'totalGemsEarned': 0,
+              'totalGemsSpent': 0,
+              'gemMultiplierUntil': null,
+            },
+            'currentLeague': 'bronze', // ✅ NOVO: Inicializar como bronze
+            'lastUpdated': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 30)),
+    );
 
     // Recarregar após criar
     await loadStats();
@@ -343,7 +439,8 @@ class GamificationController extends GetxController {
     try {
       // Validar gems suficientes PRIMEIRO
       if (gems.value < 100) {
-        errorMessage.value = 'Você precisa de ${100 - gems.value} gemas a mais.';
+        errorMessage.value =
+            'Você precisa de ${100 - gems.value} gemas a mais.';
         return;
       }
 
@@ -366,7 +463,7 @@ class GamificationController extends GetxController {
       // Deduzir gems e adicionar energia
       gems.value -= 100;
       totalGemsSpent.value += 100;
-      
+
       // Adicionar 5 energia (limitado ao máximo)
       final newEnergy = currentEnergy.value + 5;
       currentEnergy.value = newEnergy > 5 ? 5 : newEnergy;
@@ -375,12 +472,13 @@ class GamificationController extends GetxController {
       await _saveStats(userId);
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } catch (e) {
-      errorMessage.value = 'Erro ao comprar recarga de energia. Tente novamente.';
-      
+      errorMessage.value =
+          'Erro ao comprar recarga de energia. Tente novamente.';
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } finally {
@@ -396,7 +494,8 @@ class GamificationController extends GetxController {
     try {
       // Validar gems suficientes
       if (gems.value < 200) {
-        errorMessage.value = 'Você precisa de ${200 - gems.value} gemas a mais.';
+        errorMessage.value =
+            'Você precisa de ${200 - gems.value} gemas a mais.';
         return;
       }
 
@@ -422,12 +521,12 @@ class GamificationController extends GetxController {
       await _saveStats(userId);
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } catch (e) {
       errorMessage.value = 'Erro ao comprar streak freeze. Tente novamente.';
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } finally {
@@ -443,7 +542,8 @@ class GamificationController extends GetxController {
     try {
       // Validar gems suficientes
       if (gems.value < 150) {
-        errorMessage.value = 'Você precisa de ${150 - gems.value} gemas a mais.';
+        errorMessage.value =
+            'Você precisa de ${150 - gems.value} gemas a mais.';
         return;
       }
 
@@ -469,12 +569,12 @@ class GamificationController extends GetxController {
       await _saveStats(userId);
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } catch (e) {
       errorMessage.value = 'Erro ao comprar XP booster. Tente novamente.';
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } finally {
@@ -490,7 +590,8 @@ class GamificationController extends GetxController {
     try {
       // Validar gems suficientes
       if (gems.value < 200) {
-        errorMessage.value = 'Você precisa de ${200 - gems.value} gemas a mais.';
+        errorMessage.value =
+            'Você precisa de ${200 - gems.value} gemas a mais.';
         return;
       }
 
@@ -516,12 +617,12 @@ class GamificationController extends GetxController {
       await _saveStats(userId);
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } catch (e) {
       errorMessage.value = 'Erro ao comprar gem multiplier. Tente novamente.';
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } finally {
@@ -530,88 +631,148 @@ class GamificationController extends GetxController {
   }
 
   // Métodos privados - History
-  /// Registra conclusão de lição no histórico
+  /// Registra conclusão de lição no histórico (do curso ativo)
   Future<void> _recordLessonHistory({
     required String userId,
     required int xpEarned,
     required int gemsEarned,
   }) async {
     try {
+      // 1. Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('⚠️ Nenhum curso ativo para registrar histórico');
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
       final today = _formatDateForStreak(DateTime.now());
-      
+
+      // 2. Salvar histórico no curso ativo
       await _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('gamification')
           .collection('history')
           .add({
-        'type': 'lesson_completion',
-        'date': today,
-        'xpEarned': xpEarned,
-        'gemsEarned': gemsEarned,
-        'timestamp': FieldValue.serverTimestamp(),
-      }).timeout(const Duration(seconds: 30));
+            'type': 'lesson_completion',
+            'date': today,
+            'xpEarned': xpEarned,
+            'gemsEarned': gemsEarned,
+            'timestamp': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 30));
     } catch (e) {
       // Não propagar erro - histórico é opcional
       debugPrint('Erro ao registrar histórico de lição: $e');
     }
   }
 
-  /// Registra milestone de streak no histórico
+  /// Registra milestone de streak no histórico (do curso ativo)
   Future<void> _recordStreakMilestone({
     required String userId,
     required int milestone,
   }) async {
     try {
+      // 1. Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('⚠️ Nenhum curso ativo para registrar milestone');
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
       final today = _formatDateForStreak(DateTime.now());
-      
+
+      // 2. Salvar milestone no curso ativo
       await _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('gamification')
           .collection('history')
           .add({
-        'type': 'streak_milestone',
-        'date': today,
-        'milestone': milestone,
-        'timestamp': FieldValue.serverTimestamp(),
-      }).timeout(const Duration(seconds: 30));
+            'type': 'streak_milestone',
+            'date': today,
+            'milestone': milestone,
+            'timestamp': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 30));
     } catch (e) {
       // Não propagar erro - histórico é opcional
       debugPrint('Erro ao registrar milestone de streak: $e');
     }
   }
 
-  /// Registra level up no histórico
+  /// Registra level up no histórico (do curso ativo)
   Future<void> _recordLevelUp({
     required String userId,
     required int newLevel,
   }) async {
     try {
+      // 1. Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('⚠️ Nenhum curso ativo para registrar level up');
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
       final today = _formatDateForStreak(DateTime.now());
-      
+
+      // 2. Salvar level up no curso ativo
       await _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('gamification')
           .collection('history')
           .add({
-        'type': 'level_up',
-        'date': today,
-        'newLevel': newLevel,
-        'timestamp': FieldValue.serverTimestamp(),
-      }).timeout(const Duration(seconds: 30));
+            'type': 'level_up',
+            'date': today,
+            'newLevel': newLevel,
+            'timestamp': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 30));
     } catch (e) {
       // Não propagar erro - histórico é opcional
       debugPrint('Erro ao registrar level up: $e');
     }
   }
 
-  /// Consulta histórico com filtro de data
-  /// 
+  /// Consulta histórico com filtro de data (do curso ativo)
+  ///
   /// Retorna eventos do histórico dentro do intervalo de datas especificado.
   /// Por padrão, limita aos últimos 365 dias.
   Future<List<Map<String, dynamic>>> queryHistory({
@@ -625,18 +786,37 @@ class GamificationController extends GetxController {
         throw Exception('Usuário não autenticado.');
       }
 
+      // 1. Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+
+      if (coursesSnapshot.docs.isEmpty) {
+        return [];
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
+
       // Calcular data de início (365 dias atrás se não especificado)
-      final start = startDate ?? DateTime.now().subtract(const Duration(days: 365));
+      final start =
+          startDate ?? DateTime.now().subtract(const Duration(days: 365));
       final end = endDate ?? DateTime.now();
 
       // Formatar datas para comparação
       final startDateStr = _formatDateForStreak(start);
       final endDateStr = _formatDateForStreak(end);
 
-      // Consultar histórico com filtro de data
+      // 2. Consultar histórico do curso ativo com filtro de data
       final querySnapshot = await _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('gamification')
           .collection('history')
@@ -648,10 +828,7 @@ class GamificationController extends GetxController {
 
       // Converter para lista de mapas
       return querySnapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
     } catch (e) {
       return [];
@@ -664,7 +841,9 @@ class GamificationController extends GetxController {
     DateTime? endDate,
   }) async {
     final history = await queryHistory(startDate: startDate, endDate: endDate);
-    return history.where((event) => event['type'] == 'lesson_completion').toList();
+    return history
+        .where((event) => event['type'] == 'lesson_completion')
+        .toList();
   }
 
   /// Consulta histórico de milestones de streak
@@ -673,7 +852,9 @@ class GamificationController extends GetxController {
     DateTime? endDate,
   }) async {
     final history = await queryHistory(startDate: startDate, endDate: endDate);
-    return history.where((event) => event['type'] == 'streak_milestone').toList();
+    return history
+        .where((event) => event['type'] == 'streak_milestone')
+        .toList();
   }
 
   /// Consulta histórico de level ups
@@ -687,7 +868,7 @@ class GamificationController extends GetxController {
 
   // Métodos públicos - Lesson Flow
   /// Chamado quando o usuário inicia uma lição
-  /// 
+  ///
   /// Verifica se tem energia suficiente, calcula regeneração,
   /// consome 1 energia e salva no Firestore
   Future<void> onLessonStart() async {
@@ -718,12 +899,12 @@ class GamificationController extends GetxController {
       await _saveStats(userId);
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } catch (e) {
       errorMessage.value = 'Erro ao iniciar lição. Tente novamente.';
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } finally {
@@ -732,11 +913,16 @@ class GamificationController extends GetxController {
   }
 
   /// Chamado quando o usuário completa uma lição
-  /// 
+  ///
   /// Calcula recompensas totais (base + bônus), adiciona XP e gems,
   /// atualiza streak se primeira lição do dia, verifica milestones e level up,
   /// e salva tudo no Firestore em uma transação
-  Future<void> onLessonComplete(int baseXp, int baseGems, bool isPerfect, {String lessonId = ''}) async {
+  Future<void> onLessonComplete(
+    int baseXp,
+    int baseGems,
+    bool isPerfect, {
+    String lessonId = '',
+  }) async {
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -767,10 +953,10 @@ class GamificationController extends GetxController {
       _addXp(totalXpReward);
 
       // 2.5. Integração com TreasureController - atualizar desafios de XP (se disponível)
-      // 
+      //
       // Atualiza progresso de desafios relacionados a XP:
       // - 'xp': Incrementa contador de XP ganho
-      // 
+      //
       // TODO: [future] Adicionar mais tipos de desafios relacionados a gamificação:
       // - 'level_ups': Número de níveis subidos
       // - 'gems_earned': Gems ganhas (não gastas)
@@ -781,12 +967,17 @@ class GamificationController extends GetxController {
           final treasureController = Get.find<dynamic>();
           if (treasureController.toString().contains('TreasureController')) {
             // Atualizar progresso de desafios de XP
-            await treasureController.updateChallengeProgress('xp', totalXpReward);
+            await treasureController.updateChallengeProgress(
+              'xp',
+              totalXpReward,
+            );
           }
         }
       } catch (e) {
         // TreasureController não registrado ou erro - não é crítico
-        debugPrint('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de XP: $e');
+        debugPrint(
+          '⚠️ TreasureController não encontrado ou erro ao atualizar desafios de XP: $e',
+        );
       }
 
       // 3. Adicionar gems (com multiplier se ativo)
@@ -796,12 +987,12 @@ class GamificationController extends GetxController {
       if (isFirstLesson) {
         _updateStreak();
         await _checkStreakMilestonesWithHistory(userId);
-        
+
         // 4.5. Integração com TreasureController - atualizar desafios de streak (se disponível)
-        // 
+        //
         // Atualiza progresso de desafios relacionados a streak:
         // - 'streak': Incrementa contador de dias de streak mantidos
-        // 
+        //
         // TODO: [future] Adicionar mais tipos de desafios relacionados a streak:
         // - 'streak_milestones': Atingir milestones específicos (7, 14, 30 dias)
         // - 'streak_freeze_used': Usar streak freeze
@@ -816,7 +1007,9 @@ class GamificationController extends GetxController {
           }
         } catch (e) {
           // TreasureController não registrado ou erro - não é crítico
-          debugPrint('⚠️ TreasureController não encontrado ou erro ao atualizar desafios de streak: $e');
+          debugPrint(
+            '⚠️ TreasureController não encontrado ou erro ao atualizar desafios de streak: $e',
+          );
         }
       }
 
@@ -842,14 +1035,22 @@ class GamificationController extends GetxController {
         xpEarned: totalXpReward,
         gemsEarned: totalGemsReward,
       );
+      // Atualizar gráfico do perfil imediatamente
+      if (Get.isRegistered<ProfileController>()) {
+        try {
+          await Get.find<ProfileController>().loadWeeklyProgress();
+        } catch (e) {
+          debugPrint('Erro ao atualizar o gráfico do perfil: ' + e.toString());
+        }
+      }
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } catch (e) {
       errorMessage.value = 'Erro ao completar lição. Tente novamente.';
-      
+
       // Reverter mudanças em caso de erro
       await loadStats();
     } finally {
@@ -879,8 +1080,9 @@ class GamificationController extends GetxController {
 
     // Atualizar timestamp pelo tempo de energia realmente regenerada
     final minutesConsumed = (newEnergy - currentEnergy.value) * 30;
-    _lastEnergyRegenAt =
-        _lastEnergyRegenAt.add(Duration(minutes: minutesConsumed));
+    _lastEnergyRegenAt = _lastEnergyRegenAt.add(
+      Duration(minutes: minutesConsumed),
+    );
 
     currentEnergy.value = newEnergy;
   }
@@ -913,12 +1115,12 @@ class GamificationController extends GetxController {
     totalXp.value += xpToAdd;
     weeklyXP.value += xpToAdd; // ✅ Padronizado para weeklyXP
     todayXp.value += xpToAdd;
-    
+
     // Salvar XP no histórico diário para o gráfico de progresso
     _saveXpToHistory(xpToAdd);
   }
 
-  /// Salva XP ganho no histórico diário para o gráfico de progresso semanal
+  /// Salva XP ganho no histórico diário para o gráfico de progresso semanal (do curso ativo)
   Future<void> _saveXpToHistory(int xpGained) async {
     try {
       final userId = _auth.currentUser?.uid;
@@ -927,25 +1129,48 @@ class GamificationController extends GetxController {
         return;
       }
 
+      // 1. Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('⚠️ _saveXpToHistory: Nenhum curso ativo encontrado');
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
       final now = DateTime.now();
-      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final dateStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-      debugPrint('📊 _saveXpToHistory: Salvando $xpGained XP para $dateStr (userId=$userId)');
+      debugPrint(
+        '📊 _saveXpToHistory: Salvando $xpGained XP para $dateStr (userId=$userId, courseId=$courseId)',
+      );
 
-      // 1. Garantir que o documento dailyHistory existe (necessário para subcoleções)
+      // 2. Garantir que o documento dailyHistory existe (necessário para subcoleções)
       await _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('dailyHistory')
           .set({
-        'lastUpdated': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            'lastUpdated': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
 
-      // 2. Salvar no documento do dia (subcoleção)
+      // 3. Salvar no documento do dia (subcoleção)
       final dayRef = _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('dailyHistory')
           .collection('days')
@@ -953,14 +1178,16 @@ class GamificationController extends GetxController {
 
       // Verificar se documento já existe
       final dayDoc = await dayRef.get();
-      
+
       if (dayDoc.exists) {
         // Documento existe - incrementar XP
         await dayRef.update({
           'xp': FieldValue.increment(xpGained),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        debugPrint('✅ XP incrementado no histórico: +$xpGained XP em $dateStr (total agora: ${(dayDoc.data()?['xp'] ?? 0) + xpGained})');
+        debugPrint(
+          '✅ XP incrementado no histórico: +$xpGained XP em $dateStr (total agora: ${(dayDoc.data()?['xp'] ?? 0) + xpGained})',
+        );
       } else {
         // Documento não existe - criar com XP inicial
         await dayRef.set({
@@ -969,7 +1196,9 @@ class GamificationController extends GetxController {
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        debugPrint('✅ XP salvo no histórico (novo documento): $xpGained XP em $dateStr');
+        debugPrint(
+          '✅ XP salvo no histórico (novo documento): $xpGained XP em $dateStr',
+        );
       }
     } catch (e, stackTrace) {
       debugPrint('❌ Erro ao salvar XP no histórico: $e');
@@ -1111,12 +1340,7 @@ class GamificationController extends GetxController {
   void _checkStreakMilestones() {
     // Milestones: 7, 14, 30, 100 dias
     // Recompensas: 5, 10, 25, 50 gems
-    final milestones = {
-      7: 5,
-      14: 10,
-      30: 25,
-      100: 50,
-    };
+    final milestones = {7: 5, 14: 10, 30: 25, 100: 50};
 
     for (final entry in milestones.entries) {
       final milestone = entry.key;
@@ -1139,12 +1363,7 @@ class GamificationController extends GetxController {
   Future<void> _checkStreakMilestonesWithHistory(String userId) async {
     // Milestones: 7, 14, 30, 100 dias
     // Recompensas: 5, 10, 25, 50 gems
-    final milestones = {
-      7: 5,
-      14: 10,
-      30: 25,
-      100: 50,
-    };
+    final milestones = {7: 5, 14: 10, 30: 25, 100: 50};
 
     for (final entry in milestones.entries) {
       final milestone = entry.key;

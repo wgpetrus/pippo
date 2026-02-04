@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_lesson_button.dart';
 import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../gamification/controllers/gamification_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../treasure/controllers/treasure_controller.dart';
 import '../widgets/home_appbar.dart';
@@ -164,6 +165,20 @@ class HomeController extends GetxController {
 
   // Métodos privados
   
+  /// Converte string de nível para int (para exibição)
+  int _levelStringToInt(String level) {
+    switch (level.toLowerCase()) {
+      case 'beginner':
+        return 1;
+      case 'intermediate':
+        return 2;
+      case 'advanced':
+        return 3;
+      default:
+        return 1;
+    }
+  }
+  
   /// Carrega o curso ativo do usuário
   Future<void> _loadActiveCourse() async {
     debugPrint('🔄 _loadActiveCourse() INICIADO');
@@ -205,7 +220,11 @@ class HomeController extends GetxController {
       activeCourseLanguage.value = languageCode;
       activeCourseName.value = LanguageHelper.getLanguageName(languageCode);
       activeCourseFlag.value = LanguageHelper.getLanguageFlag(languageCode);
-      activeCourseLevel.value = courseData['level'] ?? 1; // Usar nível do Firestore
+      
+      // Nível do curso é uma String no Firestore (beginner, intermediate, advanced)
+      // Converter para int para exibição (1 = beginner, 2 = intermediate, 3 = advanced)
+      final levelString = courseData['level'] as String? ?? 'beginner';
+      activeCourseLevel.value = _levelStringToInt(levelString);
       
       debugPrint('  ✅ Curso ativo carregado:');
       debugPrint('    ID: ${activeCourseId.value}');
@@ -231,11 +250,33 @@ class HomeController extends GetxController {
         return;
       }
       
+      debugPrint('  👤 UserId: $userId');
+      debugPrint('  📡 Buscando cursos em: users/$userId/courses');
+      
       final coursesSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
           .get();
+      
+      debugPrint('  📊 Snapshot recebido: ${coursesSnapshot.docs.length} documentos');
+      
+      if (coursesSnapshot.docs.isEmpty) {
+        debugPrint('  ⚠️ Nenhum curso encontrado');
+        userCourses.value = [];
+        return;
+      }
+      
+      // Log de cada curso encontrado
+      for (var doc in coursesSnapshot.docs) {
+        final data = doc.data();
+        debugPrint('  📚 Curso encontrado:');
+        debugPrint('    - ID: ${doc.id}');
+        debugPrint('    - Idioma: ${data['language']}');
+        debugPrint('    - Nome: ${data['languageName']}');
+        debugPrint('    - Ativo: ${data['isActive']}');
+        debugPrint('    - Nível: ${data['level']}');
+      }
       
       userCourses.value = coursesSnapshot.docs.map((doc) {
         final data = doc.data();
@@ -252,9 +293,14 @@ class HomeController extends GetxController {
         };
       }).toList();
       
-      debugPrint('  ✅ ${userCourses.length} cursos carregados');
+      debugPrint('  ✅ ${userCourses.length} cursos carregados e convertidos');
+      debugPrint('  📋 Lista final de cursos:');
+      for (var course in userCourses) {
+        debugPrint('    - ${course['languageName']} (${course['language']}): isActive=${course['isActive']}');
+      }
     } catch (e) {
       debugPrint('  ❌ Erro ao carregar cursos: $e');
+      debugPrint('  📍 Stack trace: ${StackTrace.current}');
     } finally {
       debugPrint('✅ loadUserCourses() CONCLUÍDO');
     }
@@ -513,6 +559,30 @@ class HomeController extends GetxController {
       await _loadActiveCourse();
       await _loadLessonProgress();
       
+      // Recarregar stats do novo curso (gamificação)
+      debugPrint('  🔄 Recarregando stats do novo curso...');
+      try {
+        if (Get.isRegistered<GamificationController>()) {
+          final gamificationController = Get.find<GamificationController>();
+          await gamificationController.loadStats();
+          debugPrint('  ✅ Stats recarregados com sucesso');
+        }
+      } catch (e) {
+        debugPrint('  ⚠️ GamificationController não encontrado ou erro ao recarregar stats: $e');
+      }
+
+      // ATUALIZAR GRÁFICO DO PERFIL após trocar curso
+      debugPrint('  🔄 Atualizando gráfico do perfil...');
+      try {
+        if (Get.isRegistered<ProfileController>()) {
+          final profileController = Get.find<ProfileController>();
+          await profileController.loadWeeklyProgress();
+          debugPrint('  ✅ Gráfico do perfil atualizado com sucesso');
+        }
+      } catch (e) {
+        debugPrint('  ⚠️ ProfileController não encontrado ou erro ao atualizar gráfico: $e');
+      }
+      
       Get.snackbar(
         'Sucesso',
         'Curso alterado para ${activeCourseName.value}!',
@@ -543,6 +613,49 @@ class HomeController extends GetxController {
     
     debugPrint('  📊 currentUnitIndex DEPOIS: ${currentUnitIndex.value}');
     debugPrint('✅ reloadProgress() CONCLUÍDO');
+  }
+  
+  /// Recarrega TUDO após adicionar novo curso
+  /// Chamado pelo OnboardingController após addNewCourse()
+  Future<void> reloadAfterAddCourse() async {
+    debugPrint('🔄 reloadAfterAddCourse() INICIADO');
+    
+    try {
+      // 1. Recarregar curso ativo
+      await _loadActiveCourse();
+      
+      // 2. Recarregar progresso das lições
+      await _loadLessonProgress();
+      _checkInProgressLesson();
+      
+      // 3. Recarregar gamificação
+      try {
+        final gamificationController = Get.find<GamificationController>();
+        await gamificationController.loadStats();
+        debugPrint('  ✅ Gamificação recarregada');
+      } catch (e) {
+        debugPrint('  ⚠️ GamificationController não encontrado: $e');
+      }
+      
+      // 4. Recarregar profile (se estiver registrado)
+      try {
+        if (Get.isRegistered<ProfileController>()) {
+          final profileController = Get.find<ProfileController>();
+          await profileController.loadOwnProfile();
+          debugPrint('  ✅ Profile recarregado');
+        }
+      } catch (e) {
+        debugPrint('  ⚠️ Erro ao recarregar profile: $e');
+      }
+      
+      // 5. Resetar para tab 0 (Courses)
+      currentNavIndex.value = 0;
+      
+      debugPrint('✅ reloadAfterAddCourse() CONCLUÍDO');
+    } catch (e) {
+      debugPrint('❌ Erro em reloadAfterAddCourse: $e');
+      errorMessage.value = 'Erro ao recarregar dados. Tente novamente.';
+    }
   }
   
   /// Determina o status de um botão de lição baseado no progresso

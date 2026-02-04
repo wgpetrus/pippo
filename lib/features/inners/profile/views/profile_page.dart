@@ -6,6 +6,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
 import '../../gamification/controllers/gamification_controller.dart';
+import '../../home/controllers/home_controller.dart';
 import '../controllers/profile_controller.dart';
 import '../widgets/change_avatar_modal.dart';
 import '../widgets/complete_profile_card.dart';
@@ -107,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 username: _controller.username.value,
                 following: _controller.followingCount.value,
                 followers: _controller.followersCount.value,
-                flagAsset: _getPrimaryCourseFlag(),
+                flagAsset: _getActiveCourseFlag(),
                 coursesCount: _controller.userCourses.length,
                 isOwnProfile: true,
                 showFollowButton: false,
@@ -163,6 +164,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             // Gráfico de progresso semanal
             SliverToBoxAdapter(
               child: Obx(() {
+                // Obter curso ativo do HomeController para chave única (força reconstrução ao trocar curso)
+                final homeController = Get.find<HomeController>();
+                final courseId = homeController.activeCourseId.value;
+                
                 // Converter dados do controller para ChartData
                 final weeklyProgressData = _controller.weeklyProgress
                     .map((day) => ChartData(
@@ -177,16 +182,17 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 return Column(
                   children: [
                     WeeklyProgressChart(
+                      key: ValueKey('weekly-chart-$courseId'), // Chave única baseada no curso ativo
                       userProgress: hasData
                           ? weeklyProgressData
                           : [
-                              ChartData('Sun', 0),
-                              ChartData('Mon', 0),
-                              ChartData('Tue', 0),
-                              ChartData('Wed', 0),
-                              ChartData('Thu', 0),
-                              ChartData('Fri', 0),
-                              ChartData('Sat', 0),
+                              ChartData('Dom', 0),
+                              ChartData('Seg', 0),
+                              ChartData('Ter', 0),
+                              ChartData('Qua', 0),
+                              ChartData('Qui', 0),
+                              ChartData('Sex', 0),
+                              ChartData('Sáb', 0),
                             ],
                       otherProgress: [], // Não mostrar comparação no próprio perfil
                       showOther: false,
@@ -200,7 +206,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             // Overview - Reactive stats from GamificationController
             SliverToBoxAdapter(
               child: Obx(() => OverviewSection(
-                flagAsset: _getPrimaryCourseFlag(),
+                flagAsset: _getActiveCourseFlag(),
                 useOwnStats: true, // Usar stats do GamificationController
               )),
             ),
@@ -276,29 +282,29 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     }
   }
 
-  String _getPrimaryCourseFlag() {
+  String _getActiveCourseFlag() {
     if (kDebugMode) {
-      debugPrint('🔍 _getPrimaryCourseFlag: Buscando curso primário');
+      debugPrint('🔍 _getActiveCourseFlag: Buscando curso ativo');
       debugPrint('   Total de cursos: ${_controller.userCourses.length}');
     }
 
-    // Buscar curso primário
-    final primaryCourse = _controller.userCourses.firstWhere(
-      (course) => course['isPrimary'] == true,
+    // Buscar curso ATIVO (não primário)
+    final activeCourse = _controller.userCourses.firstWhere(
+      (course) => course['isActive'] == true,
       orElse: () => <String, dynamic>{},
     );
 
     if (kDebugMode) {
-      debugPrint('   Curso primário encontrado: ${primaryCourse.isNotEmpty}');
-      if (primaryCourse.isNotEmpty) {
-        debugPrint('   - Idioma: ${primaryCourse['languageName']}');
-        debugPrint('   - Bandeira: ${primaryCourse['flagAsset']}');
+      debugPrint('   Curso ativo encontrado: ${activeCourse.isNotEmpty}');
+      if (activeCourse.isNotEmpty) {
+        debugPrint('   - Idioma: ${activeCourse['languageName']}');
+        debugPrint('   - Bandeira: ${activeCourse['flagAsset']}');
       }
     }
 
-    // Se encontrou curso primário, retornar sua bandeira
-    if (primaryCourse.isNotEmpty && primaryCourse['flagAsset'] != null) {
-      return primaryCourse['flagAsset'] as String;
+    // Se encontrou curso ativo, retornar sua bandeira
+    if (activeCourse.isNotEmpty && activeCourse['flagAsset'] != null) {
+      return activeCourse['flagAsset'] as String;
     }
 
     // Fallback: usar bandeira do país do usuário

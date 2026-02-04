@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -5,6 +6,7 @@ import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
+import '../../../../inners/home/controllers/home_controller.dart';
 import '../../controllers/onboarding_controller.dart';
 
 /// Tela de conclusão do onboarding
@@ -158,10 +160,34 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   // Métodos
   void _onButtonPressed() {
     if (_controller.isAddingCourse.value) {
-      // Volta para home e reseta estado
-      _controller.isAddingCourse.value = false;
-      Get.offAllNamed('/home');
+      debugPrint('🎯 _onButtonPressed: Modo add course - chamando completeOnboarding()');
+      
+      // Chamar completeOnboarding() que vai executar addNewCourse()
+      _controller.completeOnboarding();
+      
+      // Aguardar conclusão e então resetar estado e navegar
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_controller.errorMessage.value.isEmpty) {
+          debugPrint('✅ Curso adicionado com sucesso, voltando para home');
+          _controller.isAddingCourse.value = false;
+          Get.offAllNamed('/home');
+          
+          // Recarregar cursos no HomeController após voltar
+          Future.delayed(const Duration(milliseconds: 500), () {
+            try {
+              final homeController = Get.find<HomeController>();
+              homeController.loadUserCourses();
+              debugPrint('🔄 Cursos recarregados após adicionar novo curso');
+            } catch (e) {
+              debugPrint('⚠️ HomeController não encontrado ao recarregar cursos');
+            }
+          });
+        } else {
+          debugPrint('❌ Erro ao adicionar curso: ${_controller.errorMessage.value}');
+        }
+      });
     } else {
+      debugPrint('🎯 _onButtonPressed: Modo onboarding normal - chamando completeOnboarding()');
       // Finaliza onboarding normal e salva estados
       _controller.completeOnboarding();
     }

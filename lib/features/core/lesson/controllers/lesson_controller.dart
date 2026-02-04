@@ -984,13 +984,33 @@ class LessonController extends GetxController {
   /// - Se última data é antes de ontem: reseta currentStreak para 1
   /// - Atualiza longestStreak se currentStreak exceder
   /// - Salva data atual como lastStreakDate
+  /// 
+  /// IMPORTANTE: Stats são por curso, não globais
+  /// Path: users/{userId}/courses/{courseId}/stats/gamification
   Future<void> _updateStreak() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('Usuário não autenticado');
     
+    // Buscar curso ativo
+    final coursesSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (coursesSnapshot.docs.isEmpty) {
+      throw Exception('Nenhum curso ativo encontrado');
+    }
+
+    final courseId = coursesSnapshot.docs.first.id;
+    
     final statsRef = _firestore
         .collection('users')
         .doc(userId)
+        .collection('courses')
+        .doc(courseId)
         .collection('stats')
         .doc('gamification');
     
@@ -1089,13 +1109,33 @@ class LessonController extends GetxController {
   /// - todayXp (reseta diariamente à meia-noite)
   /// 
   /// Usa transação do Firestore para garantir atomicidade
+  /// 
+  /// IMPORTANTE: Stats são por curso, não globais
+  /// Path: users/{userId}/courses/{courseId}/stats/gamification
   Future<void> _distributeXP(int xpAmount) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('Usuário não autenticado');
     
+    // Buscar curso ativo
+    final coursesSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (coursesSnapshot.docs.isEmpty) {
+      throw Exception('Nenhum curso ativo encontrado');
+    }
+
+    final courseId = coursesSnapshot.docs.first.id;
+    
     final statsRef = _firestore
         .collection('users')
         .doc(userId)
+        .collection('courses')
+        .doc(courseId)
         .collection('stats')
         .doc('gamification');
     
@@ -1132,14 +1172,34 @@ class LessonController extends GetxController {
   /// Fórmula: totalXp >= currentLevel * 100
   /// Se level up: incrementa currentLevel, NÃO reseta totalXp
   /// 
+  /// IMPORTANTE: Stats são por curso, não globais
+  /// Path: users/{userId}/courses/{courseId}/stats/gamification
+  /// 
   /// Retorna true se houve level up, false caso contrário
   Future<bool> _checkAndLevelUp() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('Usuário não autenticado');
     
+    // Buscar curso ativo
+    final coursesSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (coursesSnapshot.docs.isEmpty) {
+      throw Exception('Nenhum curso ativo encontrado');
+    }
+
+    final courseId = coursesSnapshot.docs.first.id;
+    
     final statsRef = _firestore
         .collection('users')
         .doc(userId)
+        .collection('courses')
+        .doc(courseId)
         .collection('stats')
         .doc('gamification');
     
@@ -1270,13 +1330,33 @@ class LessonController extends GetxController {
   // Persistência de progresso
   
   /// Adiciona gems ao totalGems do usuário (operação atômica)
+  /// 
+  /// IMPORTANTE: Stats são por curso, não globais
+  /// Path: users/{userId}/courses/{courseId}/stats/gamification
   Future<void> _addGems(int gemsAmount) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('Usuário não autenticado');
     
+    // Buscar curso ativo
+    final coursesSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (coursesSnapshot.docs.isEmpty) {
+      throw Exception('Nenhum curso ativo encontrado');
+    }
+
+    final courseId = coursesSnapshot.docs.first.id;
+    
     final statsRef = _firestore
         .collection('users')
         .doc(userId)
+        .collection('courses')
+        .doc(courseId)
         .collection('stats')
         .doc('gamification');
     
@@ -1635,6 +1715,22 @@ class LessonController extends GetxController {
   int _calculateTimeSpent() {
     final milliseconds = _calculateTimeSpentMilliseconds();
     return (milliseconds / 1000).round();
+  }
+  
+  /// Retorna o label de avaliação baseado na accuracy
+  /// 
+  /// Faixas:
+  /// - 100%: Perfeito!
+  /// - 90-99%: Excelente
+  /// - 70-89%: Muito Bom
+  /// - 50-69%: Bom
+  /// - <50%: Continue Praticando
+  String getAccuracyLabel() {
+    if (accuracy == 100.0) return 'Perfeito!';
+    if (accuracy >= 90.0) return 'Excelente';
+    if (accuracy >= 70.0) return 'Muito Bom';
+    if (accuracy >= 50.0) return 'Bom';
+    return 'Continue Praticando';
   }
   
   /// Retorna o tempo formatado como string (MM:SS)
