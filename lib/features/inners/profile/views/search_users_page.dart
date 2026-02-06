@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_search_controller.dart';
 import '../widgets/user_search_item.dart';
 
 /// Página de busca de usuários
@@ -17,13 +17,13 @@ class SearchUsersPage extends StatefulWidget {
 }
 
 class _SearchUsersPageState extends State<SearchUsersPage> {
-  late final ProfileController _controller;
+  late final ProfileSearchController _controller;
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileSearchController>();
     _controller.clearSearch();
   }
 
@@ -129,12 +129,12 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
               }
 
               // Erro
-              if (_controller.searchErrorMessage.value.isNotEmpty) {
+              if (_controller.errorMessage.value.isNotEmpty) {
                 return Center(
                   child: Padding(
                     padding: EdgeInsets.all(r.spacing16),
                     child: Text(
-                      _controller.searchErrorMessage.value,
+                      _controller.errorMessage.value,
                       style: AppTheme.textMd.copyWith(
                         color: _controller.searchResults.isEmpty
                             ? AppTheme.gray600

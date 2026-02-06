@@ -10,7 +10,8 @@ import '../../../core/lesson/controllers/lesson_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
 import '../../gamification/controllers/gamification_controller.dart';
-import '../../profile/controllers/profile_controller.dart';
+import '../../profile/controllers/profile_data_controller.dart';
+import '../../profile/controllers/profile_social_controller.dart';
 import '../../treasure/controllers/treasure_controller.dart';
 import '../widgets/home_appbar.dart';
 
@@ -461,14 +462,16 @@ class HomeController extends GetxController {
   /// Recarrega dados da página Profile quando usuário retorna à tab
   void _refreshProfilePage() {
     try {
-      // Importar ProfileController no topo do arquivo se necessário
-      final profileController = Get.find<ProfileController>();
-      profileController.loadOwnProfile();
-      profileController.loadWeeklyProgress();
+      final profileDataController = Get.find<ProfileDataController>();
+      final profileSocialController = Get.find<ProfileSocialController>();
+      
+      profileDataController.loadOwnProfile();
+      profileSocialController.loadWeeklyProgress();
+      
       debugPrint('🔄 Profile atualizado ao trocar de aba');
     } catch (e) {
       debugPrint('⚠️ Erro ao atualizar Profile: $e');
-      // ProfileController não registrado - não é crítico
+      // Controllers não registrados - não é crítico
     }
   }
 
@@ -574,13 +577,13 @@ class HomeController extends GetxController {
       // ATUALIZAR GRÁFICO DO PERFIL após trocar curso
       debugPrint('  🔄 Atualizando gráfico do perfil...');
       try {
-        if (Get.isRegistered<ProfileController>()) {
-          final profileController = Get.find<ProfileController>();
-          await profileController.loadWeeklyProgress();
+        if (Get.isRegistered<ProfileSocialController>()) {
+          final profileSocialController = Get.find<ProfileSocialController>();
+          await profileSocialController.loadWeeklyProgress();
           debugPrint('  ✅ Gráfico do perfil atualizado com sucesso');
         }
       } catch (e) {
-        debugPrint('  ⚠️ ProfileController não encontrado ou erro ao atualizar gráfico: $e');
+        debugPrint('  ⚠️ ProfileSocialController não encontrado ou erro ao atualizar gráfico: $e');
       }
       
       Get.snackbar(
@@ -639,9 +642,9 @@ class HomeController extends GetxController {
       
       // 4. Recarregar profile (se estiver registrado)
       try {
-        if (Get.isRegistered<ProfileController>()) {
-          final profileController = Get.find<ProfileController>();
-          await profileController.loadOwnProfile();
+        if (Get.isRegistered<ProfileDataController>()) {
+          final profileDataController = Get.find<ProfileDataController>();
+          await profileDataController.loadOwnProfile();
           debugPrint('  ✅ Profile recarregado');
         }
       } catch (e) {

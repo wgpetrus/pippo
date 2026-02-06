@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_pinput.dart';
 import '../../../../shared/widgets/app_resend_code.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_auth_controller.dart';
 import 'phone_linked_page.dart';
 
 /// Tela de verificação de código do telefone
@@ -29,13 +30,13 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
   final _pinController = TextEditingController();
   final _focusNode = FocusNode();
 
-  late final ProfileController _controller;
+  late final ProfileAuthController _controller;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileAuthController>();
   }
 
   @override
@@ -58,7 +59,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
   // Build
   @override
   Widget build(BuildContext context) {
-    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final r = ResponsiveUtils(context);
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -69,7 +70,12 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.only(
+                  left: r.spacing24,
+                  right: r.spacing24,
+                  top: r.spacing24,
+                  bottom: r.keyboardHeight,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -79,7 +85,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     ),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.spacing12),
 
                     // Descrição
                     Text(
@@ -87,7 +93,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                     ),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacing32),
 
                     // Pin input
                     Center(
@@ -98,14 +104,21 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: r.spacing16),
 
                     // Resend code
-                    AppResendCode(isComplete: true, onResend: () {
-                      // TODO: Implementar reenvio de código
-                    }),
+                    AppResendCode(
+                      isComplete: true,
+                      onResend: () {
+                        // Reenviar código via controller
+                        _controller.linkPhoneNumber(
+                          widget.phoneNumber,
+                          '',
+                        );
+                      },
+                    ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacing16),
 
                     // Error message
                     Obx(() {
@@ -124,9 +137,14 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
             ),
 
             // Botão Verify
-            if (isKeyboardVisible)
+            if (r.isKeyboardOpen)
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                padding: EdgeInsets.fromLTRB(
+                  r.spacing24,
+                  0,
+                  r.spacing24,
+                  r.spacing16,
+                ),
                 child: Obx(() => AppButton(
                   text: 'Verificar',
                   isLoading: _controller.isLoading.value,

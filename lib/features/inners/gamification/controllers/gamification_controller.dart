@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import '../../profile/controllers/profile_controller.dart';
+import '../../profile/controllers/profile_social_controller.dart';
 
 /// Controller de gamificação
 ///
@@ -1036,9 +1036,9 @@ class GamificationController extends GetxController {
         gemsEarned: totalGemsReward,
       );
       // Atualizar gráfico do perfil imediatamente
-      if (Get.isRegistered<ProfileController>()) {
+      if (Get.isRegistered<ProfileSocialController>()) {
         try {
-          await Get.find<ProfileController>().loadWeeklyProgress();
+          await Get.find<ProfileSocialController>().loadWeeklyProgress();
         } catch (e) {
           debugPrint('Erro ao atualizar o gráfico do perfil: ' + e.toString());
         }

@@ -9,7 +9,8 @@ import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_data_controller.dart';
+import '../controllers/profile_auth_controller.dart';
 import '../widgets/change_avatar_modal.dart';
 import '../widgets/country_selector_modal.dart';
 import '../widgets/delete_account_modal.dart';
@@ -25,7 +26,8 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  late final ProfileController _controller;
+  late final ProfileDataController _controller;
+  late final ProfileAuthController _authController;
   
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -39,7 +41,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileDataController>();
+    _authController = Get.find<ProfileAuthController>();
     
     // Inicializar campos com dados do controller
     _nameController.text = _controller.userName.value;
@@ -226,12 +229,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: AbsorbPointer(
                   child: Obx(() => AppTextField(
                     label: 'Telefone',
-                    hint: _controller.phoneVerified.value
-                        ? _controller.phone.value
+                    hint: _authController.phoneVerified.value
+                        ? _authController.phone.value
                         : 'adicione seu telefone',
                     controller: TextEditingController(),
                     keyboardType: TextInputType.phone,
-                    suffixIcon: _controller.phoneVerified.value
+                    suffixIcon: _authController.phoneVerified.value
                         ? const Icon(Icons.check_circle, color: AppTheme.green)
                         : const Icon(Icons.arrow_forward_ios, size: 16),
                   )),

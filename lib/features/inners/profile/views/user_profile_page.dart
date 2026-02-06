@@ -6,7 +6,7 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../friends/views/friends_view.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_social_controller.dart';
 import '../widgets/overview_section.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/weekly_progress_chart.dart';
@@ -25,14 +25,14 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
-  late final ProfileController _controller;
+  late final ProfileSocialController _controller;
 
   // Ciclo de vida
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileSocialController>();
     
     // Limpar dados anteriores e carregar perfil do usuário
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,7 +55,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       appBar: const AppAppbar(title: 'Perfil'),
       body: Obx(() {
         // Mostrar loading
-        if (_controller.isLoadingProfile.value) {
+        if (_controller.isLoading.value) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );

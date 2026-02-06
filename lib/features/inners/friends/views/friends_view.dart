@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
-import '../../profile/controllers/profile_controller.dart';
+import '../../profile/controllers/profile_social_controller.dart';
 import '../../profile/views/user_profile_page.dart';
 import '../widgets/friend_tile.dart';
 import '../widgets/friend_toggle.dart';
@@ -18,7 +18,7 @@ class FriendsView extends StatefulWidget {
 }
 
 class _FriendsViewState extends State<FriendsView> {
-  late final ProfileController _controller;
+  late final ProfileSocialController _controller;
   late bool _isFollowing;
   late String? _userId;
 
@@ -26,7 +26,7 @@ class _FriendsViewState extends State<FriendsView> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileSocialController>();
     
     final args = Get.arguments as Map<String, dynamic>?;
     _isFollowing = args?['tab'] != 'followers';

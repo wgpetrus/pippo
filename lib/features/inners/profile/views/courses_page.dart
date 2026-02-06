@@ -4,9 +4,10 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/app_dialog.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_courses_controller.dart';
 import '../widgets/course_item.dart';
 
 /// Página de cursos/idiomas do usuário
@@ -18,87 +19,91 @@ class CoursesPage extends StatefulWidget {
 }
 
 class _CoursesPageState extends State<CoursesPage> {
-  late final ProfileController _controller;
+  late final ProfileCoursesController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileCoursesController>();
     _controller.loadUserCourses();
   }
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: const AppAppbar(title: 'Cursos'),
-      body: Obx(() {
-        // Mostrar loading
-        if (_controller.isLoadingCourses.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primary),
-          );
-        }
-
-        // Mostrar erro
-        if (_controller.errorMessage.value.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _controller.errorMessage.value,
-                    style: AppTheme.textMdRegular.copyWith(color: AppTheme.red),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  AppButton(
-                    text: 'Tentar Novamente',
-                    onPressed: () => _controller.loadUserCourses(),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        // Mostrar lista de cursos
-        if (_controller.userCourses.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Você ainda não tem cursos ativos.',
-                style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray700),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.all(24),
-          itemCount: _controller.userCourses.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final course = _controller.userCourses[index];
-            final courseId = course['id'] as String;
-            final languageCode = course['language'] as String? ?? 'en'; // Mudado de 'languageCode' para 'language'
-            final languageName = course['languageName'] as String? ?? 'Unknown';
-            final isPrimary = course['isPrimary'] as bool? ?? false;
-
-            return CourseItem(
-              flagAsset: _getFlagAsset(languageCode),
-              name: languageName,
-              isPrimary: isPrimary,
-              onSetPrimary: isPrimary ? null : () => _setPrimaryCourse(courseId),
-              onDelete: () => _deleteCourse(courseId, languageName),
+      body: SafeArea(
+        child: Obx(() {
+          // Mostrar loading
+          if (_controller.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
             );
-          },
-        );
-      }),
+          }
+
+          // Mostrar erro
+          if (_controller.errorMessage.value.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.all(r.spacing24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _controller.errorMessage.value,
+                      style: AppTheme.textMdRegular.copyWith(color: AppTheme.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: r.spacing16),
+                    AppButton(
+                      text: 'Tentar Novamente',
+                      onPressed: () => _controller.loadUserCourses(),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Mostrar lista de cursos
+          if (_controller.userCourses.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.all(r.spacing24),
+                child: Text(
+                  'Você ainda não tem cursos ativos.',
+                  style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray700),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: EdgeInsets.all(r.spacing24),
+            itemCount: _controller.userCourses.length,
+            separatorBuilder: (_, __) => SizedBox(height: r.spacing12),
+            itemBuilder: (context, index) {
+              final course = _controller.userCourses[index];
+              final courseId = course['id'] as String;
+              final languageCode = course['language'] as String? ?? 'en';
+              final languageName = course['languageName'] as String? ?? 'Unknown';
+              final isPrimary = course['isPrimary'] as bool? ?? false;
+
+              return CourseItem(
+                flagAsset: _getFlagAsset(languageCode),
+                name: languageName,
+                isPrimary: isPrimary,
+                onSetPrimary: isPrimary ? null : () => _setPrimaryCourse(courseId),
+                onDelete: () => _deleteCourse(courseId, languageName),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 

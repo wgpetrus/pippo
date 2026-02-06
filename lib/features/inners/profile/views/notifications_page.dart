@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_list_item.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_settings_controller.dart';
 import '../widgets/reminder_time_modal.dart';
 
 /// Página de configurações de notificações
@@ -16,27 +17,29 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  late final ProfileController _controller;
+  late final ProfileSettingsController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileSettingsController>();
   }
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
         title: 'Notificações',
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(horizontal: r.spacing24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: r.spacing16),
 
             // Seção Learning Style
             Text(
@@ -44,7 +47,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
             ),
 
-            const SizedBox(height: 8),
+            SizedBox(height: r.spacing8),
 
             // Practice reminders
             Obx(() => AppListItem(
@@ -87,7 +90,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             )),
 
-            const SizedBox(height: 8),
+            SizedBox(height: r.spacing8),
 
             // Friend Activity
             Obx(() => AppListItem(
@@ -103,7 +106,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             )),
 
-            const SizedBox(height: 32),
+            SizedBox(height: r.spacing32),
           ],
         ),
       ),

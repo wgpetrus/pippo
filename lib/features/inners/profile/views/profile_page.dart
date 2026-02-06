@@ -7,7 +7,9 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
 import '../../gamification/controllers/gamification_controller.dart';
 import '../../home/controllers/home_controller.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_data_controller.dart';
+import '../controllers/profile_social_controller.dart';
+import '../controllers/profile_courses_controller.dart';
 import '../widgets/change_avatar_modal.dart';
 import '../widgets/complete_profile_card.dart';
 import '../widgets/find_friends_card.dart';
@@ -26,7 +28,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClientMixin {
-  late final ProfileController _controller;
+  late final ProfileDataController _dataController;
+  late final ProfileSocialController _socialController;
+  late final ProfileCoursesController _coursesController;
   late final GamificationController _gamification;
 
   @override
@@ -35,18 +39,20 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _dataController = Get.find<ProfileDataController>();
+    _socialController = Get.find<ProfileSocialController>();
+    _coursesController = Get.find<ProfileCoursesController>();
     _gamification = Get.find<GamificationController>();
     
     // Carregar perfil e progresso semanal ao iniciar
-    _controller.loadOwnProfile();
-    _controller.loadWeeklyProgress();
+    _dataController.loadOwnProfile();
+    _socialController.loadWeeklyProgress();
   }
 
   // Recarregar dados quando a página é exibida
   void _refreshData() {
-    _controller.loadOwnProfile();
-    _controller.loadWeeklyProgress();
+    _dataController.loadOwnProfile();
+    _socialController.loadWeeklyProgress();
   }
 
   @override
@@ -57,14 +63,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       backgroundColor: AppTheme.white,
       body: Obx(() {
         // Mostrar loading
-        if (_controller.isLoadingProfile.value) {
+        if (_dataController.isLoading.value) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
 
         // Mostrar erro
-        if (_controller.errorMessage.value.isNotEmpty) {
+        if (_dataController.errorMessage.value.isNotEmpty) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -72,13 +78,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _controller.errorMessage.value,
+                    _dataController.errorMessage.value,
                     style: AppTheme.textMd.copyWith(color: AppTheme.red),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () => _controller.loadOwnProfile(),
+                    onPressed: () => _dataController.loadOwnProfile(),
                     child: Text(
                       'Tentar novamente',
                       style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
@@ -93,8 +99,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         // Conteúdo do perfil
         return RefreshIndicator(
           onRefresh: () async {
-            await _controller.loadOwnProfile();
-            await _controller.loadWeeklyProgress();
+            await _dataController.loadOwnProfile();
+            await _socialController.loadWeeklyProgress();
           },
           color: AppTheme.primary,
           child: CustomScrollView(
@@ -103,13 +109,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               // Header com card azul (já é um Sliver, não precisa de SliverToBoxAdapter)
               Obx(() => ProfileHeader(
                 title: 'Perfil',
-                avatarAsset: _getAvatarAsset(_controller.avatarId.value),
-                name: _controller.userName.value,
-                username: _controller.username.value,
-                following: _controller.followingCount.value,
-                followers: _controller.followersCount.value,
+                avatarAsset: _getAvatarAsset(_dataController.avatarId.value),
+                name: _dataController.userName.value,
+                username: _dataController.username.value,
+                following: _socialController.followingCount.value,
+                followers: _socialController.followersCount.value,
                 flagAsset: _getActiveCourseFlag(),
-                coursesCount: _controller.userCourses.length,
+                coursesCount: _coursesController.userCourses.length,
                 isOwnProfile: true,
                 showFollowButton: false,
                 onSettingsTap: () {
@@ -124,24 +130,24 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 onAvatarTap: () {
                   ChangeAvatarModal.show(
                     context,
-                    currentAvatar: _getAvatarAsset(_controller.avatarId.value),
+                    currentAvatar: _getAvatarAsset(_dataController.avatarId.value),
                     onAvatarSelected: (avatar) {
                       // Extrair avatarId do asset path
                       final avatarId = _getAvatarIdFromAsset(avatar);
-                      _controller.updateProfile({'avatarId': avatarId});
+                      _dataController.updateProfile({'avatarId': avatarId});
                     },
                   );
                 },
               )),
 
             // Card "Finish your profile" (mostrar apenas se incompleto)
-            if (_controller.profileCompletionPercentage.value < 100)
+            if (_dataController.profileCompletionPercentage.value < 100)
               SliverToBoxAdapter(
                 child: Column(
                   children: [
                     const SizedBox(height: 16),
                     CompleteProfileCard(
-                      stepsLeft: _controller.missingFields.length,
+                      stepsLeft: _dataController.missingFields.length,
                       onTap: () {
                         Get.to(() => const EditProfilePage());
                       },
@@ -169,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 final courseId = homeController.activeCourseId.value;
                 
                 // Converter dados do controller para ChartData
-                final weeklyProgressData = _controller.weeklyProgress
+                final weeklyProgressData = _socialController.weeklyProgress
                     .map((day) => ChartData(
                           day['day'] as String,
                           (day['xp'] as int).toDouble(),
@@ -285,11 +291,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   String _getActiveCourseFlag() {
     if (kDebugMode) {
       debugPrint('🔍 _getActiveCourseFlag: Buscando curso ativo');
-      debugPrint('   Total de cursos: ${_controller.userCourses.length}');
+      debugPrint('   Total de cursos: ${_coursesController.userCourses.length}');
     }
 
     // Buscar curso ATIVO (não primário)
-    final activeCourse = _controller.userCourses.firstWhere(
+    final activeCourse = _coursesController.userCourses.firstWhere(
       (course) => course['isActive'] == true,
       orElse: () => <String, dynamic>{},
     );
@@ -309,8 +315,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
 
     // Fallback: usar bandeira do país do usuário
     if (kDebugMode) {
-      debugPrint('   ⚠️ Usando fallback: bandeira do país ${_controller.country.value}');
+      debugPrint('   ⚠️ Usando fallback: bandeira do país ${_dataController.country.value}');
     }
-    return _getCountryFlag(_controller.country.value);
+    return _getCountryFlag(_dataController.country.value);
   }
 }

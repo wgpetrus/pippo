@@ -4,12 +4,12 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_auth_controller.dart';
 
 /// Modal de confirmação final de exclusão de conta
 class ConfirmDeleteModal {
   static void show(BuildContext context) {
-    final controller = Get.find<ProfileController>();
+    final controller = Get.find<ProfileAuthController>();
 
     WoltModalSheet.show(
       context: context,

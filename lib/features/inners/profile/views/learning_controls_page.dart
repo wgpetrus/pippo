@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_list_item.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_settings_controller.dart';
 
 /// Página de controles de aprendizado
 class LearningControlsPage extends StatefulWidget {
@@ -16,7 +16,7 @@ class LearningControlsPage extends StatefulWidget {
 }
 
 class _LearningControlsPageState extends State<LearningControlsPage> {
-  late final ProfileController _controller;
+  late final ProfileSettingsController _controller;
 
   // Modo de exibição de palavras (0 = all words highlighted, 1 = new words only)
   int _displayModeIndex = 0;
@@ -24,7 +24,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileSettingsController>();
   }
 
   @override

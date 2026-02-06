@@ -5,9 +5,10 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../controllers/profile_controller.dart';
+import '../controllers/profile_auth_controller.dart';
 import '../widgets/country_selector_modal.dart';
 import 'verify_phone_page.dart';
 
@@ -30,7 +31,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
   bool _isSendingCode = false;
   String _errorMessage = '';
 
-  late final ProfileController _controller;
+  late final ProfileAuthController _controller;
 
   // Formatador de máscara
   final _phoneMaskFormatter = MaskTextInputFormatter(
@@ -43,7 +44,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<ProfileController>();
+    _controller = Get.find<ProfileAuthController>();
   }
 
   @override
@@ -83,7 +84,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
             _isSendingCode = false;
           });
           // Salvar verificationId no controller
-          _controller.verificationId = verificationId;
+          _controller.verificationId.value = verificationId;
           // Navegar para tela de verificação
           Get.to(() => VerifyPhonePage(
             phoneNumber: fullPhoneNumber,
@@ -119,127 +120,143 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
   // Widgets
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveUtils(context);
+
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: const AppAppbar(title: 'Telefone'),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Título
-              Text(
-                "Qual é o seu telefone",
-                style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Campo de telefone com seletor de país
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.gray600, width: 1),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: EdgeInsets.all(r.spacing24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Título
+                Text(
+                  "Qual é o seu telefone",
+                  style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
                 ),
-                child: Row(
-                  children: [
-                    // Bandeira e código do país
-                    GestureDetector(
-                      onTap: () {
-                        CountrySelectorModal.show(
-                          context,
-                          currentCode: _countryCode,
-                          onSelect: (code, flag) {
-                            setState(() {
-                              _countryCode = code;
-                              _countryFlag = flag;
-                            });
-                          },
-                        );
-                      },
-                      child: Row(
-                        children: [
-                          Image.asset(
-                            _countryFlag,
-                            width: 24,
-                            height: 24,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _countryCode,
-                            style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_drop_down,
-                            color: AppTheme.gray400,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
 
-                    const SizedBox(width: 12),
+                SizedBox(height: r.spacing16),
 
-                    // Campo de texto
-                    Expanded(
-                      child: TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [_phoneMaskFormatter],
-                        onChanged: (value) => setState(() {}),
-                        validator: _controller.validatePhoneNumber,
-                        style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
-                        decoration: InputDecoration(
-                          hintText: 'número de telefone',
-                          hintStyle: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
+                // Campo de telefone com seletor de país
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: r.spacing16, vertical: r.spacing12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.gray600, width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      // Bandeira e código do país
+                      GestureDetector(
+                        onTap: () {
+                          CountrySelectorModal.show(
+                            context,
+                            currentCode: _countryCode,
+                            onSelect: (code, flag) {
+                              setState(() {
+                                _countryCode = code;
+                                _countryFlag = flag;
+                              });
+                            },
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Image.asset(
+                              _countryFlag,
+                              width: 24,
+                              height: 24,
+                            ),
+                            SizedBox(width: r.spacing8),
+                            Text(
+                              _countryCode,
+                              style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
+                            ),
+                            SizedBox(width: r.spacing4),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: AppTheme.gray400,
+                              size: 20,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+
+                      SizedBox(width: r.spacing12),
+
+                      // Campo de texto
+                      Expanded(
+                        child: TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [_phoneMaskFormatter],
+                          onChanged: (value) => setState(() {}),
+                          validator: _validatePhoneNumber,
+                          style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
+                          decoration: InputDecoration(
+                            hintText: 'número de telefone',
+                            hintStyle: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                SizedBox(height: r.spacing16),
 
-              // Aviso
-              Text(
-                'Você receberá um SMS para verificar seu telefone. Taxas de SMS padrão podem ser aplicadas.',
-                style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray400),
-              ),
-
-              // Error message
-              if (_errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 16),
+                // Aviso
                 Text(
-                  _errorMessage,
-                  style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
+                  'Você receberá um SMS para verificar seu telefone. Taxas de SMS padrão podem ser aplicadas.',
+                  style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray400),
                 ),
+
+                // Error message
+                if (_errorMessage.isNotEmpty) ...[
+                  SizedBox(height: r.spacing16),
+                  Text(
+                    _errorMessage,
+                    style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
+                  ),
+                ],
+
+                const Spacer(),
+
+                // Botão Save/Next
+                AppButton(
+                  text: _phoneController.text.isEmpty ? 'Salvar' : 'Próximo',
+                  isLoading: _isSendingCode,
+                  onPressed: (_phoneController.text.isEmpty || _isSendingCode)
+                      ? null
+                      : _sendVerificationCode,
+                ),
+
+                SizedBox(height: r.spacing16),
               ],
-
-              const Spacer(),
-
-              // Botão Save/Next
-              AppButton(
-                text: _phoneController.text.isEmpty ? 'Salvar' : 'Próximo',
-                isLoading: _isSendingCode,
-                onPressed: (_phoneController.text.isEmpty || _isSendingCode)
-                    ? null
-                    : _sendVerificationCode,
-              ),
-
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  // Validadores
+  String? _validatePhoneNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Número de telefone é obrigatório.';
+    }
+    final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
+    if (digitsOnly.length < 10) {
+      return 'Número de telefone inválido.';
+    }
+    return null;
   }
 }
