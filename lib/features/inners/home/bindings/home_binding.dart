@@ -21,7 +21,8 @@ import '../../profile/controllers/profile_social_controller.dart';
 import '../../shop/controllers/shop_controller.dart';
 import '../../treasure/controllers/treasure_challenges_controller.dart';
 import '../../treasure/controllers/treasure_rewards_controller.dart';
-import '../controllers/home_controller.dart';
+import '../controllers/home_navigation_controller.dart';
+import '../controllers/home_stats_controller.dart';
 
 /// Binding da home
 class HomeBinding extends Bindings {
@@ -75,8 +76,9 @@ class HomeBinding extends Bindings {
     Get.lazyPut<TreasureChallengesController>(() => TreasureChallengesController());
     Get.lazyPut<TreasureRewardsController>(() => TreasureRewardsController());
 
-    // Instanciar outros controllers
-    Get.lazyPut<HomeController>(() => HomeController());
+    // Instanciar Home controllers (2 controllers)
+    Get.lazyPut<HomeNavigationController>(() => HomeNavigationController());
+    Get.lazyPut<HomeStatsController>(() => HomeStatsController());
     
     // Instanciar OnboardingControllers (3 novos controllers)
     Get.lazyPut<OnboardingDataController>(() => OnboardingDataController());

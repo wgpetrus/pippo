@@ -11,7 +11,8 @@ import '../../leaderboard/views/leaderboard_page.dart';
 import '../../profile/views/profile_page.dart';
 import '../../shop/views/shop_page.dart';
 import '../../treasure/views/treasure_page.dart';
-import '../controllers/home_controller.dart';
+import '../controllers/home_navigation_controller.dart';
+import '../controllers/home_stats_controller.dart';
 import '../widgets/courses_modal.dart';
 import '../widgets/energy_modal.dart';
 import '../widgets/gems_modal.dart';
@@ -28,25 +29,26 @@ class HomeView extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HomeController>();
+    final navController = Get.find<HomeNavigationController>();
+    final statsController = Get.find<HomeStatsController>();
 
     return Obx(() => Scaffold(
       body: IndexedStack(
-        index: controller.currentNavIndex.value,
+        index: navController.currentNavIndex.value,
         children: [
-          _buildCoursesPage(context, controller),  // Tab 0
+          _buildCoursesPage(context, statsController),  // Tab 0
           const LeaderboardPage(),                 // Tab 1
           const ShopPage(),                        // Tab 2
           const TreasurePage(),                    // Tab 3
           const ProfilePage(),                     // Tab 4
         ],
       ),
-      bottomNavigationBar: _buildBottomBar(controller),
+      bottomNavigationBar: _buildBottomBar(navController),
     ));
   }
 
   // Bottom Navigation Bar
-  Widget _buildBottomBar(HomeController controller) {
+  Widget _buildBottomBar(HomeNavigationController navController) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.white,
@@ -64,11 +66,11 @@ class HomeView extends StatelessWidget {
           child: Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, AppAssets.bottomRay, controller),
-              _buildNavItem(1, AppAssets.bottomCoroa, controller),
-              _buildNavItem(2, AppAssets.bottomCoins, controller),
-              _buildNavItem(3, AppAssets.bottomBox, controller),
-              _buildAvatarNavItem(4, controller),
+              _buildNavItem(0, AppAssets.bottomRay, navController),
+              _buildNavItem(1, AppAssets.bottomCoroa, navController),
+              _buildNavItem(2, AppAssets.bottomCoins, navController),
+              _buildNavItem(3, AppAssets.bottomBox, navController),
+              _buildAvatarNavItem(4, navController),
             ],
           )),
         ),
@@ -76,13 +78,13 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(int index, String iconAsset, HomeController controller) {
-    final isSelected = controller.currentNavIndex.value == index;
+  Widget _buildNavItem(int index, String iconAsset, HomeNavigationController navController) {
+    final isSelected = navController.currentNavIndex.value == index;
     final containerSize = ResponsiveUtils.width(48, min: 44, max: 56);
     final iconSize = ResponsiveUtils.width(24, min: 24, max: 28);
 
     return GestureDetector(
-      onTap: () => controller.onNavTap(index),
+      onTap: () => navController.onNavTap(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -102,12 +104,12 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarNavItem(int index, HomeController controller) {
-    final isSelected = controller.currentNavIndex.value == index;
+  Widget _buildAvatarNavItem(int index, HomeNavigationController navController) {
+    final isSelected = navController.currentNavIndex.value == index;
     final containerSize = ResponsiveUtils.width(48, min: 44, max: 56);
 
     return GestureDetector(
-      onTap: () => controller.onNavTap(index),
+      onTap: () => navController.onNavTap(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -135,7 +137,7 @@ class HomeView extends StatelessWidget {
   }
 
   // Widgets
-  Widget _buildCoursesPage(BuildContext context, HomeController controller) {
+  Widget _buildCoursesPage(BuildContext context, HomeStatsController statsController) {
     return Stack(
       children: [
         // Background
@@ -149,18 +151,18 @@ class HomeView extends StatelessWidget {
         ),
 
         // Conteúdo (mascote + botões)
-        _buildContent(context, controller),
+        _buildContent(context, statsController),
 
         // AppBar
         Builder(
           builder: (appBarContext) => Obx(() => HomeAppbar(
             avatarAsset: AppAssets.charDiogo,
-            flagAsset: controller.activeCourseFlag.value.isEmpty 
+            flagAsset: statsController.activeCourseFlag.value.isEmpty 
                 ? AppAssets.flagFrance 
-                : controller.activeCourseFlag.value,
-            selectedStat: controller.selectedStat.value,
-            onStatTap: (stat) => _onStatTap(appBarContext, controller, stat),
-            controller: controller,
+                : statsController.activeCourseFlag.value,
+            selectedStat: statsController.selectedStat.value,
+            onStatTap: (stat) => _onStatTap(appBarContext, statsController, stat),
+            controller: statsController,
           )),
         ),
 
@@ -171,14 +173,14 @@ class HomeView extends StatelessWidget {
           right: 0,
           child: Obx(() {
             // Acessar diretamente a variável observável para o GetX rastrear
-            final _ = controller.currentUnitIndex.value;
-            final unit = controller.currentUnit;
+            final _ = statsController.currentUnitIndex.value;
+            final unit = statsController.currentUnit;
             
             return Builder(
               builder: (ctx) => UnitHeader(
                 unitNumber: unit['number'] as String,
                 title: unit['title'] as String,
-                onListTap: () => _showLessonPopover(ctx, controller),
+                onListTap: () => _showLessonPopover(ctx, statsController),
               ),
             );
           }),
@@ -187,15 +189,15 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, HomeController controller) {
+  Widget _buildContent(BuildContext context, HomeStatsController statsController) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Obx(() {
       // Acessar diretamente as variáveis observáveis para o GetX rastrear
-      final _ = controller.currentUnitIndex.value;
-      final __ = controller.completedLessons.length;
-      final lessonButtons = controller.currentLessonButtons;
+      final _ = statsController.currentUnitIndex.value;
+      final __ = statsController.completedLessons.length;
+      final lessonButtons = statsController.currentLessonButtons;
       
       return Stack(
         children: [
@@ -228,7 +230,7 @@ class HomeView extends StatelessWidget {
               context: context,
               lessonData: lessonData,
               index: index,
-              controller: controller,
+              controller: statsController,
             );
           }),
         ],
@@ -240,7 +242,7 @@ class HomeView extends StatelessWidget {
     required BuildContext context,
     required Map<String, dynamic> lessonData,
     required int index,
-    required HomeController controller,
+    required HomeStatsController controller,
   }) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -297,7 +299,7 @@ class HomeView extends StatelessWidget {
     required String iconAsset,
     required String? effectAsset,
     required LessonStatus status,
-    required HomeController controller,
+    required HomeStatsController controller,
     required String tooltipText,
     required int buttonIndex,
   }) {
@@ -324,47 +326,47 @@ class HomeView extends StatelessWidget {
   }
 
   // Métodos
-  void _onStatTap(BuildContext context, HomeController controller, StatType stat) {
+  void _onStatTap(BuildContext context, HomeStatsController statsController, StatType stat) {
     // Marca como selecionada ANTES de abrir o modal
-    controller.onStatTap(stat);
+    statsController.onStatTap(stat);
     
     // Aguarda um frame para garantir que a UI atualizou
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Abre modal específico
       switch (stat) {
         case StatType.flag:
-          _showCoursesModal(context, controller);
+          _showCoursesModal(context, statsController);
           break;
         case StatType.fire:
-          _showStreakModal(context, controller);
+          _showStreakModal(context, statsController);
           break;
         case StatType.gem:
-          _showGemsModal(context, controller);
+          _showGemsModal(context, statsController);
           break;
         case StatType.ray:
-          _showEnergyModal(context, controller);
+          _showEnergyModal(context, statsController);
           break;
       }
     });
   }
 
-  void _showCoursesModal(BuildContext context, HomeController controller) {
+  void _showCoursesModal(BuildContext context, HomeStatsController statsController) {
     // Carregar cursos antes de abrir modal
-    controller.loadUserCourses().then((_) {
+    statsController.loadUserCourses().then((_) {
       // Se não há cursos carregados, usar dados mockados como fallback
-      final courses = controller.userCourses.isEmpty
+      final courses = statsController.userCourses.isEmpty
           ? [
               CourseData(
-                flagAsset: controller.activeCourseFlag.value.isEmpty 
+                flagAsset: statsController.activeCourseFlag.value.isEmpty 
                     ? AppAssets.flagFrance 
-                    : controller.activeCourseFlag.value,
-                name: controller.activeCourseName.value.isEmpty 
+                    : statsController.activeCourseFlag.value,
+                name: statsController.activeCourseName.value.isEmpty 
                     ? 'Francês' 
-                    : controller.activeCourseName.value,
+                    : statsController.activeCourseName.value,
                 isSelected: true,
               ),
             ]
-          : controller.userCourses.map((course) {
+          : statsController.userCourses.map((course) {
               return CourseData(
                 flagAsset: course['flagAsset'] as String,
                 name: course['languageName'] as String,
@@ -375,30 +377,30 @@ class HomeView extends StatelessWidget {
       CoursesModal.show(
         context,
         courses: courses,
-        selectedCourseName: controller.activeCourseName.value.isEmpty 
+        selectedCourseName: statsController.activeCourseName.value.isEmpty 
             ? 'Francês' 
-            : controller.activeCourseName.value,
-        currentLevel: controller.activeCourseLevel.value,
+            : statsController.activeCourseName.value,
+        currentLevel: statsController.activeCourseLevel.value,
         maxLevel: 15,
-        onAddCourse: controller.onAddCourse,
+        onAddCourse: statsController.onAddCourse,
         onCourseSelected: (course) {
           // Encontrar ID do curso selecionado
-          final selectedCourse = controller.userCourses.firstWhereOrNull(
+          final selectedCourse = statsController.userCourses.firstWhereOrNull(
             (c) => c['languageName'] == course.name,
           );
           
           if (selectedCourse != null) {
-            controller.switchActiveCourse(selectedCourse['id'] as String);
+            statsController.switchActiveCourse(selectedCourse['id'] as String);
           }
         },
       ).then((_) {
         // Limpar seleção quando modal fechar
-        controller.clearStatSelection();
+        statsController.clearStatSelection();
       });
     });
   }
 
-  void _showStreakModal(BuildContext context, HomeController controller) {
+  void _showStreakModal(BuildContext context, HomeStatsController statsController) {
     StreakModal.show(
       context,
       onSeeMore: () {
@@ -406,23 +408,25 @@ class HomeView extends StatelessWidget {
       },
     ).then((_) {
       // Limpar seleção quando modal fechar
-      controller.clearStatSelection();
+      statsController.clearStatSelection();
     });
   }
 
-  void _showGemsModal(BuildContext context, HomeController controller) {
+  void _showGemsModal(BuildContext context, HomeStatsController statsController) {
+    final navController = Get.find<HomeNavigationController>();
+    
     GemsModal.show(
       context,
       onGoToShop: () {
-        controller.goToShop();
+        navController.goToShop();
       },
     ).then((_) {
       // Limpar seleção quando modal fechar
-      controller.clearStatSelection();
+      statsController.clearStatSelection();
     });
   }
 
-  void _showEnergyModal(BuildContext context, HomeController controller) {
+  void _showEnergyModal(BuildContext context, HomeStatsController statsController) {
     EnergyModal.show(
       context,
       onUnlimitedTap: () {
@@ -430,16 +434,16 @@ class HomeView extends StatelessWidget {
       },
     ).then((_) {
       // Limpar seleção quando modal fechar
-      controller.clearStatSelection();
+      statsController.clearStatSelection();
     });
   }
 
-  void _showLessonPopover(BuildContext context, HomeController controller) {
-    final unit = controller.currentUnit;
-    final lessonButtons = controller.currentLessonButtons;
+  void _showLessonPopover(BuildContext context, HomeStatsController statsController) {
+    final unit = statsController.currentUnit;
+    final lessonButtons = statsController.currentLessonButtons;
     final completedInUnit = lessonButtons.where((lesson) {
       final lessonId = lesson['lessonId'] as String;
-      return controller.completedLessons.contains(lessonId);
+      return statsController.completedLessons.contains(lessonId);
     }).length;
     
     showPopover(
@@ -450,7 +454,7 @@ class HomeView extends StatelessWidget {
         totalLessons: lessonButtons.length,
         onStartTap: () {
           Navigator.of(ctx).pop();
-          controller.onStartTap(controller.currentUnitIndex.value);
+          statsController.onStartTap(statsController.currentUnitIndex.value);
         },
       ),
       direction: PopoverDirection.bottom,

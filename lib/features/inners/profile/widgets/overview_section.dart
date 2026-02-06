@@ -5,7 +5,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../gamification/controllers/xp_level_controller.dart';
 import '../../gamification/controllers/streak_controller.dart';
-import '../../home/controllers/home_controller.dart';
+import '../../home/controllers/home_stats_controller.dart';
 import 'overview_card.dart';
 
 /// Seção de overview do perfil (Total XP, Day streak, etc)
@@ -58,7 +58,7 @@ class OverviewSection extends StatelessWidget {
   Widget _buildReactiveStats() {
     final xpLevelController = Get.find<XpLevelController>();
     final streakController = Get.find<StreakController>();
-    final homeController = Get.find<HomeController>();
+    final homeStatsController = Get.find<HomeStatsController>();
 
     return Column(
       children: [
@@ -110,7 +110,7 @@ class OverviewSection extends StatelessWidget {
                   iconAsset: flagAsset,
                   value: '${xpLevelController.level.value}',
                   label:
-                      'Nível de ${homeController.activeCourseName.value.isNotEmpty ? homeController.activeCourseName.value : 'Idioma'}',
+                      'Nível de ${homeStatsController.activeCourseName.value.isNotEmpty ? homeStatsController.activeCourseName.value : 'Idioma'}',
                   iconSize: 30,
                   starColor: AppTheme.blue,
                 ),

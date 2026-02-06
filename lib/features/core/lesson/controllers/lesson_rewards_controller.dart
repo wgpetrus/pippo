@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../inners/gamification/controllers/xp_level_controller.dart';
 import '../../../inners/gamification/controllers/gems_controller.dart';
-import '../../../inners/home/controllers/home_controller.dart';
+import '../../../inners/home/controllers/home_stats_controller.dart';
 import '../../../inners/treasure/controllers/treasure_challenges_controller.dart';
 import 'lesson_flow_controller.dart';
 import 'lesson_progress_controller.dart';
@@ -155,10 +155,10 @@ class LessonRewardsController extends GetxController {
         
         // Step 12: Recarregar progresso das lições na home
         try {
-          final homeController = Get.find<HomeController>();
-          await homeController.reloadProgress();
+          final homeStatsController = Get.find<HomeStatsController>();
+          await homeStatsController.reloadProgress();
         } catch (e) {
-          debugPrint('⚠️ HomeController não encontrado para recarregar progresso: $e');
+          debugPrint('⚠️ HomeStatsController não encontrado para recarregar progresso: $e');
         }
         
         debugPrint('✅ applyRewards() CONCLUÍDO COM SUCESSO');

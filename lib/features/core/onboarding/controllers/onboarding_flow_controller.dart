@@ -11,7 +11,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Imports locais
-import '../../../inners/home/controllers/home_controller.dart';
+import '../../../inners/home/controllers/home_stats_controller.dart';
 import '../navigation/onboarding_navigation.dart';
 import 'onboarding_data_controller.dart';
 
@@ -195,15 +195,15 @@ class OnboardingFlowController extends GetxController {
       // Modo add course: apenas criar novo curso
       await _dataController.addNewCourse();
 
-      // Recarregar dados do HomeController após adicionar curso
+      // Recarregar dados do HomeStatsController após adicionar curso
       if (errorMessage.value.isEmpty) {
-        debugPrint('🔄 finishOnboarding: Recarregando HomeController...');
+        debugPrint('🔄 finishOnboarding: Recarregando HomeStatsController...');
         try {
-          final homeController = Get.find<HomeController>();
-          await homeController.reloadAfterAddCourse();
-          debugPrint('✅ finishOnboarding: HomeController recarregado');
+          final homeStatsController = Get.find<HomeStatsController>();
+          await homeStatsController.reloadAfterAddCourse();
+          debugPrint('✅ finishOnboarding: HomeStatsController recarregado');
         } catch (e) {
-          debugPrint('⚠️ finishOnboarding: Erro ao recarregar HomeController: $e');
+          debugPrint('⚠️ finishOnboarding: Erro ao recarregar HomeStatsController: $e');
         }
       }
     } else {

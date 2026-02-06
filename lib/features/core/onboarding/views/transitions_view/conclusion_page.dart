@@ -6,7 +6,7 @@ import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../../../inners/home/controllers/home_controller.dart';
+import '../../../../inners/home/controllers/home_stats_controller.dart';
 import '../../controllers/onboarding_data_controller.dart';
 import '../../controllers/onboarding_flow_controller.dart';
 
@@ -175,14 +175,14 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
           _dataController.isAddingCourse.value = false;
           Get.offAllNamed('/home');
           
-          // Recarregar cursos no HomeController após voltar
+          // Recarregar cursos no HomeStatsController após voltar
           Future.delayed(const Duration(milliseconds: 500), () {
             try {
-              final homeController = Get.find<HomeController>();
-              homeController.loadUserCourses();
+              final homeStatsController = Get.find<HomeStatsController>();
+              homeStatsController.loadActiveCourse();
               debugPrint('🔄 Cursos recarregados após adicionar novo curso');
             } catch (e) {
-              debugPrint('⚠️ HomeController não encontrado ao recarregar cursos');
+              debugPrint('⚠️ HomeStatsController não encontrado ao recarregar cursos');
             }
           });
         } else {

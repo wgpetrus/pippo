@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/inners/home/controllers/home_controller.dart';
+import 'package:pippo/features/inners/home/controllers/home_navigation_controller.dart';
 import 'package:pippo/shared/theme/theme.dart';
 
+import '../helpers/firebase_test_helper.dart';
+
 void main() {
+  setUpAll(() async {
+    await FirebaseTestHelper.setupFirebase();
+  });
+
   group('Gems Modal Navigation - Smooth Transition Tests', () {
-    late HomeController homeController;
+    late HomeNavigationController homeNavigationController;
 
     setUp(() {
       // Registrar controller
-      homeController = Get.put(HomeController(), permanent: true);
+      homeNavigationController = Get.put(HomeNavigationController(), permanent: true);
     });
 
     tearDown(() {
@@ -45,7 +51,7 @@ void main() {
                                 modalClosed = true;
                                 
                                 // Depois navegar
-                                homeController.goToShop();
+                                homeNavigationController.goToShop();
                                 navigationCalled = true;
                               },
                               child: const Text('Ir para a loja'),
@@ -64,7 +70,7 @@ void main() {
       );
 
       // Verificar que está na tab 0 (Courses)
-      expect(homeController.currentNavIndex.value, 0);
+      expect(homeNavigationController.currentNavIndex.value, 0);
 
       // Act - Abrir modal
       await tester.tap(find.text('Abrir Modal'));
@@ -81,7 +87,7 @@ void main() {
 
       // Assert - Verificar que navegou para shop (tab 2)
       expect(navigationCalled, true);
-      expect(homeController.currentNavIndex.value, 2);
+      expect(homeNavigationController.currentNavIndex.value, 2);
     });
 
     testWidgets('Transição é suave sem erros', (WidgetTester tester) async {
@@ -104,7 +110,7 @@ void main() {
                             child: ElevatedButton(
                               onPressed: () {
                                 Navigator.of(context).pop();
-                                homeController.goToShop();
+                                homeNavigationController.goToShop();
                               },
                               child: const Text('Ir para a loja'),
                             ),
@@ -135,7 +141,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - Verificar estado final
-      expect(homeController.currentNavIndex.value, 2);
+      expect(homeNavigationController.currentNavIndex.value, 2);
     });
 
     testWidgets('Callback é chamado apenas após modal fechar', (WidgetTester tester) async {
@@ -165,7 +171,7 @@ void main() {
                                 // Callback após fechar
                                 callbackCalled = true;
                                 callbackCallCount++;
-                                homeController.goToShop();
+                                homeNavigationController.goToShop();
                               },
                               child: const Text('Ir para a loja'),
                             ),
@@ -203,18 +209,18 @@ void main() {
       // Assert
       expect(callbackCalled, true);
       expect(callbackCallCount, 1); // Chamado apenas uma vez
-      expect(homeController.currentNavIndex.value, 2);
+      expect(homeNavigationController.currentNavIndex.value, 2);
     });
 
     test('goToShop atualiza currentNavIndex para 2', () {
       // Arrange
-      homeController.currentNavIndex.value = 0;
+      homeNavigationController.currentNavIndex.value = 0;
 
       // Act
-      homeController.goToShop();
+      homeNavigationController.goToShop();
 
       // Assert
-      expect(homeController.currentNavIndex.value, 2);
+      expect(homeNavigationController.currentNavIndex.value, 2);
     });
   });
 }

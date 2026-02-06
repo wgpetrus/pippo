@@ -783,13 +783,21 @@ class AuthController extends GetxController {
       
       // Deletar controllers de features
       final controllersToDelete = [
-        'HomeController',
-        'LessonController',
+        'HomeNavigationController',
+        'HomeStatsController',
+        'LessonFlowController',
+        'LessonExerciseController',
+        'LessonProgressController',
+        'LessonRewardsController',
         'TreasureChallengesController',
         'TreasureRewardsController',
         'ShopController',
         'LeaderboardController',
-        'ProfileController',
+        'ProfileDataController',
+        'ProfileSettingsController',
+        'ProfileSocialController',
+        'ProfileCoursesController',
+        'ProfileAuthController',
         'FriendsController',
       ];
       

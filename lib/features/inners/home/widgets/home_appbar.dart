@@ -18,7 +18,7 @@ class HomeAppbar extends StatelessWidget {
   final StatType? selectedStat;
   final VoidCallback? onAvatarTap;
   final ValueChanged<StatType>? onStatTap;
-  final dynamic controller; // HomeController para observar selectedStat
+  final dynamic controller; // HomeStatsController para observar selectedStat
 
   const HomeAppbar({
     super.key,

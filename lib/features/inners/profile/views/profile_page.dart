@@ -7,7 +7,7 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
 import '../../gamification/controllers/xp_level_controller.dart';
 import '../../gamification/controllers/streak_controller.dart';
-import '../../home/controllers/home_controller.dart';
+import '../../home/controllers/home_stats_controller.dart';
 import '../controllers/profile_data_controller.dart';
 import '../controllers/profile_social_controller.dart';
 import '../controllers/profile_courses_controller.dart';
@@ -173,9 +173,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             // Gráfico de progresso semanal
             SliverToBoxAdapter(
               child: Obx(() {
-                // Obter curso ativo do HomeController para chave única (força reconstrução ao trocar curso)
-                final homeController = Get.find<HomeController>();
-                final courseId = homeController.activeCourseId.value;
+                // Obter curso ativo do HomeStatsController para chave única (força reconstrução ao trocar curso)
+                final homeStatsController = Get.find<HomeStatsController>();
+                final courseId = homeStatsController.activeCourseId.value;
                 
                 // Converter dados do controller para ChartData
                 final weeklyProgressData = _socialController.weeklyProgress

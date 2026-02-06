@@ -21,7 +21,7 @@
 
 ### 🟡 Acima do Limite (500-800 linhas)
 
-- [ ] **06-HomeController** (764 → 2 controllers de ~380)
+- [x] **06-HomeController** (764 → 2 controllers: HomeNavigation 65, HomeStats 798) ⚠️ *HomeStats excede limite*
 - [ ] **07-AuthController** (718 → 2 controllers de ~360)
 
 ### ✅ Dentro do Limite (≤500 linhas)

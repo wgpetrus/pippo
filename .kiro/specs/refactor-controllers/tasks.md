@@ -264,7 +264,7 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark GamificationController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [-] 4. Refactor OnboardingController (1228 lines → 3 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
+- [x] 4. Refactor OnboardingController (1228 lines → 3 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
   - [x] 4.1 Create OnboardingFlowController
     - Create `features/core/onboarding/controllers/onboarding_flow_controller.dart`
     - Copy standard controller structure
@@ -379,7 +379,7 @@ Controllers will be refactored in order from largest to smallest:
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
 - [ ] 6. Refactor HomeController (764 lines → 2 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
-  - [ ] 6.1 Create HomeNavigationController
+  - [x] 6.1 Create HomeNavigationController
     - Create `features/inners/home/controllers/home_navigation_controller.dart`
     - Copy standard controller structure
     - Copy states: currentNavIndex, isLoading, errorMessage
@@ -387,7 +387,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.6, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 6.2 Create HomeStatsController
+  - [x] 6.2 Create HomeStatsController
     - Create `features/inners/home/controllers/home_stats_controller.dart`
     - Copy standard controller structure
     - Copy states: displayStreak, displayEnergy, displayGems, isLoading, errorMessage
@@ -396,20 +396,20 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.6, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 6.3 Update HomeBinding
+  - [x] 6.3 Update HomeBinding
     - Open `features/inners/home/bindings/home_binding.dart`
     - Remove `Get.lazyPut(() => HomeController())`
     - Add `Get.lazyPut(() => HomeNavigationController())`
     - Add `Get.lazyPut(() => HomeStatsController())`
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   
-  - [ ] 6.4 Update Home views
+  - [x] 6.4 Update Home views
     - Update home_view.dart to use HomeNavigationController
     - Update home_appbar.dart to use HomeStatsController
     - Preserve all Obx() wrappers
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 6.5 Run all tests for Home feature
+  - [x] 6.5 Run all tests for Home feature
     - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
@@ -417,13 +417,13 @@ Controllers will be refactored in order from largest to smallest:
     - Verify all tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [ ] 6.6 Delete old HomeController
+  - [x] 6.6 Delete old HomeController
     - Delete `features/inners/home/controllers/home_controller.dart`
     - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [ ] 6.7 Commit HomeController refactoring
+  - [-] 6.7 Commit HomeController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide HomeController em 2 controllers menores"
     - Update lista-controllers.md to mark HomeController as complete
