@@ -605,12 +605,18 @@ class LessonRewardsController extends GetxController {
     final userId = _auth.currentUser?.uid;
     if (userId == null) throw Exception('Usuário não autenticado');
     
+    // Obter courseId do curso ativo
+    final courseId = _flowController.currentLesson.value?['courseId'] as String? ?? '';
+    if (courseId.isEmpty) throw Exception('CourseId não pode ser vazio');
+    
     final todayDate = _getTodayDateString();
     
     try {
       await _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('dailyHistory')
           .set({
@@ -620,6 +626,8 @@ class LessonRewardsController extends GetxController {
       final dayRef = _firestore
           .collection('users')
           .doc(userId)
+          .collection('courses')
+          .doc(courseId)
           .collection('stats')
           .doc('dailyHistory')
           .collection('days')
