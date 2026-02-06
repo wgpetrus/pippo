@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 
 /// Tela de seleção de tempo de estudo diário
@@ -24,7 +25,8 @@ class StudyTimePage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OnboardingController>();
+    final dataController = Get.find<OnboardingDataController>();
+    final flowController = Get.find<OnboardingFlowController>();
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -35,15 +37,15 @@ class StudyTimePage extends StatelessWidget {
             bubbleText: 'Escolha sua meta diária de aprendizado',
             progress: 44,
           ),
-          _buildTimeList(controller),
+          _buildTimeList(dataController),
         ],
       ),
-      bottomNavigationBar: _buildBottomButton(controller),
+      bottomNavigationBar: _buildBottomButton(dataController, flowController),
     );
   }
 
   // Widgets
-  Widget _buildTimeList(OnboardingController controller) {
+  Widget _buildTimeList(OnboardingDataController dataController) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -54,8 +56,8 @@ class StudyTimePage extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(24, index == 0 ? 8 : 0, 24, 12),
             child: Obx(() => _buildTimeCard(
               label: time,
-              isSelected: controller.studyTime.value == time,
-              onTap: () => controller.studyTime.value = time,
+              isSelected: dataController.studyTime.value == time,
+              onTap: () => dataController.setStudyTime(time),
             )),
           );
         },
@@ -123,27 +125,27 @@ class StudyTimePage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomButton(OnboardingController controller) {
+  Widget _buildBottomButton(OnboardingDataController dataController, OnboardingFlowController flowController) {
     return Container(
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
         text: 'Continuar',
-        onPressed: controller.studyTime.value.isNotEmpty
-            ? () => _onContinue(controller)
+        onPressed: dataController.studyTime.value.isNotEmpty
+            ? () => _onContinue(dataController, flowController)
             : null,
       )),
     );
   }
 
   // Métodos
-  void _onContinue(OnboardingController controller) {
-    if (controller.isAddingCourse.value) {
+  void _onContinue(OnboardingDataController dataController, OnboardingFlowController flowController) {
+    if (dataController.isAddingCourse.value) {
       // Pula direto para conclusão (sem passar por cadastro)
-      controller.nav.goToConclusion();
+      flowController.nav.goToConclusion();
     } else {
       // Fluxo normal do onboarding
-      controller.nav.goToPauseTwo();
+      flowController.nav.goToPauseTwo();
     }
   }
 }

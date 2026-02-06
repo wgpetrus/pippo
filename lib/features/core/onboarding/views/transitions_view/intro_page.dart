@@ -5,7 +5,7 @@ import 'package:showcaseview/showcaseview.dart';
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 
 /// Tela de introdução do mascote
 class IntroPage extends StatelessWidget {
@@ -28,7 +28,7 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
   // Keys
   final _showcaseKey = GlobalKey();
 
-  late final OnboardingController _controller;
+  late final OnboardingFlowController _flowController;
   late final AnimationController _animController;
   late final Animation<double> _bounceAnim;
 
@@ -43,7 +43,7 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _flowController = Get.find<OnboardingFlowController>();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -92,7 +92,7 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
               const SizedBox(height: 32),
               AppButton(
                 text: 'Começar',
-                onPressed: _controller.nav.goToSelectLanguage,
+                onPressed: _flowController.nav.goToSelectLanguage,
               ),
               const SizedBox(height: 48),
             ],

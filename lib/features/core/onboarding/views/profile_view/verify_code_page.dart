@@ -7,7 +7,8 @@ import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../../../../shared/widgets/app_pinput.dart';
 import '../../../../../shared/widgets/app_resend_code.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_validation_controller.dart';
 import '../../widgets/onboarding_header.dart';
 
 /// Tela de verificação de código do onboarding
@@ -23,7 +24,8 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   final _pinController = TextEditingController();
   final _focusNode = FocusNode();
 
-  late final OnboardingController _controller;
+  late final OnboardingDataController _dataController;
+  late final OnboardingValidationController _validationController;
 
   // Estados
   bool _isComplete = false;
@@ -32,7 +34,8 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _dataController = Get.find<OnboardingDataController>();
+    _validationController = Get.find<OnboardingValidationController>();
     _pinController.addListener(() {
       setState(() => _isComplete = _pinController.text.length == 5);
     });
@@ -100,18 +103,18 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                     SizedBox(height: r.spacing32),
                     
                     // Exibir erro se houver
-                    Obx(() => _controller.errorMessage.value.isNotEmpty
+                    Obx(() => _validationController.errorMessage.value.isNotEmpty
                         ? Padding(
                             padding: EdgeInsets.only(bottom: r.spacing16),
                             child: Text(
-                              _controller.errorMessage.value,
+                              _validationController.errorMessage.value,
                               style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
                             ),
                           )
                         : const SizedBox.shrink()),
                     
                     // Exibir mensagem de retry se houver
-                    Obx(() => _controller.retryMessage.value.isNotEmpty
+                    Obx(() => _dataController.retryMessage.value.isNotEmpty
                         ? Padding(
                             padding: EdgeInsets.only(bottom: r.spacing16),
                             child: Column(
@@ -129,7 +132,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                                     SizedBox(width: r.spacing8),
                                     Expanded(
                                       child: Text(
-                                        _controller.retryMessage.value,
+                                        _dataController.retryMessage.value,
                                         style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
                                       ),
                                     ),
@@ -139,7 +142,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                                 Align(
                                   alignment: Alignment.centerLeft,
                                   child: TextButton(
-                                    onPressed: () => _controller.cancelRetry(),
+                                    onPressed: () => _dataController.cancelRetry(),
                                     child: Text(
                                       'Cancelar',
                                       style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
@@ -156,8 +159,8 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                         controller: _pinController,
                         focusNode: _focusNode,
                         onCompleted: (pin) {
-                          if (!_controller.isLoading.value) {
-                            _controller.verifyCode(pin);
+                          if (!_validationController.isLoading.value) {
+                            _validationController.verifyCode(pin);
                           }
                         },
                       ),
@@ -165,9 +168,9 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                     SizedBox(height: r.spacing24),
                     Obx(() => AppResendCode(
                       isComplete: _isComplete,
-                      onResend: _controller.isLoading.value
+                      onResend: _validationController.isLoading.value
                           ? () {}
-                          : _controller.resendVerificationCode,
+                          : _validationController.resendVerificationCode,
                     )),
                     
                     // Botão cancelar quando teclado está fechado
@@ -176,9 +179,9 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       AppButton(
                         text: 'Cancelar',
                         isPrimary: false,
-                        onPressed: _controller.isLoading.value
+                        onPressed: _validationController.isLoading.value
                             ? null
-                            : _controller.cancelVerification,
+                            : _validationController.cancelVerification,
                       ),
                     ],
                   ],
@@ -192,9 +195,9 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                   children: [
                     Obx(() => AppButton(
                       text: 'Verify',
-                      isLoading: _controller.isLoading.value,
-                      onPressed: (_isComplete && !_controller.isLoading.value)
-                          ? () => _controller.verifyCode(_pinController.text)
+                      isLoading: _validationController.isLoading.value,
+                      onPressed: (_isComplete && !_validationController.isLoading.value)
+                          ? () => _validationController.verifyCode(_pinController.text)
                           : null,
                       isPrimary: _isComplete,
                     )),
@@ -202,9 +205,9 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                     AppButton(
                       text: 'Cancelar',
                       isPrimary: false,
-                      onPressed: _controller.isLoading.value
+                      onPressed: _validationController.isLoading.value
                           ? null
-                          : _controller.cancelVerification,
+                          : _validationController.cancelVerification,
                     ),
                   ],
                 ),

@@ -8,7 +8,7 @@ import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 
 /// Tela de pausa 1 - transição entre blocos
@@ -92,7 +92,7 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
                     const SizedBox(height: 40),
                     AppButton(
                       text: 'Próximo',
-                      onPressed: () => Get.find<OnboardingController>().nav.goToStudyTime(),
+                      onPressed: () => Get.find<OnboardingFlowController>().nav.goToStudyTime(),
                       suffixIcon: const FaIcon(FontAwesomeIcons.arrowRight, color: AppTheme.white, size: 18),
                     ),
                   ],

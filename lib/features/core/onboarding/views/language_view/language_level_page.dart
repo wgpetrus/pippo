@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/option_card.dart';
 
@@ -24,7 +25,8 @@ class LanguageLevelPage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OnboardingController>();
+    final dataController = Get.find<OnboardingDataController>();
+    final flowController = Get.find<OnboardingFlowController>();
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -35,22 +37,22 @@ class LanguageLevelPage extends StatelessWidget {
             bubbleText: 'Como você avalia seu nível?',
             progress: 22,
           ),
-          _buildLevelList(controller),
+          _buildLevelList(dataController),
         ],
       ),
-      bottomNavigationBar: _buildBottomButton(controller),
+      bottomNavigationBar: _buildBottomButton(dataController, flowController),
     );
   }
 
   // Widgets
-  Widget _buildLevelList(OnboardingController controller) {
+  Widget _buildLevelList(OnboardingDataController dataController) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final level = _levels[index];
           // Usar LanguageHelper para obter o nome do idioma
-          final languageName = controller.selectedLanguage.value.isNotEmpty
-              ? _getLanguageName(controller.selectedLanguage.value)
+          final languageName = dataController.selectedLanguage.value.isNotEmpty
+              ? _getLanguageName(dataController.selectedLanguage.value)
               : '';
           final label = level['label']!.replaceAll('{lang}', languageName);
 
@@ -60,8 +62,8 @@ class LanguageLevelPage extends StatelessWidget {
             child: Obx(() => OptionCard(
               iconAsset: level['icon']!,
               label: label,
-              isSelected: controller.languageLevel.value == level['label'],
-              onTap: () => controller.languageLevel.value = level['label']!,
+              isSelected: dataController.languageLevel.value == level['label'],
+              onTap: () => dataController.setLanguageLevel(level['label']!),
               isCircularIcon: false,
             )),
           );
@@ -86,14 +88,14 @@ class LanguageLevelPage extends StatelessWidget {
     return languageNames[code] ?? code;
   }
 
-  Widget _buildBottomButton(OnboardingController controller) {
+  Widget _buildBottomButton(OnboardingDataController dataController, OnboardingFlowController flowController) {
     return Container(
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
         text: 'Continuar',
-        onPressed: controller.languageLevel.value.isNotEmpty
-            ? controller.nav.goToLearningReason
+        onPressed: dataController.languageLevel.value.isNotEmpty
+            ? flowController.nav.goToLearningReason
             : null,
       )),
     );

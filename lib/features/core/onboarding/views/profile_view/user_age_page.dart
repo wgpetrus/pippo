@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/onboarding_text_field.dart';
 
@@ -21,7 +22,8 @@ class _UserAgePageState extends State<UserAgePage> {
   final _ageController = TextEditingController();
   final _focusNode = FocusNode();
 
-  late final OnboardingController _controller;
+  late final OnboardingDataController _dataController;
+  late final OnboardingFlowController _flowController;
 
   // Estados
   bool _isFocused = false;
@@ -30,7 +32,8 @@ class _UserAgePageState extends State<UserAgePage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _dataController = Get.find<OnboardingDataController>();
+    _flowController = Get.find<OnboardingFlowController>();
     _ageController.addListener(() => setState(() {}));
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
   }
@@ -82,8 +85,8 @@ class _UserAgePageState extends State<UserAgePage> {
                 text: 'Continuar',
                 onPressed: hasText
                     ? () {
-                        _controller.userAge.value = _ageController.text.trim();
-                        _controller.nav.goToUserEmail();
+                        _dataController.setUserAge(_ageController.text.trim());
+                        _flowController.nav.goToUserEmail();
                       }
                     : null,
               ),

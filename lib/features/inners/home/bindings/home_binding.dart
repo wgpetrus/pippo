@@ -5,7 +5,9 @@ import '../../../core/lesson/controllers/lesson_flow_controller.dart';
 import '../../../core/lesson/controllers/lesson_exercise_controller.dart';
 import '../../../core/lesson/controllers/lesson_progress_controller.dart';
 import '../../../core/lesson/controllers/lesson_rewards_controller.dart';
-import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../../core/onboarding/controllers/onboarding_data_controller.dart';
+import '../../../core/onboarding/controllers/onboarding_flow_controller.dart';
+import '../../../core/onboarding/controllers/onboarding_validation_controller.dart';
 import '../../gamification/controllers/gems_controller.dart';
 import '../../gamification/controllers/energy_controller.dart';
 import '../../gamification/controllers/streak_controller.dart';
@@ -73,6 +75,10 @@ class HomeBinding extends Bindings {
 
     // Instanciar outros controllers
     Get.lazyPut<HomeController>(() => HomeController());
-    Get.lazyPut<OnboardingController>(() => OnboardingController());
+    
+    // Instanciar OnboardingControllers (3 novos controllers)
+    Get.lazyPut<OnboardingDataController>(() => OnboardingDataController());
+    Get.lazyPut<OnboardingValidationController>(() => OnboardingValidationController());
+    Get.lazyPut<OnboardingFlowController>(() => OnboardingFlowController());
   }
 }

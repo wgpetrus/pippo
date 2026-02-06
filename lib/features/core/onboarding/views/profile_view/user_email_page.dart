@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../shared/theme/theme.dart';
+import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/onboarding_text_field.dart';
 
@@ -21,26 +23,19 @@ class _UserEmailPageState extends State<UserEmailPage> {
   final _emailController = TextEditingController();
   final _focusNode = FocusNode();
 
-  late final OnboardingController _controller;
+  late final OnboardingDataController _dataController;
+  late final OnboardingFlowController _flowController;
 
   // Estados
   bool _isFocused = false;
-  String? _errorMessage;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
-    _emailController.addListener(_validateInput);
+    _dataController = Get.find<OnboardingDataController>();
+    _flowController = Get.find<OnboardingFlowController>();
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
-  }
-
-  // Validação em tempo real
-  void _validateInput() {
-    setState(() {
-      _errorMessage = ValidationHelper.validateEmail(_emailController.text);
-    });
   }
 
   @override
@@ -53,8 +48,7 @@ class _UserEmailPageState extends State<UserEmailPage> {
   // Build
   @override
   Widget build(BuildContext context) {
-    final hasText = _emailController.text.isNotEmpty;
-    final isValid = _errorMessage == null && hasText;
+    final r = ResponsiveUtils(context);
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -82,17 +76,28 @@ class _UserEmailPageState extends State<UserEmailPage> {
                 hint: 'digite seu e-mail',
                 isFocused: _isFocused,
                 keyboardType: TextInputType.emailAddress,
-                errorText: _errorMessage,
               ),
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 200),
+              SizedBox(height: r.isKeyboardOpen ? 16 : 200),
               AppButton(
                 text: 'Continuar',
-                onPressed: isValid
-                    ? () {
-                        _controller.userEmail.value = _emailController.text.trim();
-                        _controller.nav.goToUserPassword();
-                      }
-                    : null,
+                onPressed: () {
+                  final email = _emailController.text.trim();
+                  final error = ValidationHelper.validateEmail(email);
+                  
+                  if (error != null) {
+                    Get.snackbar(
+                      'E-mail inválido',
+                      error,
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppTheme.error,
+                      colorText: AppTheme.white,
+                    );
+                    return;
+                  }
+                  
+                  _dataController.setUserEmail(email);
+                  _flowController.nav.goToUserPassword();
+                },
               ),
               const SizedBox(height: 16),
             ],

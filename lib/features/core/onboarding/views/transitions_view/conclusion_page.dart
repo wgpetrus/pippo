@@ -7,7 +7,8 @@ import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
 import '../../../../inners/home/controllers/home_controller.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 
 /// Tela de conclusão do onboarding
 class ConclusionPage extends StatefulWidget {
@@ -21,13 +22,15 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
   // Animações
   late final AnimationController _animController;
   late final Animation<double> _animation;
-  late final OnboardingController _controller;
+  late final OnboardingDataController _dataController;
+  late final OnboardingFlowController _flowController;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _dataController = Get.find<OnboardingDataController>();
+    _flowController = Get.find<OnboardingFlowController>();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -74,11 +77,11 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                     SizedBox(height: r.spacing24),
                     
                     // Exibir erro se houver
-                    Obx(() => _controller.errorMessage.value.isNotEmpty
+                    Obx(() => _dataController.errorMessage.value.isNotEmpty
                         ? Padding(
                             padding: EdgeInsets.only(bottom: r.spacing16),
                             child: Text(
-                              _controller.errorMessage.value,
+                              _dataController.errorMessage.value,
                               style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
                               textAlign: TextAlign.center,
                             ),
@@ -86,7 +89,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                         : const SizedBox.shrink()),
                     
                     // Exibir mensagem de retry se houver
-                    Obx(() => _controller.retryMessage.value.isNotEmpty
+                    Obx(() => _dataController.retryMessage.value.isNotEmpty
                         ? Padding(
                             padding: EdgeInsets.only(bottom: r.spacing16),
                             child: Column(
@@ -105,7 +108,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                                     SizedBox(width: r.spacing8),
                                     Flexible(
                                       child: Text(
-                                        _controller.retryMessage.value,
+                                        _dataController.retryMessage.value,
                                         style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
                                         textAlign: TextAlign.center,
                                       ),
@@ -114,7 +117,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                                 ),
                                 SizedBox(height: r.spacing8),
                                 TextButton(
-                                  onPressed: () => _controller.cancelRetry(),
+                                  onPressed: () => _dataController.cancelRetry(),
                                   child: Text(
                                     'Cancelar',
                                     style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
@@ -127,8 +130,8 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                     
                     Obx(() => AppButton(
                       text: 'Vamos Aprender',
-                      isLoading: _controller.isLoading.value,
-                      onPressed: _controller.isLoading.value ? null : _onButtonPressed,
+                      isLoading: _dataController.isLoading.value,
+                      onPressed: _dataController.isLoading.value ? null : _onButtonPressed,
                     )),
                     SizedBox(height: r.spacing32),
                   ],
@@ -159,17 +162,17 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
 
   // Métodos
   void _onButtonPressed() {
-    if (_controller.isAddingCourse.value) {
-      debugPrint('🎯 _onButtonPressed: Modo add course - chamando completeOnboarding()');
+    if (_dataController.isAddingCourse.value) {
+      debugPrint('🎯 _onButtonPressed: Modo add course - chamando finishOnboarding()');
       
-      // Chamar completeOnboarding() que vai executar addNewCourse()
-      _controller.completeOnboarding();
+      // Chamar finishOnboarding() que vai executar addNewCourse()
+      _flowController.finishOnboarding();
       
       // Aguardar conclusão e então resetar estado e navegar
       Future.delayed(const Duration(milliseconds: 100), () {
-        if (_controller.errorMessage.value.isEmpty) {
+        if (_dataController.errorMessage.value.isEmpty) {
           debugPrint('✅ Curso adicionado com sucesso, voltando para home');
-          _controller.isAddingCourse.value = false;
+          _dataController.isAddingCourse.value = false;
           Get.offAllNamed('/home');
           
           // Recarregar cursos no HomeController após voltar
@@ -183,13 +186,13 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
             }
           });
         } else {
-          debugPrint('❌ Erro ao adicionar curso: ${_controller.errorMessage.value}');
+          debugPrint('❌ Erro ao adicionar curso: ${_dataController.errorMessage.value}');
         }
       });
     } else {
-      debugPrint('🎯 _onButtonPressed: Modo onboarding normal - chamando completeOnboarding()');
+      debugPrint('🎯 _onButtonPressed: Modo onboarding normal - chamando finishOnboarding()');
       // Finaliza onboarding normal e salva estados
-      _controller.completeOnboarding();
+      _flowController.finishOnboarding();
     }
   }
 }

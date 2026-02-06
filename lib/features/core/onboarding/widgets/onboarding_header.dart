@@ -8,7 +8,7 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_back_button.dart';
-import '../controllers/onboarding_controller.dart';
+import '../controllers/onboarding_flow_controller.dart';
 import 'bouncing_mascot.dart';
 import 'progress_bar.dart';
 
@@ -43,8 +43,8 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
     int? calculatedProgress;
     if (currentScreen != null) {
       try {
-        final controller = Get.find<OnboardingController>();
-        final progressData = controller.calculateProgress(currentScreen!);
+        final flowController = Get.find<OnboardingFlowController>();
+        final progressData = flowController.calculateProgress(currentScreen!);
         final current = progressData['current']!;
         final total = progressData['total']!;
         // Convert to percentage (0-100)
@@ -167,8 +167,8 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
 
     if (confirm == true) {
       try {
-        final controller = Get.find<OnboardingController>();
-        controller.exitOnboarding();
+        final flowController = Get.find<OnboardingFlowController>();
+        flowController.exitOnboarding();
       } catch (e) {
         // Controller não encontrado, apenas voltar
         Get.offAllNamed('/onboarding');

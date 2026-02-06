@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+// Controllers
+import '../controllers/onboarding_validation_controller.dart';
+
 // Transitions
 import '../views/transitions_view/intro_page.dart';
 import '../views/transitions_view/pause_one_page.dart';
@@ -22,7 +25,7 @@ import '../views/profile_view/user_password_page.dart';
 import '../views/profile_view/verify_code_page.dart';
 
 // Controller
-import '../controllers/onboarding_controller.dart';
+import '../controllers/onboarding_data_controller.dart';
 
 /// Navegação do onboarding
 class OnboardingNavigation {
@@ -46,7 +49,7 @@ class OnboardingNavigation {
   
   void goToUserEmail() {
     // Skip if social login
-    final controller = Get.find<OnboardingController>();
+    final controller = Get.find<OnboardingValidationController>();
     if (controller.shouldSkipEmail()) {
       goToConclusion();
       return;
@@ -57,7 +60,7 @@ class OnboardingNavigation {
   
   void goToUserPassword() {
     // Skip if social login
-    final controller = Get.find<OnboardingController>();
+    final controller = Get.find<OnboardingValidationController>();
     if (controller.shouldSkipPassword()) {
       goToConclusion();
       return;
@@ -68,7 +71,7 @@ class OnboardingNavigation {
   
   void goToVerifyCode() {
     // Skip if social login
-    final controller = Get.find<OnboardingController>();
+    final controller = Get.find<OnboardingValidationController>();
     if (controller.shouldSkipVerifyCode()) {
       goToConclusion();
       return;

@@ -5,7 +5,7 @@ import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 
 /// Tela de pausa 2 - transição para cadastro
@@ -72,7 +72,7 @@ class _PauseTwoPageState extends State<PauseTwoPage> with SingleTickerProviderSt
               const Spacer(flex: 1),
               AppButton(
                 text: "Vamos lá",
-                onPressed: () => Get.find<OnboardingController>().nav.goToUserName(),
+                onPressed: () => Get.find<OnboardingFlowController>().nav.goToUserName(),
               ),
               SizedBox(height: r.spacing48),
             ],

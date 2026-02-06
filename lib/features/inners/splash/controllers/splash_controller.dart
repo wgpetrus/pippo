@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Controllers
-import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../../core/onboarding/controllers/onboarding_flow_controller.dart';
 
 /// Controller da splash screen
 class SplashController extends GetxController {
@@ -77,11 +77,11 @@ class SplashController extends GetxController {
         // Configurar após navegação para garantir que o controller existe
         Future.microtask(() {
           try {
-            final onboardingController = Get.find<OnboardingController>();
-            onboardingController.skipWelcome.value = true;
+            final onboardingFlowController = Get.find<OnboardingFlowController>();
+            onboardingFlowController.skipWelcome.value = true;
           } catch (e) {
             // Controller será criado pelo binding na próxima frame
-            debugPrint('⚠️ OnboardingController não encontrado, será criado pelo binding');
+            debugPrint('⚠️ OnboardingFlowController não encontrado, será criado pelo binding');
           }
         });
       } else {

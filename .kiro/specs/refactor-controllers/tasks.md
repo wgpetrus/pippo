@@ -264,8 +264,8 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark GamificationController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 4. Refactor OnboardingController (1228 lines → 3 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
-  - [ ] 4.1 Create OnboardingFlowController
+- [-] 4. Refactor OnboardingController (1228 lines → 3 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
+  - [x] 4.1 Create OnboardingFlowController
     - Create `features/core/onboarding/controllers/onboarding_flow_controller.dart`
     - Copy standard controller structure
     - Copy states: currentStep, isLoading, errorMessage
@@ -275,7 +275,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.4, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 4.2 Create OnboardingDataController
+  - [x] 4.2 Create OnboardingDataController
     - Create `features/core/onboarding/controllers/onboarding_data_controller.dart`
     - Copy standard controller structure
     - Copy states: selectedLanguage, languageLevel, learningReason, studyTime, userName, userAge, userEmail, userPassword, isLoading, errorMessage
@@ -283,7 +283,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.4, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 4.3 Create OnboardingValidationController
+  - [x] 4.3 Create OnboardingValidationController
     - Create `features/core/onboarding/controllers/onboarding_validation_controller.dart`
     - Copy standard controller structure
     - Copy states: isLoading, errorMessage
@@ -291,7 +291,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.4, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 4.4 Update OnboardingBinding
+  - [x] 4.4 Update OnboardingBinding
     - Open `features/core/onboarding/bindings/onboarding_binding.dart`
     - Remove `Get.lazyPut(() => OnboardingController())`
     - Add `Get.lazyPut(() => OnboardingDataController())`
@@ -299,7 +299,7 @@ Controllers will be refactored in order from largest to smallest:
     - Add `Get.lazyPut(() => OnboardingFlowController())`
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   
-  - [ ] 4.5 Update Onboarding views
+  - [x] 4.5 Update Onboarding views
     - Identify all views that use OnboardingController
     - Update `Get.find<OnboardingController>()` to appropriate new controllers
     - Update all state and method references
@@ -307,7 +307,7 @@ Controllers will be refactored in order from largest to smallest:
     - Views to update: welcome_view.dart, select_language_page.dart, language_level_page.dart, learning_reason_page.dart, intro_page.dart, study_time_page.dart, pause_one_page.dart, user_name_page.dart, user_age_page.dart, pause_two_page.dart, user_email_page.dart, user_password_page.dart, verify_code_page.dart, conclusion_page.dart
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 4.6 Run all tests for Onboarding feature
+  - [x] 4.6 Run all tests for Onboarding feature
     - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
@@ -315,13 +315,13 @@ Controllers will be refactored in order from largest to smallest:
     - Verify all tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [ ] 4.7 Delete old OnboardingController
+  - [x] 4.7 Delete old OnboardingController
     - Delete `features/core/onboarding/controllers/onboarding_controller.dart`
     - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [ ] 4.8 Commit OnboardingController refactoring
+  - [-] 4.8 Commit OnboardingController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide OnboardingController em 3 controllers menores"
     - Update lista-controllers.md to mark OnboardingController as complete
@@ -471,6 +471,7 @@ Controllers will be refactored in order from largest to smallest:
   
   - [ ] 7.6 Delete old AuthController
     - Delete `features/core/auth/controllers/auth_controller.dart`
+    - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   

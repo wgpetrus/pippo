@@ -11,7 +11,8 @@ import '../../../core/lesson/controllers/lesson_exercise_controller.dart';
 import '../../../core/lesson/controllers/lesson_progress_controller.dart';
 import '../../../core/lesson/controllers/lesson_rewards_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
-import '../../../core/onboarding/controllers/onboarding_controller.dart';
+import '../../../core/onboarding/controllers/onboarding_data_controller.dart';
+import '../../../core/onboarding/controllers/onboarding_flow_controller.dart';
 import '../../gamification/controllers/gems_controller.dart';
 import '../../gamification/controllers/xp_level_controller.dart';
 import '../../gamification/controllers/streak_controller.dart';
@@ -516,9 +517,11 @@ class HomeController extends GetxController {
 
   void onAddCourse() {
     // Marca que está adicionando curso e navega para onboarding
-    final onboardingController = Get.find<OnboardingController>();
-    onboardingController.isAddingCourse.value = true;
-    onboardingController.nav.goToSelectLanguage();
+    final onboardingDataController = Get.find<OnboardingDataController>();
+    onboardingDataController.isAddingCourse.value = true;
+    
+    final onboardingFlowController = Get.find<OnboardingFlowController>();
+    onboardingFlowController.nav.goToSelectLanguage();
   }
   
   /// Troca o curso ativo

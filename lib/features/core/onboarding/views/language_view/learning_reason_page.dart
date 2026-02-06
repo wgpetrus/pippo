@@ -6,7 +6,8 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/option_card.dart';
 
@@ -27,11 +28,12 @@ class LearningReasonPage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OnboardingController>();
+    final dataController = Get.find<OnboardingDataController>();
+    final flowController = Get.find<OnboardingFlowController>();
     
     // Obter nome do idioma
-    final languageName = controller.selectedLanguage.value.isNotEmpty
-        ? _getLanguageName(controller.selectedLanguage.value)
+    final languageName = dataController.selectedLanguage.value.isNotEmpty
+        ? _getLanguageName(dataController.selectedLanguage.value)
         : '';
 
     return Scaffold(
@@ -43,15 +45,15 @@ class LearningReasonPage extends StatelessWidget {
             bubbleText: 'Por que você quer aprender $languageName?',
             progress: 33,
           ),
-          _buildReasonList(context, controller),
+          _buildReasonList(context, dataController),
         ],
       ),
-      bottomNavigationBar: _buildBottomButton(controller),
+      bottomNavigationBar: _buildBottomButton(dataController, flowController),
     );
   }
 
   // Widgets
-  Widget _buildReasonList(BuildContext context, OnboardingController controller) {
+  Widget _buildReasonList(BuildContext context, OnboardingDataController dataController) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (ctx, index) {
@@ -72,11 +74,11 @@ class LearningReasonPage extends StatelessWidget {
                     child: FaIcon(FontAwesomeIcons.ellipsis, color: AppTheme.gray300, size: 20),
                   ),
                 ),
-                label: controller.learningReason.value.startsWith('Outro:')
-                    ? controller.learningReason.value.replaceFirst('Outro: ', '')
+                label: dataController.learningReason.value.startsWith('Outro:')
+                    ? dataController.learningReason.value.replaceFirst('Outro: ', '')
                     : 'Outro',
-                isSelected: controller.learningReason.value.startsWith('Outro'),
-                onTap: () => _showOtherModal(context, controller),
+                isSelected: dataController.learningReason.value.startsWith('Outro'),
+                onTap: () => _showOtherModal(context, dataController),
               )),
             );
           }
@@ -89,8 +91,8 @@ class LearningReasonPage extends StatelessWidget {
             child: Obx(() => OptionCard(
               iconAsset: reason['icon']!,
               label: reason['label']!,
-              isSelected: controller.learningReason.value == reason['label'],
-              onTap: () => controller.learningReason.value = reason['label']!,
+              isSelected: dataController.learningReason.value == reason['label'],
+              onTap: () => dataController.setLearningReason(reason['label']!),
               isCircularIcon: false,
             )),
           );
@@ -100,25 +102,25 @@ class LearningReasonPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomButton(OnboardingController controller) {
+  Widget _buildBottomButton(OnboardingDataController dataController, OnboardingFlowController flowController) {
     return Container(
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
         text: 'Continuar',
-        onPressed: controller.learningReason.value.isNotEmpty
-            ? controller.nav.goToPauseOne
+        onPressed: dataController.learningReason.value.isNotEmpty
+            ? flowController.nav.goToPauseOne
             : null,
       )),
     );
   }
 
   // Handlers
-  void _showOtherModal(BuildContext context, OnboardingController controller) {
+  void _showOtherModal(BuildContext context, OnboardingDataController dataController) {
     final textController = TextEditingController();
 
-    if (controller.learningReason.value.startsWith('Outro:')) {
-      textController.text = controller.learningReason.value.replaceFirst('Outro: ', '');
+    if (dataController.learningReason.value.startsWith('Outro:')) {
+      textController.text = dataController.learningReason.value.replaceFirst('Outro: ', '');
     }
 
     WoltModalSheet.show(
@@ -166,9 +168,9 @@ class LearningReasonPage extends StatelessWidget {
                   onPressed: () {
                     final text = textController.text.trim();
                     if (text.isNotEmpty) {
-                      controller.learningReason.value = 'Outro: $text';
+                      dataController.setLearningReason('Outro: $text');
                     } else {
-                      controller.learningReason.value = 'Outro';
+                      dataController.setLearningReason('Outro');
                     }
                     Navigator.of(context).pop();
                   },

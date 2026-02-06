@@ -5,7 +5,8 @@ import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/onboarding_text_field.dart';
 
@@ -22,7 +23,8 @@ class _UserNamePageState extends State<UserNamePage> {
   final _nameController = TextEditingController();
   final _focusNode = FocusNode();
 
-  late final OnboardingController _controller;
+  late final OnboardingDataController _dataController;
+  late final OnboardingFlowController _flowController;
 
   // Estados
   bool _isFocused = false;
@@ -33,11 +35,12 @@ class _UserNamePageState extends State<UserNamePage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _dataController = Get.find<OnboardingDataController>();
+    _flowController = Get.find<OnboardingFlowController>();
     
     // Pre-fill with Google displayName if available
-    if (_controller.userName.value.isNotEmpty) {
-      _nameController.text = _controller.userName.value;
+    if (_dataController.userName.value.isNotEmpty) {
+      _nameController.text = _dataController.userName.value;
     }
     
     _nameController.addListener(_validateInput);
@@ -99,8 +102,8 @@ class _UserNamePageState extends State<UserNamePage> {
                 text: 'Continuar',
                 onPressed: isValid
                     ? () {
-                        _controller.userName.value = _nameController.text.trim();
-                        _controller.nav.goToUserAge();
+                        _dataController.setUserName(_nameController.text.trim());
+                        _flowController.nav.goToUserAge();
                       }
                     : null,
               ),

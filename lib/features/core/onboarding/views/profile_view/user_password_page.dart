@@ -6,7 +6,9 @@ import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/responsive_utils.dart';
 import '../../../../../shared/utils/validation_helper.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
+import '../../controllers/onboarding_validation_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/onboarding_text_field.dart';
 
@@ -25,7 +27,9 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
   final _passwordFocus = FocusNode();
   final _confirmFocus = FocusNode();
 
-  late final OnboardingController _controller;
+  late final OnboardingDataController _dataController;
+  late final OnboardingFlowController _flowController;
+  late final OnboardingValidationController _validationController;
 
   // Estados
   bool _passwordFocused = false;
@@ -39,7 +43,9 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _dataController = Get.find<OnboardingDataController>();
+    _flowController = Get.find<OnboardingFlowController>();
+    _validationController = Get.find<OnboardingValidationController>();
     _passwordController.addListener(_validatePassword);
     _confirmController.addListener(_validateConfirmPassword);
     _passwordFocus.addListener(() => setState(() => _passwordFocused = _passwordFocus.hasFocus));
@@ -111,18 +117,18 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
               SizedBox(height: r.spacing24),
               
               // Exibir erro se houver
-              Obx(() => _controller.errorMessage.value.isNotEmpty
+              Obx(() => _validationController.errorMessage.value.isNotEmpty
                   ? Padding(
                       padding: EdgeInsets.only(bottom: r.spacing16),
                       child: Text(
-                        _controller.errorMessage.value,
+                        _validationController.errorMessage.value,
                         style: AppTheme.textSmRegular.copyWith(color: AppTheme.error),
                       ),
                     )
                   : const SizedBox.shrink()),
               
               // Exibir mensagem de retry se houver
-              Obx(() => _controller.retryMessage.value.isNotEmpty
+              Obx(() => _dataController.retryMessage.value.isNotEmpty
                   ? Padding(
                       padding: EdgeInsets.only(bottom: r.spacing16),
                       child: Column(
@@ -140,7 +146,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                               SizedBox(width: r.spacing8),
                               Expanded(
                                 child: Text(
-                                  _controller.retryMessage.value,
+                                  _dataController.retryMessage.value,
                                   style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
                                 ),
                               ),
@@ -150,7 +156,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(
-                              onPressed: () => _controller.cancelRetry(),
+                              onPressed: () => _dataController.cancelRetry(),
                               child: Text(
                                 'Cancelar',
                                 style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
@@ -208,30 +214,30 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
               SizedBox(height: r.keyboardHeight > 0 ? r.spacing16 : r.spacing48),
               Obx(() => AppButton(
                 text: 'Continuar',
-                isLoading: _controller.isLoading.value,
-                onPressed: (_canContinue && !_controller.isLoading.value)
+                isLoading: _validationController.isLoading.value,
+                onPressed: (_canContinue && !_validationController.isLoading.value)
                     ? () {
                         // Validar senha antes de prosseguir
-                        final passwordError = _controller.validatePassword(_passwordController.text);
+                        final passwordError = _validationController.validatePassword(_passwordController.text);
                         if (passwordError != null) {
-                          _controller.errorMessage.value = passwordError;
+                          _validationController.errorMessage.value = passwordError;
                           return;
                         }
                         
-                        _controller.setPassword(_passwordController.text);
-                        _controller.createAccount();
+                        _dataController.setUserPassword(_passwordController.text);
+                        _validationController.createAccount();
                       }
                     : null,
               )),
               
               // Botão "Já tenho uma conta" quando email já existe
-              Obx(() => _controller.showLoginOption.value
+              Obx(() => _dataController.showLoginOption.value
                   ? Padding(
                       padding: EdgeInsets.only(top: r.spacing12),
                       child: AppButton(
                         text: 'Já tenho uma conta',
                         isPrimary: false,
-                        onPressed: () => _controller.nav.goToAuth(),
+                        onPressed: () => _flowController.nav.goToAuth(),
                       ),
                     )
                   : const SizedBox.shrink()),

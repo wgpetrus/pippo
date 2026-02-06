@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import '../../../../../shared/theme/theme.dart';
 import '../../../../../shared/utils/app_assets.dart';
 import '../../../../../shared/widgets/app_button.dart';
-import '../../controllers/onboarding_controller.dart';
+import '../../controllers/onboarding_data_controller.dart';
+import '../../controllers/onboarding_flow_controller.dart';
 import '../../widgets/onboarding_header.dart';
 import '../../widgets/option_card.dart';
 
@@ -27,7 +28,8 @@ class SelectLanguagePage extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OnboardingController>();
+    final dataController = Get.find<OnboardingDataController>();
+    final flowController = Get.find<OnboardingFlowController>();
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -38,15 +40,15 @@ class SelectLanguagePage extends StatelessWidget {
             bubbleText: 'Qual idioma você quer aprender?',
             progress: 11,
           ),
-          _buildLanguageList(controller),
+          _buildLanguageList(dataController),
         ],
       ),
-      bottomNavigationBar: _buildBottomButton(controller),
+      bottomNavigationBar: _buildBottomButton(dataController, flowController),
     );
   }
 
   // Widgets
-  Widget _buildLanguageList(OnboardingController controller) {
+  Widget _buildLanguageList(OnboardingDataController dataController) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -58,8 +60,8 @@ class SelectLanguagePage extends StatelessWidget {
             child: Obx(() => OptionCard(
               iconAsset: lang['flag']!,
               label: lang['name']!,
-              isSelected: controller.selectedLanguage.value == lang['code'],
-              onTap: () => controller.selectedLanguage.value = lang['code']!,
+              isSelected: dataController.selectedLanguage.value == lang['code'],
+              onTap: () => dataController.setLanguage(lang['code']!),
             )),
           );
         },
@@ -68,14 +70,14 @@ class SelectLanguagePage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomButton(OnboardingController controller) {
+  Widget _buildBottomButton(OnboardingDataController dataController, OnboardingFlowController flowController) {
     return Container(
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
         text: 'Continuar',
-        onPressed: controller.selectedLanguage.value.isNotEmpty
-            ? controller.nav.goToLanguageLevel
+        onPressed: dataController.selectedLanguage.value.isNotEmpty
+            ? flowController.nav.goToLanguageLevel
             : null,
       )),
     );

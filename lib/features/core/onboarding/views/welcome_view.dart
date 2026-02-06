@@ -6,7 +6,8 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../controllers/onboarding_controller.dart';
+import '../controllers/onboarding_data_controller.dart';
+import '../controllers/onboarding_flow_controller.dart';
 
 /// Tela de boas-vindas
 class WelcomeView extends StatefulWidget {
@@ -17,28 +18,30 @@ class WelcomeView extends StatefulWidget {
 }
 
 class _WelcomeViewState extends State<WelcomeView> {
-  late final OnboardingController _controller;
+  late final OnboardingFlowController _flowController;
+  late final OnboardingDataController _dataController;
 
   // Lifecycle
   
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<OnboardingController>();
+    _flowController = Get.find<OnboardingFlowController>();
+    _dataController = Get.find<OnboardingDataController>();
     
     // Verificar se veio com argumentos (login com onboarding incompleto)
     final args = Get.arguments as Map<String, dynamic>?;
     if (args != null && args['skipWelcome'] == true) {
-      _controller.skipWelcome.value = true;
+      _dataController.skipWelcome.value = true;
       
       // Configurar dados do usuário autenticado (lógica no controller)
-      _controller.configureAuthenticatedUser();
+      _flowController.configureAuthenticatedUser();
     }
     
     // Se skipWelcome = true, pular direto para próxima tela
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_controller.skipWelcome.value) {
-        _controller.handleSkipWelcome();
+      if (_dataController.skipWelcome.value) {
+        _flowController.handleSkipWelcome();
       }
     });
   }
@@ -81,13 +84,13 @@ class _WelcomeViewState extends State<WelcomeView> {
                 SizedBox(height: r.spacing32),
                 AppButton(
                   text: 'Começar',
-                  onPressed: _controller.nav.goToIntro,
+                  onPressed: _flowController.nav.goToIntro,
                 ),
                 SizedBox(height: r.spacing16),
                 AppButton(
                   text: 'Já tenho uma conta',
                   isPrimary: false,
-                  onPressed: _controller.nav.goToAuth,
+                  onPressed: _flowController.nav.goToAuth,
                 ),
               ],
             ),

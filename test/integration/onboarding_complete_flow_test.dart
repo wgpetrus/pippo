@@ -4,28 +4,45 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
+import 'package:pippo/features/core/onboarding/controllers/onboarding_data_controller.dart';
+import 'package:pippo/features/core/onboarding/controllers/onboarding_validation_controller.dart';
+import 'package:pippo/features/core/onboarding/controllers/onboarding_flow_controller.dart';
 import 'package:pippo/shared/utils/validation_helper.dart';
+import '../helpers/firebase_test_helper.dart';
 
 void main() {
   group('Complete Onboarding Flow Integration Tests', () {
-    late OnboardingController controller;
+    late OnboardingDataController dataController;
+    late OnboardingValidationController validationController;
+    late OnboardingFlowController flowController;
 
-    // Setup only for tests that need the controller
-    void setupController() {
+    // Setup only for tests that need the controllers
+    Future<void> setupControllers() async {
       Get.testMode = true;
-      controller = OnboardingController();
-      Get.put<OnboardingController>(controller);
+      
+      // Setup Firebase for tests
+      await FirebaseTestHelper.setupFirebase();
+      
+      // Initialize controllers in correct order
+      dataController = OnboardingDataController();
+      Get.put<OnboardingDataController>(dataController);
+      
+      validationController = OnboardingValidationController();
+      Get.put<OnboardingValidationController>(validationController);
+      
+      flowController = OnboardingFlowController();
+      Get.put<OnboardingFlowController>(flowController);
     }
 
-    tearDown(() {
+    tearDown(() async {
+      await FirebaseTestHelper.teardownFirebase();
       Get.reset();
     });
 
     // Test 1: Email/password onboarding from welcome to home
     group('Email/Password Onboarding Flow', () {
-      setUp(() {
-        setupController();
+      setUp(() async {
+        await setupControllers();
       });
 
       test('Email/password onboarding from welcome to home', () async {
@@ -34,50 +51,50 @@ void main() {
         
         // ETAPA 1: Welcome (tela inicial)
         // Usuário clica em "Get Started"
-        expect(controller.skipWelcome.value, false);
+        expect(dataController.skipWelcome.value, false);
         
         // ETAPA 2: Select Language
-        controller.selectedLanguage.value = 'en';
-        expect(controller.selectedLanguage.value, 'en');
+        dataController.selectedLanguage.value = 'en';
+        expect(dataController.selectedLanguage.value, 'en');
         
         // ETAPA 3: Language Level
-        controller.languageLevel.value = 'beginner';
-        expect(controller.languageLevel.value, 'beginner');
+        dataController.languageLevel.value = 'beginner';
+        expect(dataController.languageLevel.value, 'beginner');
         
         // ETAPA 4: Learning Reason
-        controller.learningReason.value = 'travel';
-        expect(controller.learningReason.value, 'travel');
+        dataController.learningReason.value = 'travel';
+        expect(dataController.learningReason.value, 'travel');
         
         // ETAPA 5: Intro (transição - sem dados)
         // Apenas animação
         
         // ETAPA 6: Study Time
-        controller.studyTime.value = '10';
-        expect(controller.studyTime.value, '10');
+        dataController.studyTime.value = '10';
+        expect(dataController.studyTime.value, '10');
         
         // ETAPA 7: Pause One (transição - sem dados)
         // Apenas animação
         
         // ETAPA 8: User Name
-        controller.userName.value = 'João Silva';
-        expect(controller.userName.value, 'João Silva');
-        expect(controller.validateName(controller.userName.value), null);
+        dataController.userName.value = 'João Silva';
+        expect(dataController.userName.value, 'João Silva');
+        expect(validationController.validateName(dataController.userName.value), null);
         
         // ETAPA 9: User Age
-        controller.userAge.value = '25-34';
-        expect(controller.userAge.value, '25-34');
+        dataController.userAge.value = '25-34';
+        expect(dataController.userAge.value, '25-34');
         
         // ETAPA 10: Pause Two (transição - sem dados)
         // Apenas animação
         
         // ETAPA 11: User Email
-        controller.userEmail.value = 'joao@email.com';
-        expect(controller.userEmail.value, 'joao@email.com');
-        expect(controller.validateEmail(controller.userEmail.value), null);
+        dataController.userEmail.value = 'joao@email.com';
+        expect(dataController.userEmail.value, 'joao@email.com');
+        expect(validationController.validateEmail(dataController.userEmail.value), null);
         
         // ETAPA 12: User Password
-        controller.setPassword('senha123');
-        expect(controller.validatePassword('senha123'), null);
+        dataController.setUserPassword('senha123');
+        expect(validationController.validatePassword('senha123'), null);
         
         // ETAPA 13: Verify Code (OTP)
         // Simula código OTP (em produção viria por email)
@@ -91,30 +108,30 @@ void main() {
         // VERIFICAÇÕES FINAIS
         
         // Verifica que todos os dados foram coletados
-        expect(controller.selectedLanguage.value, 'en');
-        expect(controller.languageLevel.value, 'beginner');
-        expect(controller.learningReason.value, 'travel');
-        expect(controller.studyTime.value, '10');
-        expect(controller.userName.value, 'João Silva');
-        expect(controller.userAge.value, '25-34');
-        expect(controller.userEmail.value, 'joao@email.com');
+        expect(dataController.selectedLanguage.value, 'en');
+        expect(dataController.languageLevel.value, 'beginner');
+        expect(dataController.learningReason.value, 'travel');
+        expect(dataController.studyTime.value, '10');
+        expect(dataController.userName.value, 'João Silva');
+        expect(dataController.userAge.value, '25-34');
+        expect(dataController.userEmail.value, 'joao@email.com');
         
         // Verifica que authProvider está vazio (email/password)
-        expect(controller.authProvider.value, '');
+        expect(dataController.authProvider.value, '');
         
         // Verifica que nenhuma tela foi pulada
-        expect(controller.shouldSkipEmail(), false);
-        expect(controller.shouldSkipPassword(), false);
-        expect(controller.shouldSkipVerifyCode(), false);
+        expect(validationController.shouldSkipEmail(), false);
+        expect(validationController.shouldSkipPassword(), false);
+        expect(validationController.shouldSkipVerifyCode(), false);
         
         // Verifica estrutura de dados para Firestore
         final userDoc = {
           'id': 'user123',
-          'email': controller.userEmail.value,
-          'name': controller.userName.value,
+          'email': dataController.userEmail.value,
+          'name': dataController.userName.value,
           'username': 'joaosilva',
-          'age': controller.userAge.value,
-          'authProvider': controller.authProvider.value.isEmpty ? 'email' : controller.authProvider.value,
+          'age': dataController.userAge.value,
+          'authProvider': dataController.authProvider.value.isEmpty ? 'email' : dataController.authProvider.value,
           'onboardingCompleted': true,
           'createdAt': DateTime.now(),
           'updatedAt': DateTime.now(),
@@ -128,11 +145,11 @@ void main() {
         
         final courseDoc = {
           'id': 'course123',
-          'language': controller.selectedLanguage.value,
+          'language': dataController.selectedLanguage.value,
           'languageName': 'English',
-          'level': controller.languageLevel.value,
-          'reason': controller.learningReason.value,
-          'studyTime': int.parse(controller.studyTime.value),
+          'level': dataController.languageLevel.value,
+          'reason': dataController.learningReason.value,
+          'studyTime': int.parse(dataController.studyTime.value),
           'isActive': true,
           'createdAt': DateTime.now(),
         };
@@ -159,66 +176,66 @@ void main() {
         expect(statsDoc['hearts'], 5);
         
         // Verifica que progresso foi calculado corretamente
-        final progress = controller.calculateProgress('verify_code');
+        final progress = flowController.calculateProgress('verify_code');
         expect(progress['current'], 9);
         expect(progress['total'], 9);
         
         // Verifica que isAddingCourse está false (novo usuário)
-        expect(controller.isAddingCourse.value, false);
+        expect(dataController.isAddingCourse.value, false);
       });
       
       test('Complete flow collects all required data in correct order', () {
         // Step 1: Language selection
-        controller.selectedLanguage.value = 'en';
-        controller.languageLevel.value = 'beginner';
-        controller.learningReason.value = 'travel';
-        controller.studyTime.value = '10';
+        dataController.selectedLanguage.value = 'en';
+        dataController.languageLevel.value = 'beginner';
+        dataController.learningReason.value = 'travel';
+        dataController.studyTime.value = '10';
         
         // Step 2: Profile data
-        controller.userName.value = 'João Silva';
-        controller.userAge.value = '25-34';
+        dataController.userName.value = 'João Silva';
+        dataController.userAge.value = '25-34';
         
         // Step 3: Account data
-        controller.userEmail.value = 'joao@email.com';
-        controller.setPassword('senha123');
+        dataController.userEmail.value = 'joao@email.com';
+        dataController.setUserPassword('senha123');
         
         // Verify all required fields are collected
-        expect(controller.selectedLanguage.value, 'en');
-        expect(controller.languageLevel.value, 'beginner');
-        expect(controller.learningReason.value, 'travel');
-        expect(controller.studyTime.value, '10');
-        expect(controller.userName.value, 'João Silva');
-        expect(controller.userAge.value, '25-34');
-        expect(controller.userEmail.value, 'joao@email.com');
-        expect(controller.authProvider.value, '');
+        expect(dataController.selectedLanguage.value, 'en');
+        expect(dataController.languageLevel.value, 'beginner');
+        expect(dataController.learningReason.value, 'travel');
+        expect(dataController.studyTime.value, '10');
+        expect(dataController.userName.value, 'João Silva');
+        expect(dataController.userAge.value, '25-34');
+        expect(dataController.userEmail.value, 'joao@email.com');
+        expect(dataController.authProvider.value, '');
       });
 
       test('Email/password flow does NOT skip any screens', () {
-        controller.authProvider.value = '';
+        dataController.authProvider.value = '';
         
-        expect(controller.shouldSkipEmail(), false);
-        expect(controller.shouldSkipPassword(), false);
-        expect(controller.shouldSkipVerifyCode(), false);
+        expect(validationController.shouldSkipEmail(), false);
+        expect(validationController.shouldSkipPassword(), false);
+        expect(validationController.shouldSkipVerifyCode(), false);
       });
 
       test('Firestore documents structure for email/password user', () {
-        controller.userName.value = 'João Silva';
-        controller.userEmail.value = 'joao@email.com';
-        controller.userAge.value = '25-34';
-        controller.selectedLanguage.value = 'en';
-        controller.languageLevel.value = 'beginner';
-        controller.learningReason.value = 'travel';
-        controller.studyTime.value = '10';
-        controller.authProvider.value = '';
+        dataController.userName.value = 'João Silva';
+        dataController.userEmail.value = 'joao@email.com';
+        dataController.userAge.value = '25-34';
+        dataController.selectedLanguage.value = 'en';
+        dataController.languageLevel.value = 'beginner';
+        dataController.learningReason.value = 'travel';
+        dataController.studyTime.value = '10';
+        dataController.authProvider.value = '';
         
         // User document
         final userDoc = {
           'id': 'user123',
-          'email': controller.userEmail.value,
-          'name': controller.userName.value,
+          'email': dataController.userEmail.value,
+          'name': dataController.userName.value,
           'username': 'joaosilva',
-          'age': controller.userAge.value,
-          'authProvider': controller.authProvider.value.isEmpty ? 'email' : controller.authProvider.value,
+          'age': dataController.userAge.value,
+          'authProvider': dataController.authProvider.value.isEmpty ? 'email' : dataController.authProvider.value,
           'onboardingCompleted': true,
           'createdAt': DateTime.now(),
           'updatedAt': DateTime.now(),
@@ -232,9 +249,9 @@ void main() {
         // Course document
         final courseDoc = {
           'id': 'course123',
-          'language': controller.selectedLanguage.value,
-          'level': controller.languageLevel.value,
-          'studyTime': int.parse(controller.studyTime.value),
+          'language': dataController.selectedLanguage.value,
+          'level': dataController.languageLevel.value,
+          'studyTime': int.parse(dataController.studyTime.value),
           'isActive': true,
         };
         
@@ -257,29 +274,29 @@ void main() {
 
     // Test 2: Google onboarding with skipped screens
     group('Google Onboarding Flow', () {
-      setUp(() {
-        setupController();
+      setUp(() async {
+        await setupControllers();
       });
 
       test('Google flow skips email, password, and OTP screens', () {
-        controller.authProvider.value = 'google';
-        controller.userName.value = 'Maria Santos';
-        controller.userEmail.value = 'maria@gmail.com';
+        dataController.authProvider.value = 'google';
+        dataController.userName.value = 'Maria Santos';
+        dataController.userEmail.value = 'maria@gmail.com';
         
-        expect(controller.authProvider.value, 'google');
-        expect(controller.shouldSkipEmail(), true);
-        expect(controller.shouldSkipPassword(), true);
-        expect(controller.shouldSkipVerifyCode(), true);
+        expect(dataController.authProvider.value, 'google');
+        expect(validationController.shouldSkipEmail(), true);
+        expect(validationController.shouldSkipPassword(), true);
+        expect(validationController.shouldSkipVerifyCode(), true);
         
         // User still provides language data
-        controller.selectedLanguage.value = 'es';
-        controller.languageLevel.value = 'intermediate';
-        controller.learningReason.value = 'work';
-        controller.studyTime.value = '15';
-        controller.userAge.value = '35-44';
+        dataController.selectedLanguage.value = 'es';
+        dataController.languageLevel.value = 'intermediate';
+        dataController.learningReason.value = 'work';
+        dataController.studyTime.value = '15';
+        dataController.userAge.value = '35-44';
         
-        expect(controller.selectedLanguage.value, 'es');
-        expect(controller.userAge.value, '35-44');
+        expect(dataController.selectedLanguage.value, 'es');
+        expect(dataController.userAge.value, '35-44');
       });
 
       test('Google flow has fewer screens than email/password', () {
@@ -298,15 +315,15 @@ void main() {
       });
 
       test('Firestore document for Google user has correct authProvider', () {
-        controller.authProvider.value = 'google';
-        controller.userName.value = 'Maria Santos';
-        controller.userEmail.value = 'maria@gmail.com';
+        dataController.authProvider.value = 'google';
+        dataController.userName.value = 'Maria Santos';
+        dataController.userEmail.value = 'maria@gmail.com';
         
         final userDoc = {
           'id': 'user456',
-          'email': controller.userEmail.value,
-          'name': controller.userName.value,
-          'authProvider': controller.authProvider.value,
+          'email': dataController.userEmail.value,
+          'name': dataController.userName.value,
+          'authProvider': dataController.authProvider.value,
           'onboardingCompleted': true,
         };
         
@@ -686,8 +703,8 @@ void main() {
     });
 
     group('Error Handling', () {
-      setUp(() {
-        setupController();
+      setUp(() async {
+        await setupControllers();
       });
 
       test('Error messages are user-friendly', () {
@@ -705,15 +722,15 @@ void main() {
       });
 
       test('Data persists in memory after error for retry', () {
-        controller.userName.value = 'João Silva';
-        controller.userEmail.value = 'joao@email.com';
-        controller.selectedLanguage.value = 'en';
+        dataController.userName.value = 'João Silva';
+        dataController.userEmail.value = 'joao@email.com';
+        dataController.selectedLanguage.value = 'en';
         
-        controller.errorMessage.value = 'Erro de rede';
+        dataController.errorMessage.value = 'Erro de rede';
         
-        expect(controller.userName.value, 'João Silva');
-        expect(controller.userEmail.value, 'joao@email.com');
-        expect(controller.selectedLanguage.value, 'en');
+        expect(dataController.userName.value, 'João Silva');
+        expect(dataController.userEmail.value, 'joao@email.com');
+        expect(dataController.selectedLanguage.value, 'en');
       });
     });
   });
