@@ -5,7 +5,8 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/xp_level_controller.dart';
+import '../../gamification/controllers/streak_controller.dart';
 import '../../home/controllers/home_controller.dart';
 import '../controllers/profile_data_controller.dart';
 import '../controllers/profile_social_controller.dart';
@@ -31,7 +32,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   late final ProfileDataController _dataController;
   late final ProfileSocialController _socialController;
   late final ProfileCoursesController _coursesController;
-  late final GamificationController _gamification;
+  late final XpLevelController _xpLevelController;
+  late final StreakController _streakController;
 
   @override
   bool get wantKeepAlive => true; // Manter estado da página
@@ -42,7 +44,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     _dataController = Get.find<ProfileDataController>();
     _socialController = Get.find<ProfileSocialController>();
     _coursesController = Get.find<ProfileCoursesController>();
-    _gamification = Get.find<GamificationController>();
+    _xpLevelController = Get.find<XpLevelController>();
+    _streakController = Get.find<StreakController>();
     
     // Carregar perfil e progresso semanal ao iniciar
     _dataController.loadOwnProfile();
@@ -209,11 +212,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               }),
             ),
 
-            // Overview - Reactive stats from GamificationController
+            // Overview - Reactive stats from XpLevelController and StreakController
             SliverToBoxAdapter(
               child: Obx(() => OverviewSection(
                 flagAsset: _getActiveCourseFlag(),
-                useOwnStats: true, // Usar stats do GamificationController
+                useOwnStats: true, // Usar stats dos novos controllers
               )),
             ),
 

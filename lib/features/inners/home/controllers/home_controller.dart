@@ -572,13 +572,22 @@ class HomeController extends GetxController {
       // Recarregar stats do novo curso (gamificação)
       debugPrint('  🔄 Recarregando stats do novo curso...');
       try {
-        if (Get.isRegistered<GamificationController>()) {
-          final gamificationController = Get.find<GamificationController>();
-          await gamificationController.loadStats();
-          debugPrint('  ✅ Stats recarregados com sucesso');
+        // Recarregar todos os controllers de gamificação
+        if (Get.isRegistered<GemsController>()) {
+          await Get.find<GemsController>().loadGems();
         }
+        if (Get.isRegistered<XpLevelController>()) {
+          await Get.find<XpLevelController>().loadXpAndLevel();
+        }
+        if (Get.isRegistered<StreakController>()) {
+          await Get.find<StreakController>().loadStreak();
+        }
+        if (Get.isRegistered<EnergyController>()) {
+          await Get.find<EnergyController>().loadEnergy();
+        }
+        debugPrint('  ✅ Stats recarregados com sucesso');
       } catch (e) {
-        debugPrint('  ⚠️ GamificationController não encontrado ou erro ao recarregar stats: $e');
+        debugPrint('  ⚠️ Erro ao recarregar stats: $e');
       }
 
       // ATUALIZAR GRÁFICO DO PERFIL após trocar curso
@@ -640,11 +649,22 @@ class HomeController extends GetxController {
       
       // 3. Recarregar gamificação
       try {
-        final gamificationController = Get.find<GamificationController>();
-        await gamificationController.loadStats();
+        // Recarregar todos os controllers de gamificação
+        if (Get.isRegistered<GemsController>()) {
+          await Get.find<GemsController>().loadGems();
+        }
+        if (Get.isRegistered<XpLevelController>()) {
+          await Get.find<XpLevelController>().loadXpAndLevel();
+        }
+        if (Get.isRegistered<StreakController>()) {
+          await Get.find<StreakController>().loadStreak();
+        }
+        if (Get.isRegistered<EnergyController>()) {
+          await Get.find<EnergyController>().loadEnergy();
+        }
         debugPrint('  ✅ Gamificação recarregada');
       } catch (e) {
-        debugPrint('  ⚠️ GamificationController não encontrado: $e');
+        debugPrint('  ⚠️ Erro ao recarregar gamificação: $e');
       }
       
       // 4. Recarregar profile (se estiver registrado)

@@ -6,7 +6,10 @@ import '../../../core/lesson/controllers/lesson_exercise_controller.dart';
 import '../../../core/lesson/controllers/lesson_progress_controller.dart';
 import '../../../core/lesson/controllers/lesson_rewards_controller.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
+import '../../gamification/controllers/energy_controller.dart';
+import '../../gamification/controllers/streak_controller.dart';
+import '../../gamification/controllers/xp_level_controller.dart';
 import '../../leaderboard/controllers/leaderboard_controller.dart';
 import '../../profile/controllers/profile_auth_controller.dart';
 import '../../profile/controllers/profile_courses_controller.dart';
@@ -26,9 +29,24 @@ class HomeBinding extends Bindings {
       Get.put(AuthController(), permanent: true);
     }
 
-    // Garantir que GamificationController está disponível
-    if (!Get.isRegistered<GamificationController>()) {
-      Get.put(GamificationController(), permanent: true);
+    // Garantir que GemsController está disponível (primeiro - sem dependências)
+    if (!Get.isRegistered<GemsController>()) {
+      Get.put(GemsController(), permanent: true);
+    }
+
+    // Garantir que EnergyController está disponível
+    if (!Get.isRegistered<EnergyController>()) {
+      Get.put(EnergyController(), permanent: true);
+    }
+
+    // Garantir que StreakController está disponível (depende de GemsController)
+    if (!Get.isRegistered<StreakController>()) {
+      Get.put(StreakController(), permanent: true);
+    }
+
+    // Garantir que XpLevelController está disponível (depende de GemsController)
+    if (!Get.isRegistered<XpLevelController>()) {
+      Get.put(XpLevelController(), permanent: true);
     }
 
     // Instanciar ProfileControllers (5 novos controllers)

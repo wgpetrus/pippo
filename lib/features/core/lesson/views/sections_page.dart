@@ -45,8 +45,7 @@ class _SectionsPageState extends State<SectionsPage> {
     });
 
     try {
-      final gamificationController = Get.find<GamificationController>();
-      final userId = gamificationController.userId;
+      final userId = FirebaseAuth.instance.currentUser?.uid;
       
       debugPrint('👤 UserId: $userId');
       
@@ -61,7 +60,7 @@ class _SectionsPageState extends State<SectionsPage> {
       }
 
       // Buscar curso ativo
-      final coursesSnapshot = await gamificationController.firestore
+      final coursesSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('courses')
@@ -108,13 +107,12 @@ class _SectionsPageState extends State<SectionsPage> {
   /// Retorna o ID da próxima lição não completada DA SEÇÃO ATUAL
   Future<String?> _getNextLessonId() async {
     try {
-      final gamificationController = Get.find<GamificationController>();
-      final userId = gamificationController.userId;
+      final userId = FirebaseAuth.instance.currentUser?.uid;
       
       if (userId == null) return '1';
 
       // Buscar curso ativo
-      final coursesSnapshot = await gamificationController.firestore
+      final coursesSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('courses')
@@ -128,7 +126,7 @@ class _SectionsPageState extends State<SectionsPage> {
       }
 
       // Buscar progresso de todas as lições
-      final progressSnapshot = await gamificationController.firestore
+      final progressSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('courses')
@@ -183,14 +181,14 @@ class _SectionsPageState extends State<SectionsPage> {
     debugPrint('🎮 Iniciando lição...');
     
     final flowController = Get.find<LessonFlowController>();
-    final gamificationController = Get.find<GamificationController>();
+    final energyController = Get.find<EnergyController>();
 
     // Verifica se tem energia suficiente
-    if (!gamificationController.canStartLesson()) {
+    if (!energyController.canStartLesson()) {
       debugPrint('⚠️ Sem energia suficiente');
       LowEnergyModal.show(
         context,
-        currentEnergy: gamificationController.currentEnergy.value,
+        currentEnergy: energyController.currentEnergy.value,
       );
       return;
     }

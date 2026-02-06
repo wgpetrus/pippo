@@ -23,7 +23,8 @@ import '../../gamification/controllers/gamification_controller.dart';
 /// 
 /// ### Módulos Integrados (Atualmente)
 /// - **LessonController**: Recebe eventos de conclusão de lição e exercícios
-/// - **GamificationController**: Recebe eventos de ganho de XP e atualização de streak
+/// - **GemsController**: Recebe eventos de ganho de gems
+/// - **XpLevelController**: Recebe eventos de ganho de XP
 /// 
 /// ### Pontos de Integração Futuros
 /// - **ProfileController**: Pode exibir estatísticas de desafios no perfil
@@ -205,8 +206,8 @@ class TreasureController extends GetxController {
   /// Atualmente implementados:
   /// - 'lessons': Lições completadas (integrado com LessonController)
   /// - 'correct_exercises': Exercícios corretos (integrado com LessonController)
-  /// - 'xp': XP ganho (integrado com GamificationController)
-  /// - 'streak': Dias de streak mantidos (integrado com GamificationController)
+  /// - 'xp': XP ganho (integrado com XpLevelController)
+  /// - 'streak': Dias de streak mantidos (integrado com StreakController)
   /// 
   /// TODO: [future] Adicionar suporte para novos tipos de eventos:
   /// - 'perfect_lessons': Lições completadas com 100% de acurácia
@@ -333,7 +334,7 @@ class TreasureController extends GetxController {
   /// Distribui recompensa ao usuário usando transação Firestore
   /// 
   /// Atualiza gems ou XP do usuário de forma atômica e notifica
-  /// GamificationController se estiver registrado
+  /// GemsController e XpLevelController se estiverem registrados
   Future<void> _distributeReward(
       String userId, Map<String, dynamic> challengeData) async {
     final rewardType = challengeData['rewardType'] as String?;
@@ -404,61 +405,72 @@ class TreasureController extends GetxController {
 
       // Atualizar valores localmente IMEDIATAMENTE (para UI instantânea)
       try {
-        if (Get.isRegistered<GamificationController>()) {
-          final gamificationController = Get.find<GamificationController>();
-          
-          debugPrint('💎 Atualizando valores localmente no GamificationController...');
-          debugPrint('  Tipo de recompensa: $rewardType');
-          debugPrint('  Quantidade: $rewardAmount');
-          
-          switch (rewardType) {
-            case 'gems':
-              final oldGems = gamificationController.gems.value;
-              final oldTotal = gamificationController.totalGemsEarned.value;
+        switch (rewardType) {
+          case 'gems':
+            if (Get.isRegistered<GemsController>()) {
+              final gemsController = Get.find<GemsController>();
+              
+              debugPrint('💎 Atualizando valores localmente no GemsController...');
+              debugPrint('  Tipo de recompensa: $rewardType');
+              debugPrint('  Quantidade: $rewardAmount');
+              
+              final oldGems = gemsController.gems.value;
+              final oldTotal = gemsController.totalGemsEarned.value;
               
               // Atualizar valores reativos EXPLICITAMENTE
-              gamificationController.gems.value = oldGems + rewardAmount;
-              gamificationController.totalGemsEarned.value = oldTotal + rewardAmount;
+              gemsController.gems.value = oldGems + rewardAmount;
+              gemsController.totalGemsEarned.value = oldTotal + rewardAmount;
               
-              debugPrint('  Gems: $oldGems → ${gamificationController.gems.value}');
-              debugPrint('  Total Gems: $oldTotal → ${gamificationController.totalGemsEarned.value}');
+              debugPrint('  Gems: $oldGems → ${gemsController.gems.value}');
+              debugPrint('  Total Gems: $oldTotal → ${gemsController.totalGemsEarned.value}');
               debugPrint('  ✅ Valores de GEMS atualizados localmente!');
-              break;
               
-            case 'xp':
-              final oldTotalXp = gamificationController.totalXp.value;
-              final oldWeeklyXp = gamificationController.weeklyXP.value;
-              final oldTodayXp = gamificationController.todayXp.value;
+              // Forçar refresh dos observadores
+              gemsController.gems.refresh();
+              gemsController.totalGemsEarned.refresh();
+            } else {
+              debugPrint('⚠️ GemsController não está registrado!');
+            }
+            break;
+            
+          case 'xp':
+            if (Get.isRegistered<XpLevelController>()) {
+              final xpController = Get.find<XpLevelController>();
+              
+              debugPrint('💎 Atualizando valores localmente no XpLevelController...');
+              debugPrint('  Tipo de recompensa: $rewardType');
+              debugPrint('  Quantidade: $rewardAmount');
+              
+              final oldTotalXp = xpController.totalXp.value;
+              final oldWeeklyXp = xpController.weeklyXP.value;
+              final oldTodayXp = xpController.todayXp.value;
               
               // Atualizar valores reativos EXPLICITAMENTE
-              gamificationController.totalXp.value = oldTotalXp + rewardAmount;
-              gamificationController.weeklyXP.value = oldWeeklyXp + rewardAmount;
-              gamificationController.todayXp.value = oldTodayXp + rewardAmount;
+              xpController.totalXp.value = oldTotalXp + rewardAmount;
+              xpController.weeklyXP.value = oldWeeklyXp + rewardAmount;
+              xpController.todayXp.value = oldTodayXp + rewardAmount;
               
-              debugPrint('  Total XP: $oldTotalXp → ${gamificationController.totalXp.value}');
-              debugPrint('  Weekly XP: $oldWeeklyXp → ${gamificationController.weeklyXP.value}');
-              debugPrint('  Today XP: $oldTodayXp → ${gamificationController.todayXp.value}');
+              debugPrint('  Total XP: $oldTotalXp → ${xpController.totalXp.value}');
+              debugPrint('  Weekly XP: $oldWeeklyXp → ${xpController.weeklyXP.value}');
+              debugPrint('  Today XP: $oldTodayXp → ${xpController.todayXp.value}');
               debugPrint('  ✅ Valores de XP atualizados localmente!');
-              break;
-          }
-          
-          debugPrint('✅ Valores atualizados localmente com sucesso!');
-          debugPrint('🔔 UI deve atualizar INSTANTANEAMENTE via Obx()');
-          
-          // Forçar refresh dos observadores
-          gamificationController.gems.refresh();
-          gamificationController.totalGemsEarned.refresh();
-          gamificationController.totalXp.refresh();
-          gamificationController.weeklyXP.refresh();
-          gamificationController.todayXp.refresh();
-          
-          debugPrint('🔄 Refresh forçado nos observadores!');
-        } else {
-          debugPrint('⚠️ GamificationController não está registrado!');
+              
+              // Forçar refresh dos observadores
+              xpController.totalXp.refresh();
+              xpController.weeklyXP.refresh();
+              xpController.todayXp.refresh();
+            } else {
+              debugPrint('⚠️ XpLevelController não está registrado!');
+            }
+            break;
         }
+        
+        debugPrint('✅ Valores atualizados localmente com sucesso!');
+        debugPrint('🔔 UI deve atualizar INSTANTANEAMENTE via Obx()');
+        debugPrint('🔄 Refresh forçado nos observadores!');
       } catch (e) {
-        // GamificationController não registrado - não é crítico
-        debugPrint('⚠️ Erro ao atualizar GamificationController: $e');
+        // Controllers não registrados - não é crítico
+        debugPrint('⚠️ Erro ao atualizar controllers: $e');
       }
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);

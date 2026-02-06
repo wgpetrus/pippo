@@ -4,7 +4,10 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/energy_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
+import '../../gamification/controllers/streak_controller.dart';
+import '../../gamification/controllers/xp_level_controller.dart';
 import '../controllers/shop_controller.dart';
 import '../widgets/boost_item.dart';
 import '../widgets/collectible_item.dart';
@@ -19,7 +22,7 @@ class ShopPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
     Get.put(ShopController());
-    final gamification = Get.find<GamificationController>();
+    final gemsController = Get.find<GemsController>();
     
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -34,7 +37,7 @@ class ShopPage extends StatelessWidget {
         actions: [
           // Contador de gems com loading
           Obx(() {
-            final isLoading = gamification.isLoading.value;
+            final isLoading = gemsController.isLoading.value;
             
             return Padding(
               padding: EdgeInsets.only(right: r.spacing16),
@@ -53,7 +56,7 @@ class ShopPage extends StatelessWidget {
                     )
                   else
                     Text(
-                      '${gamification.gems.value}',
+                      '${gemsController.gems.value}',
                       style: AppTheme.textLgBold.copyWith(color: AppTheme.red),
                     ),
                 ],
@@ -232,7 +235,10 @@ class ShopPage extends StatelessWidget {
 
   Widget _buildLearningBoosts(ResponsiveUtils r) {
     final controller = Get.find<ShopController>();
-    final gamification = Get.find<GamificationController>();
+    final energyController = Get.find<EnergyController>();
+    final xpLevelController = Get.find<XpLevelController>();
+    final gemsController = Get.find<GemsController>();
+    final streakController = Get.find<StreakController>();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,14 +252,17 @@ class ShopPage extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: r.spacing16),
           child: Obx(() {
-            final isLoading = gamification.isLoading.value;
+            final isEnergyLoading = energyController.isLoading.value;
+            final isXpLoading = xpLevelController.isLoading.value;
+            final isGemsLoading = gemsController.isLoading.value;
+            final isStreakLoading = streakController.isLoading.value;
             
             return Column(
               children: [
                 // Recarga de Energia - 100 gems
                 Builder(
                   builder: (context) {
-                    final currentEnergy = gamification.currentEnergy.value;
+                    final currentEnergy = energyController.currentEnergy.value;
                     final isEnergyFull = currentEnergy >= 5;
                     final description = isEnergyFull
                         ? 'Energia completa! ($currentEnergy/5)'
@@ -266,8 +275,8 @@ class ShopPage extends StatelessWidget {
                       price: 100,
                       badge: isEnergyFull ? 'COMPLETA' : null,
                       badgeColor: isEnergyFull ? AppTheme.green : null,
-                      isLoading: isLoading,
-                      onTap: (isEnergyFull || isLoading) ? null : controller.purchaseEnergyRefill,
+                      isLoading: isEnergyLoading,
+                      onTap: (isEnergyFull || isEnergyLoading) ? null : controller.purchaseEnergyRefill,
                     );
                   }
                 ),
@@ -276,8 +285,8 @@ class ShopPage extends StatelessWidget {
                 // XP Booster - 150 gems
                 Builder(
                   builder: (context) {
-                    final isActive = gamification.hasXpBooster;
-                    final timeRemaining = gamification.getXpBoosterTimeRemaining();
+                    final isActive = xpLevelController.hasXpBooster;
+                    final timeRemaining = xpLevelController.getXpBoosterTimeRemaining();
                     final description = timeRemaining.isNotEmpty
                         ? 'Ativo! $timeRemaining'
                         : 'Ganhe 2× XP nas lições por 1 hora!';
@@ -289,8 +298,8 @@ class ShopPage extends StatelessWidget {
                       price: 150,
                       badge: isActive ? 'ATIVO' : null,
                       badgeColor: isActive ? AppTheme.green : null,
-                      isLoading: isLoading,
-                      onTap: (isActive || isLoading) ? null : controller.purchaseXpBooster,
+                      isLoading: isXpLoading,
+                      onTap: (isActive || isXpLoading) ? null : controller.purchaseXpBooster,
                     );
                   }
                 ),
@@ -299,8 +308,8 @@ class ShopPage extends StatelessWidget {
                 // Gem Multiplier - 200 gems
                 Builder(
                   builder: (context) {
-                    final isActive = gamification.hasGemMultiplier;
-                    final timeRemaining = gamification.getGemMultiplierTimeRemaining();
+                    final isActive = gemsController.hasGemMultiplier;
+                    final timeRemaining = gemsController.getGemMultiplierTimeRemaining();
                     final description = timeRemaining.isNotEmpty
                       ? 'Ativo! $timeRemaining'
                       : 'Ganhe 2× gemas nas lições por 1 hora!';
@@ -312,8 +321,8 @@ class ShopPage extends StatelessWidget {
                     price: 200,
                     badge: isActive ? 'ATIVO' : 'POPULAR',
                     badgeColor: isActive ? AppTheme.green : AppTheme.orange,
-                    isLoading: isLoading,
-                    onTap: (isActive || isLoading) ? null : () => controller.purchaseGemMultiplier(Get.context!),
+                    isLoading: isGemsLoading,
+                    onTap: (isActive || isGemsLoading) ? null : () => controller.purchaseGemMultiplier(Get.context!),
                   );
                 }),
                 SizedBox(height: r.spacing12),
@@ -321,7 +330,7 @@ class ShopPage extends StatelessWidget {
                 // Streak Freeze - 200 gems
                 Builder(
                   builder: (context) {
-                    final isActive = gamification.streakFreezeAvailable;
+                    final isActive = streakController.streakFreezeAvailable;
                     
                     return BoostItem(
                       iconAsset: AppAssets.appbarFire,
@@ -330,8 +339,8 @@ class ShopPage extends StatelessWidget {
                       price: 200,
                       badge: isActive ? 'ATIVO' : null,
                       badgeColor: isActive ? AppTheme.green : null,
-                      isLoading: isLoading,
-                      onTap: (isActive || isLoading) ? null : () => controller.purchaseStreakFreeze(Get.context!),
+                      isLoading: isStreakLoading,
+                      onTap: (isActive || isStreakLoading) ? null : () => controller.purchaseStreakFreeze(Get.context!),
                     );
                   }
                 ),

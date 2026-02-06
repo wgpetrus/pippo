@@ -6,7 +6,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
 
 /// Dados de um pack de gems
 class GemPackData {
@@ -42,7 +42,7 @@ class GemsModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    final gamification = Get.find<GamificationController>();
+    final gemsController = Get.find<GemsController>();
     
     // Calcular altura máxima disponível (80% da tela)
     final maxHeight = r.heightScreen * 0.8;
@@ -77,8 +77,8 @@ class GemsModal extends StatelessWidget {
     ];
 
     return Obx(() {
-      final currentGems = gamification.gems.value;
-      final totalGemsEarned = gamification.totalGemsEarned.value;
+      final currentGems = gemsController.gems.value;
+      final totalGemsEarned = gemsController.totalGemsEarned.value;
       
       return Container(
         width: double.infinity,

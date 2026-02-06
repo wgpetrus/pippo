@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/streak_controller.dart';
+import '../../gamification/controllers/energy_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
+import '../../gamification/controllers/xp_level_controller.dart';
 
 /// Tipo de stat para definir cor
 enum StatType { flag, fire, gem, ray }
@@ -29,8 +32,11 @@ class HomeAppbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Obter GamificationController
-    final gamificationController = Get.find<GamificationController>();
+    // Obter controllers
+    final streakController = Get.find<StreakController>();
+    final energyController = Get.find<EnergyController>();
+    final gemsController = Get.find<GemsController>();
+    final xpLevelController = Get.find<XpLevelController>();
 
     return SafeArea(
       child: Padding(
@@ -83,7 +89,7 @@ class HomeAppbar extends StatelessWidget {
                       flagAsset,
                       null, // será obtido do controller
                       StatType.flag,
-                      gamificationController,
+                      xpLevelController,
                     ),
                   ),
                   
@@ -93,7 +99,7 @@ class HomeAppbar extends StatelessWidget {
                       AppAssets.appbarFire,
                       null, // será obtido do controller
                       StatType.fire,
-                      gamificationController,
+                      streakController,
                     ),
                   ),
                   
@@ -103,7 +109,7 @@ class HomeAppbar extends StatelessWidget {
                       AppAssets.appbarGem,
                       null, // será obtido do controller
                       StatType.gem,
-                      gamificationController,
+                      gemsController,
                     ),
                   ),
                   
@@ -113,7 +119,7 @@ class HomeAppbar extends StatelessWidget {
                       AppAssets.appbarRay,
                       null, // será obtido do controller
                       StatType.ray,
-                      gamificationController,
+                      energyController,
                     ),
                   ),
                 ],
@@ -130,15 +136,15 @@ class HomeAppbar extends StatelessWidget {
     String iconAsset,
     int? fixedCount,
     StatType type,
-    GamificationController gamificationController,
+    dynamic controller,
   ) {
     // Envolver APENAS o widget que precisa ser reativo
     return Obx(() {
       // Obter count (fixo ou reativo)
-      final count = fixedCount ?? _getCountForType(type, gamificationController);
+      final count = fixedCount ?? _getCountForType(type, controller);
       
       // Obter isSelected
-      final isSelected = controller.selectedStat.value == type;
+      final isSelected = this.controller.selectedStat.value == type;
       
       // Construir o widget
       return _buildStatChipContent(
@@ -151,16 +157,16 @@ class HomeAppbar extends StatelessWidget {
   }
   
   /// Obtém o count para um tipo específico de stat
-  int _getCountForType(StatType type, GamificationController gamificationController) {
+  int _getCountForType(StatType type, dynamic controller) {
     switch (type) {
       case StatType.flag:
-        return gamificationController.level.value;
+        return (controller as XpLevelController).level.value;
       case StatType.fire:
-        return gamificationController.currentStreak.value;
+        return (controller as StreakController).currentStreak.value;
       case StatType.gem:
-        return gamificationController.gems.value;
+        return (controller as GemsController).gems.value;
       case StatType.ray:
-        return gamificationController.currentEnergy.value;
+        return (controller as EnergyController).currentEnergy.value;
       default:
         return 0;
     }

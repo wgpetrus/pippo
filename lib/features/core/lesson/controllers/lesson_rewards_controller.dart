@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../../../inners/gamification/controllers/xp_level_controller.dart';
+import '../../../inners/gamification/controllers/gems_controller.dart';
 import '../../../inners/home/controllers/home_controller.dart';
 import '../../../inners/treasure/controllers/treasure_controller.dart';
 import 'lesson_flow_controller.dart';
@@ -16,7 +17,8 @@ class LessonRewardsController extends GetxController {
   final _auth = FirebaseAuth.instance;
   
   // Dependências
-  late final GamificationController _gamificationController;
+  late final XpLevelController _xpLevelController;
+  late final GemsController _gemsController;
   late final LessonProgressController _progressController;
   late final LessonFlowController _flowController;
 
@@ -33,7 +35,8 @@ class LessonRewardsController extends GetxController {
   void onInit() {
     super.onInit();
     try {
-      _gamificationController = Get.find<GamificationController>();
+      _xpLevelController = Get.find<XpLevelController>();
+      _gemsController = Get.find<GemsController>();
       _progressController = Get.find<LessonProgressController>();
       _flowController = Get.find<LessonFlowController>();
     } catch (e) {
@@ -77,23 +80,29 @@ class LessonRewardsController extends GetxController {
         calculatedXp.value = totalXp;
         calculatedGems.value = totalGems;
         
-        // Step 2: Distribuir XP (atomic operation)
+        // Step 2: Distribuir XP (atomic operation via XpLevelController)
         debugPrint('📝 Step 2: Distribuindo XP...');
-        await _distributeXP(totalXp);
+        await _xpLevelController.addXp(totalXp);
         debugPrint('  ✅ XP distribuído');
         
-        // Step 3: Adicionar gems ao totalGems
+        // Step 3: Adicionar gems (via GemsController)
         debugPrint('📝 Step 3: Adicionando gems...');
-        await _addGems(totalGems);
+        _gemsController.addGems(totalGems);
         debugPrint('  ✅ Gems adicionadas');
         
-        // Step 4: Verificar e executar level up
-        debugPrint('📝 Step 4: Verificando level up...');
-        final leveledUp = await _checkAndLevelUp();
-        debugPrint('  ✅ Level up: $leveledUp');
+        // Step 4: Salvar gems no Firestore
+        debugPrint('📝 Step 4: Salvando gems no Firestore...');
+        final userId = _auth.currentUser?.uid;
+        if (userId != null) {
+          await _gemsController.loadGems(); // Reload to ensure sync
+        }
+        debugPrint('  ✅ Gems salvas');
         
-        // Step 5: Atualizar streak (apenas se primeira lição hoje)
-        debugPrint('📝 Step 5: Verificando streak...');
+        // Step 5: Verificar e executar level up (já feito automaticamente pelo XpLevelController.addXp)
+        debugPrint('📝 Step 5: Level up verificado automaticamente');
+        
+        // Step 6: Atualizar streak (apenas se primeira lição hoje)
+        debugPrint('📝 Step 6: Verificando streak...');
         final isFirstToday = await _isFirstLessonToday();
         if (isFirstToday) {
           await _updateStreak();
@@ -102,11 +111,11 @@ class LessonRewardsController extends GetxController {
           debugPrint('  ⏭️ Não é primeira lição hoje, streak não atualizado');
         }
         
-        // Step 6: Salvar progresso da lição
+        // Step 7: Salvar progresso da lição
         final courseId = _flowController.currentLesson.value?['courseId'] as String? ?? '';
         final lessonId = _flowController.currentLesson.value?['id'] as String? ?? '';
         
-        debugPrint('📝 Step 6: Salvando progresso da lição...');
+        debugPrint('📝 Step 7: Salvando progresso da lição...');
         debugPrint('  📚 CourseId: $courseId');
         debugPrint('  📖 LessonId: $lessonId');
         
@@ -117,14 +126,14 @@ class LessonRewardsController extends GetxController {
         
         await _updateLessonProgress(courseId, lessonId, totalXp, totalGems);
         
-        // Step 7: Atualizar histórico diário
+        // Step 8: Atualizar histórico diário
         final timeSpent = _progressController.getElapsedTime();
         await _updateDailyHistory(totalXp, totalGems, timeSpent);
         
-        // Step 8: Atualizar desafios
+        // Step 9: Atualizar desafios
         await _updateChallenges();
         
-        // Step 8.5: Integração com TreasureController (se disponível)
+        // Step 10: Integração com TreasureController (se disponível)
         try {
           if (Get.isRegistered<TreasureController>()) {
             final treasureController = Get.find<TreasureController>();
@@ -141,10 +150,10 @@ class LessonRewardsController extends GetxController {
           debugPrint('⚠️ Erro ao atualizar desafios: $e');
         }
         
-        // Step 9: Desbloquear próxima lição
+        // Step 11: Desbloquear próxima lição
         await _unlockNextLesson(courseId, lessonId);
         
-        // Step 9.5: Recarregar progresso das lições na home
+        // Step 12: Recarregar progresso das lições na home
         try {
           final homeController = Get.find<HomeController>();
           await homeController.reloadProgress();
@@ -209,7 +218,7 @@ class LessonRewardsController extends GetxController {
     }
     
     // Step 4: XP Booster (multiplica por 2 se ativo)
-    final hasXpBooster = _gamificationController.hasXpBooster;
+    final hasXpBooster = _xpLevelController.hasXpBooster;
     if (hasXpBooster) {
       totalXp *= 2;
     }
@@ -225,7 +234,7 @@ class LessonRewardsController extends GetxController {
     int totalGems = _flowController.currentLesson.value?['gemsReward'] as int? ?? 1;
     
     // Step 2: Gem Multiplier (multiplica por 2 se ativo)
-    final hasGemMultiplier = _gamificationController.hasGemMultiplier;
+    final hasGemMultiplier = _gemsController.hasGemMultiplier;
     if (hasGemMultiplier) {
       totalGems *= 2;
     }

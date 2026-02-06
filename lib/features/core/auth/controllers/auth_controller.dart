@@ -763,8 +763,18 @@ class AuthController extends GetxController {
       await _auth.signOut();
 
       // Deletar TODOS os controllers do GetX para limpar dados da memória
-      if (Get.isRegistered<dynamic>(tag: 'GamificationController')) {
-        Get.delete<dynamic>(tag: 'GamificationController', force: true);
+      // Deletar controllers de gamificação
+      if (Get.isRegistered<GemsController>()) {
+        Get.delete<GemsController>(force: true);
+      }
+      if (Get.isRegistered<XpLevelController>()) {
+        Get.delete<XpLevelController>(force: true);
+      }
+      if (Get.isRegistered<StreakController>()) {
+        Get.delete<StreakController>(force: true);
+      }
+      if (Get.isRegistered<EnergyController>()) {
+        Get.delete<EnergyController>(force: true);
       }
       
       // Deletar controllers de features

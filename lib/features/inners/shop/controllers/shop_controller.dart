@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/energy_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
+import '../../gamification/controllers/streak_controller.dart';
+import '../../gamification/controllers/xp_level_controller.dart';
 import '../widgets/iap_notice_dialog.dart';
 import '../widgets/purchase_confirmation_dialog.dart';
 
@@ -25,20 +28,26 @@ class ShopController extends GetxController {
   final claimedRewards = <String>[].obs; // Lista de IDs de recompensas já reivindicadas
 
   // Dependências
-  late final GamificationController _gamification;
+  late final EnergyController _energyController;
+  late final XpLevelController _xpLevelController;
+  late final GemsController _gemsController;
+  late final StreakController _streakController;
 
   // Lifecycle
   @override
   void onInit() {
     super.onInit();
-    _gamification = Get.find<GamificationController>();
+    _energyController = Get.find<EnergyController>();
+    _xpLevelController = Get.find<XpLevelController>();
+    _gemsController = Get.find<GemsController>();
+    _streakController = Get.find<StreakController>();
     loadOwnedPacks();
     loadClaimedRewards();
   }
 
   // Getters para acesso aos dados de gamificação
-  int get gems => _gamification.gems.value;
-  bool get isGamificationLoading => _gamification.isLoading.value;
+  int get gems => _gemsController.gems.value;
+  bool get isGamificationLoading => _gemsController.isLoading.value;
 
   // Métodos públicos - Pacotes
   /// Carrega pacotes adquiridos do Firestore
@@ -149,14 +158,25 @@ class ShopController extends GetxController {
     errorMessage.value = '';
 
     try {
-      await _gamification.purchaseEnergyRefill();
+      // Verificar se tem gems suficientes
+      if (_gemsController.gems.value < 100) {
+        errorMessage.value = 'Você não tem gemas suficientes.';
+        _showErrorSnackbar(errorMessage.value);
+        return;
+      }
 
-      if (_gamification.errorMessage.value.isNotEmpty) {
-        errorMessage.value = _gamification.errorMessage.value;
-        _showErrorSnackbar(_gamification.errorMessage.value);
+      // Gastar gems
+      await _gemsController.spendGems(100);
+
+      // Recarregar energia
+      await _energyController.refillEnergy();
+
+      if (_energyController.errorMessage.value.isNotEmpty) {
+        errorMessage.value = _energyController.errorMessage.value;
+        _showErrorSnackbar(_energyController.errorMessage.value);
       } else {
         _showSuccessSnackbar(
-          'Energia recarregada! Você agora tem ${_gamification.currentEnergy.value} energias.',
+          'Energia recarregada! Você agora tem ${_energyController.currentEnergy.value} energias.',
         );
       }
     } catch (e) {
@@ -173,11 +193,22 @@ class ShopController extends GetxController {
     errorMessage.value = '';
 
     try {
-      await _gamification.purchaseXpBooster();
+      // Verificar se tem gems suficientes
+      if (_gemsController.gems.value < 150) {
+        errorMessage.value = 'Você não tem gemas suficientes.';
+        _showErrorSnackbar(errorMessage.value);
+        return;
+      }
 
-      if (_gamification.errorMessage.value.isNotEmpty) {
-        errorMessage.value = _gamification.errorMessage.value;
-        _showErrorSnackbar(_gamification.errorMessage.value);
+      // Gastar gems
+      await _gemsController.spendGems(150);
+
+      // Ativar XP booster
+      await _xpLevelController.activateXpBooster(60);
+
+      if (_xpLevelController.errorMessage.value.isNotEmpty) {
+        errorMessage.value = _xpLevelController.errorMessage.value;
+        _showErrorSnackbar(_xpLevelController.errorMessage.value);
       } else {
         _showSuccessSnackbar('XP Booster ativado! Ganhe 2× XP por 1 hora.');
       }
@@ -202,11 +233,22 @@ class ShopController extends GetxController {
         errorMessage.value = '';
 
         try {
-          await _gamification.purchaseGemMultiplier();
+          // Verificar se tem gems suficientes
+          if (_gemsController.gems.value < 200) {
+            errorMessage.value = 'Você não tem gemas suficientes.';
+            _showErrorSnackbar(errorMessage.value);
+            return;
+          }
 
-          if (_gamification.errorMessage.value.isNotEmpty) {
-            errorMessage.value = _gamification.errorMessage.value;
-            _showErrorSnackbar(_gamification.errorMessage.value);
+          // Gastar gems
+          await _gemsController.spendGems(200);
+
+          // Ativar gem multiplier
+          await _gemsController.activateGemMultiplier(60);
+
+          if (_gemsController.errorMessage.value.isNotEmpty) {
+            errorMessage.value = _gemsController.errorMessage.value;
+            _showErrorSnackbar(_gemsController.errorMessage.value);
           } else {
             _showSuccessSnackbar(
               'Multiplicador de Gemas ativado! Ganhe 2× gemas por 1 hora.',
@@ -235,11 +277,22 @@ class ShopController extends GetxController {
         errorMessage.value = '';
 
         try {
-          await _gamification.purchaseStreakFreeze();
+          // Verificar se tem gems suficientes
+          if (_gemsController.gems.value < 200) {
+            errorMessage.value = 'Você não tem gemas suficientes.';
+            _showErrorSnackbar(errorMessage.value);
+            return;
+          }
 
-          if (_gamification.errorMessage.value.isNotEmpty) {
-            errorMessage.value = _gamification.errorMessage.value;
-            _showErrorSnackbar(_gamification.errorMessage.value);
+          // Gastar gems
+          await _gemsController.spendGems(200);
+
+          // Ativar streak freeze
+          await _streakController.useStreakFreeze();
+
+          if (_streakController.errorMessage.value.isNotEmpty) {
+            errorMessage.value = _streakController.errorMessage.value;
+            _showErrorSnackbar(_streakController.errorMessage.value);
           } else {
             _showSuccessSnackbar(
               'Proteção de Streak ativada! Seu streak está protegido por 1 dia.',
@@ -276,16 +329,16 @@ class ShopController extends GetxController {
       }
 
       // Salvar valores originais para reversão
-      final originalGems = _gamification.gems.value;
-      final originalTotalGems = _gamification.totalGemsEarned.value;
+      final originalGems = _gemsController.gems.value;
+      final originalTotalGems = _gemsController.totalGemsEarned.value;
 
       // Atualizar UI imediatamente (otimista)
-      _gamification.gems.value += gemsAmount;
-      _gamification.totalGemsEarned.value += gemsAmount;
+      _gemsController.gems.value += gemsAmount;
+      _gemsController.totalGemsEarned.value += gemsAmount;
 
       try {
         // Adicionar gems no Firestore
-        await _gamification.firestore
+        await _firestore
             .collection('users')
             .doc(userId)
             .collection('stats')
@@ -307,8 +360,8 @@ class ShopController extends GetxController {
         _showSuccessSnackbar('Você ganhou $gemsAmount gemas!');
       } catch (e) {
         // Reverter mudanças locais
-        _gamification.gems.value = originalGems;
-        _gamification.totalGemsEarned.value = originalTotalGems;
+        _gemsController.gems.value = originalGems;
+        _gemsController.totalGemsEarned.value = originalTotalGems;
         claimedRewards.remove(rewardId);
 
         errorMessage.value = 'Erro ao reivindicar recompensa. Tente novamente.';

@@ -82,7 +82,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
                 // Header - sem botão voltar após verificar
                 Obx(() => ExerciseHeader(
                       progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
-                      energy: Get.find<GamificationController>().currentEnergy.value,
+                      energy: Get.find<EnergyController>().currentEnergy.value,
                       onBack: _hasChecked ? null : () => _onBackPressed(context),
                     )),
 

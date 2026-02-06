@@ -56,10 +56,20 @@ class _CompletePageState extends State<CompletePage> {
     await _rewardsController.applyRewards();
 
     if (_rewardsController.errorMessage.value.isEmpty) {
-      // Recarregar stats do GamificationController para atualizar UI
+      // Recarregar stats dos controllers de gamificação para atualizar UI
       try {
-        final gamificationController = Get.find<GamificationController>();
-        await gamificationController.loadStats();
+        if (Get.isRegistered<GemsController>()) {
+          await Get.find<GemsController>().loadGems();
+        }
+        if (Get.isRegistered<XpLevelController>()) {
+          await Get.find<XpLevelController>().loadXpAndLevel();
+        }
+        if (Get.isRegistered<StreakController>()) {
+          await Get.find<StreakController>().loadStreak();
+        }
+        if (Get.isRegistered<EnergyController>()) {
+          await Get.find<EnergyController>().loadEnergy();
+        }
       } catch (e) {
         debugPrint('⚠️ Erro ao recarregar stats de gamificação: $e');
       }
@@ -83,7 +93,6 @@ class _CompletePageState extends State<CompletePage> {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    final gamificationController = Get.find<GamificationController>();
     
     // Calcula estatísticas
     final accuracy = (_progressController.accuracy).toStringAsFixed(0);

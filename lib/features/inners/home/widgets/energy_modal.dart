@@ -7,7 +7,8 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/energy_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
 
 /// Modal de Energy Sparks
 class EnergyModal extends StatelessWidget {
@@ -36,7 +37,8 @@ class EnergyModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    final gamification = Get.find<GamificationController>();
+    final energyController = Get.find<EnergyController>();
+    final gemsController = Get.find<GemsController>();
     
     // Padding responsivo para telas pequenas
     final verticalPadding = r.isTablet || r.isDesktop ? 24.0 : 16.0;
@@ -44,9 +46,9 @@ class EnergyModal extends StatelessWidget {
     final smallSpacing = r.isTablet || r.isDesktop ? 12.0 : 8.0;
 
     return Obx(() {
-      final currentEnergy = gamification.currentEnergy.value;
+      final currentEnergy = energyController.currentEnergy.value;
       final maxEnergy = 5;
-      final nextEnergyTime = gamification.getNextEnergyTime();
+      final nextEnergyTime = energyController.getNextEnergyTime();
       final isFull = _isFull(currentEnergy, maxEnergy);
       final messageText = _getMessageText(currentEnergy, maxEnergy);
       
@@ -119,17 +121,20 @@ class EnergyModal extends StatelessWidget {
               Obx(() => AppButton(
                 text: 'Recarregar',
                 isPrimary: false,
-                isLoading: gamification.isLoading.value,
-                onPressed: gamification.isLoading.value || gamification.gems.value < 100
+                isLoading: energyController.isLoading.value,
+                onPressed: energyController.isLoading.value || gemsController.gems.value < 100
                     ? null
                     : () async {
-                        await gamification.purchaseEnergyRefill();
+                        // Purchase via shop controller
+                        // This will be handled by ShopController
+                        await energyController.refillEnergy();
+                        await gemsController.spendGems(100);
                         
                         // Feedback visual
-                        if (gamification.errorMessage.value.isNotEmpty) {
+                        if (energyController.errorMessage.value.isNotEmpty) {
                           Get.snackbar(
                             'Erro',
-                            gamification.errorMessage.value,
+                            energyController.errorMessage.value,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppTheme.red,
                             colorText: AppTheme.white,
@@ -155,7 +160,7 @@ class EnergyModal extends StatelessWidget {
                     Text(
                       '100',
                       style: AppTheme.textLgBold.copyWith(
-                        color: gamification.gems.value < 100 
+                        color: gemsController.gems.value < 100 
                             ? AppTheme.gray400 
                             : AppTheme.red,
                       ),

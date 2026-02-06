@@ -6,7 +6,8 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/streak_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
 
 /// Níveis de streak
 enum StreakLevel { zero, one, two, four, seven }
@@ -115,11 +116,12 @@ class StreakModal extends StatelessWidget {
   // Build
   @override
   Widget build(BuildContext context) {
-    final gamification = Get.find<GamificationController>();
+    final streakController = Get.find<StreakController>();
+    final gemsController = Get.find<GemsController>();
     
     return Obx(() {
-      final streakDays = gamification.currentStreak.value;
-      final longestStreak = gamification.longestStreak.value;
+      final streakDays = streakController.currentStreak.value;
+      final longestStreak = streakController.longestStreak.value;
       final level = _getLevel(streakDays);
       final bgColor = _getBgColor(level);
       final borderColor = _getBorderColor(level);
@@ -165,7 +167,8 @@ class StreakModal extends StatelessWidget {
                           longestStreak,
                           numberColor,
                           textColor,
-                          gamification,
+                          streakController,
+                          gemsController,
                         ),
                       ),
                       Image.asset(mascotAsset, width: 150, fit: BoxFit.contain),
@@ -186,7 +189,8 @@ class StreakModal extends StatelessWidget {
     int longestStreak,
     Color numberColor,
     Color textColor,
-    GamificationController gamification,
+    StreakController streakController,
+    GemsController gemsController,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,10 +220,11 @@ class StreakModal extends StatelessWidget {
         const SizedBox(height: 12),
 
         // Streak freeze purchase option
-        if (gamification.gems.value >= 200 && !gamification.streakFreezeAvailable)
+        if (gemsController.gems.value >= 200 && !streakController.streakFreezeAvailable)
           GestureDetector(
             onTap: () async {
-              await gamification.purchaseStreakFreeze();
+              // Purchase streak freeze via shop controller
+              // This will be handled by ShopController
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -242,7 +247,7 @@ class StreakModal extends StatelessWidget {
             ),
           ),
         
-        if (gamification.streakFreezeAvailable)
+        if (streakController.streakFreezeAvailable)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(

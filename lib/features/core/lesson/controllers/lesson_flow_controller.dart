@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../../../inners/gamification/controllers/energy_controller.dart';
 import '../../../../shared/mocks/lesson_mocks.dart';
 import 'lesson_progress_controller.dart';
 
@@ -14,7 +14,7 @@ class LessonFlowController extends GetxController {
   final _auth = FirebaseAuth.instance;
   
   // Dependências
-  late final GamificationController _gamificationController;
+  late final EnergyController _energyController;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -33,9 +33,9 @@ class LessonFlowController extends GetxController {
   void onInit() {
     super.onInit();
     try {
-      _gamificationController = Get.find<GamificationController>();
+      _energyController = Get.find<EnergyController>();
     } catch (e) {
-      errorMessage.value = 'Erro ao inicializar sistema de gamificação.';
+      errorMessage.value = 'Erro ao inicializar sistema de energia.';
     }
   }
 
@@ -66,7 +66,7 @@ class LessonFlowController extends GetxController {
       }
 
       // Buscar curso ativo do usuário
-      final coursesSnapshot = await _gamificationController.firestore
+      final coursesSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
@@ -98,7 +98,7 @@ class LessonFlowController extends GetxController {
   /// Ordem obrigatória:
   /// 1. Validar lição desbloqueada
   /// 2. Validar energia disponível (ou ilimitada ativa)
-  /// 3. Consumir energia (operação atômica via GamificationController)
+  /// 3. Consumir energia (operação atômica via EnergyController)
   /// 4. Inicializar estado da lição (hearts=3, counters=0, startTime)
   /// 5. Carregar exercícios do Firestore
   /// 6. Navegar para primeiro exercício
@@ -131,18 +131,18 @@ class LessonFlowController extends GetxController {
       }
 
       // Step 2: Validar energia disponível (ou ilimitada ativa)
-      if (!_gamificationController.canStartLesson()) {
+      if (!_energyController.canStartLesson()) {
         errorMessage.value = 'Você não tem energia suficiente. Aguarde a regeneração ou compre mais energia.';
         return;
       }
 
-      // Step 3: Consumir energia (operação atômica via GamificationController)
-      // Delega para GamificationController que gerencia energia corretamente
-      await _gamificationController.onLessonStart();
+      // Step 3: Consumir energia (operação atômica via EnergyController)
+      // Delega para EnergyController que gerencia energia corretamente
+      await _energyController.consumeEnergy(1);
       
       // Verificar se houve erro ao consumir energia
-      if (_gamificationController.errorMessage.value.isNotEmpty) {
-        errorMessage.value = _gamificationController.errorMessage.value;
+      if (_energyController.errorMessage.value.isNotEmpty) {
+        errorMessage.value = _energyController.errorMessage.value;
         return;
       }
 

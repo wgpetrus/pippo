@@ -6,7 +6,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../../../inners/gamification/controllers/energy_controller.dart';
 import '../controllers/lesson_flow_controller.dart';
 import '../controllers/lesson_exercise_controller.dart';
 import '../controllers/lesson_progress_controller.dart';
@@ -82,7 +82,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
                 // Header - sem botão voltar após verificar
                 Obx(() => ExerciseHeader(
                       progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
-                      energy: Get.find<GamificationController>().currentEnergy.value,
+                      energy: Get.find<EnergyController>().currentEnergy.value,
                       onBack: _hasChecked ? null : () => _onBackPressed(context),
                     )),
 

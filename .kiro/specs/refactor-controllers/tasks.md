@@ -97,7 +97,7 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark ProfileController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 2. Refactor LessonController (1810 lines → 4 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
+- [x] 2. Refactor LessonController (1810 lines → 4 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
   - [x] 2.1 Create LessonFlowController
     - Create `features/core/lesson/controllers/lesson_flow_controller.dart`
     - Copy standard controller structure
@@ -164,14 +164,14 @@ Controllers will be refactored in order from largest to smallest:
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [-] 2.9 Commit LessonController refactoring
+  - [x] 2.9 Commit LessonController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide LessonController em 4 controllers menores"
     - Update lista-controllers.md to mark LessonController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 3. Refactor GamificationController (1367 lines → 4 controllers)
-  - [ ] 3.1 Create StreakController
+- [-] 3. Refactor GamificationController (1367 lines → 4 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
+  - [x] 3.1 Create StreakController
     - Create `features/inners/gamification/controllers/streak_controller.dart`
     - Copy standard controller structure
     - Copy states: currentStreak, longestStreak, _lastStreakDate, _streakFreezeAvailable, _streakFreezeUsedToday, _milestonesReached, isLoading, errorMessage
@@ -181,7 +181,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.3, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 3.2 Create EnergyController
+  - [x] 3.2 Create EnergyController
     - Create `features/inners/gamification/controllers/energy_controller.dart`
     - Copy standard controller structure
     - Copy states: currentEnergy, _lastEnergyRegenAt, _unlimitedEnergyUntil, isLoading, errorMessage
@@ -190,7 +190,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.3, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 3.3 Create XpLevelController
+  - [x] 3.3 Create XpLevelController
     - Create `features/inners/gamification/controllers/xp_level_controller.dart`
     - Copy standard controller structure
     - Copy states: totalXp, weeklyXP, todayXp, level, xpToNextLevel, _xpBoosterUntil, _lastWeeklyResetDate, _lastDailyResetDate, isLoading, errorMessage
@@ -200,7 +200,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.3, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 3.4 Create GemsController
+  - [x] 3.4 Create GemsController
     - Create `features/inners/gamification/controllers/gems_controller.dart`
     - Copy standard controller structure
     - Copy states: gems, totalGemsEarned, totalGemsSpent, _gemMultiplierUntil, isLoading, errorMessage
@@ -209,7 +209,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.3, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 3.5 Update HomeBinding (gamification is instantiated here)
+  - [x] 3.5 Update HomeBinding (gamification is instantiated here)
     - Open `features/inners/home/bindings/home_binding.dart`
     - Remove `Get.lazyPut(() => GamificationController())`
     - Add `Get.lazyPut(() => GemsController())` (first - no dependencies)
@@ -218,7 +218,7 @@ Controllers will be refactored in order from largest to smallest:
     - Add `Get.lazyPut(() => XpLevelController())` (depends on GemsController)
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   
-  - [ ] 3.6 Update Home views (AppBar, modals)
+  - [x] 3.6 Update Home views (AppBar, modals)
     - Update home_appbar.dart to use new controllers
     - Update streak_modal.dart to use StreakController
     - Update energy_modal.dart to use EnergyController
@@ -226,7 +226,7 @@ Controllers will be refactored in order from largest to smallest:
     - Preserve all Obx() wrappers
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 3.7 Update Shop views (boost purchases)
+  - [x] 3.7 Update Shop views (boost purchases)
     - Update boost_item.dart to use appropriate controllers
     - Energy refill → EnergyController
     - XP booster → XpLevelController
@@ -234,18 +234,18 @@ Controllers will be refactored in order from largest to smallest:
     - Streak freeze → StreakController
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 3.8 Update Profile views (stats display)
+  - [x] 3.8 Update Profile views (stats display)
     - Update profile_page.dart to use XpLevelController and StreakController
     - Update overview cards to display stats from new controllers
     - Preserve all Obx() wrappers
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 3.9 Update Lesson integration
+  - [x] 3.9 Update Lesson integration
     - Update LessonFlowController to use EnergyController for canStartLesson()
     - Update LessonRewardsController to use XpLevelController and GemsController
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 3.10 Run all tests for Gamification feature
+  - [x] 3.10 Run all tests for Gamification feature
     - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
@@ -253,18 +253,18 @@ Controllers will be refactored in order from largest to smallest:
     - Verify all tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [ ] 3.11 Delete old GamificationController
+  - [x] 3.11 Delete old GamificationController
     - Delete `features/inners/gamification/controllers/gamification_controller.dart`
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [ ] 3.12 Commit GamificationController refactoring
+  - [-] 3.12 Commit GamificationController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide GamificationController em 4 controllers menores"
     - Update lista-controllers.md to mark GamificationController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 4. Refactor OnboardingController (1228 lines → 3 controllers)
+- [ ] 4. Refactor OnboardingController (1228 lines → 3 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
   - [ ] 4.1 Create OnboardingFlowController
     - Create `features/core/onboarding/controllers/onboarding_flow_controller.dart`
     - Copy standard controller structure
@@ -326,7 +326,7 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark OnboardingController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 5. Refactor TreasureController (897 lines → 2 controllers)
+- [ ] 5. Refactor TreasureController (897 lines → 2 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
   - [ ] 5.1 Create TreasureChallengesController
     - Create `features/inners/treasure/controllers/treasure_challenges_controller.dart`
     - Copy standard controller structure
@@ -358,6 +358,7 @@ Controllers will be refactored in order from largest to smallest:
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
   - [ ] 5.5 Run all tests for Treasure feature
+    - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
     - Execute integration tests
@@ -375,7 +376,7 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark TreasureController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 6. Refactor HomeController (764 lines → 2 controllers)
+- [ ] 6. Refactor HomeController (764 lines → 2 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
   - [ ] 6.1 Create HomeNavigationController
     - Create `features/inners/home/controllers/home_navigation_controller.dart`
     - Copy standard controller structure
@@ -407,6 +408,7 @@ Controllers will be refactored in order from largest to smallest:
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
   - [ ] 6.5 Run all tests for Home feature
+    - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
     - Execute integration tests
@@ -424,7 +426,7 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark HomeController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 7. Refactor AuthController (718 lines → 2 controllers)
+- [ ] 7. Refactor AuthController (718 lines → 2 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
   - [ ] 7.1 Create AuthCredentialsController
     - Create `features/core/auth/controllers/auth_credentials_controller.dart`
     - Copy standard controller structure
@@ -457,6 +459,7 @@ Controllers will be refactored in order from largest to smallest:
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
   - [ ] 7.5 Run all tests for Auth feature
+    - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
     - Execute integration tests

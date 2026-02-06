@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'features/core/auth/controllers/auth_controller.dart';
-import 'features/inners/gamification/controllers/gamification_controller.dart';
+import 'features/inners/gamification/controllers/energy_controller.dart';
+import 'features/inners/gamification/controllers/gems_controller.dart';
+import 'features/inners/gamification/controllers/streak_controller.dart';
+import 'features/inners/gamification/controllers/xp_level_controller.dart';
 import 'firebase_options.dart';
 import 'shared/routes/app_routes.dart';
 import 'shared/theme/theme.dart';
@@ -17,7 +20,12 @@ void main() async {
 
   // Register global controllers
   Get.put(AuthController(), permanent: true);
-  Get.put(GamificationController(), permanent: true);
+  
+  // Register gamification controllers (order matters - dependencies first)
+  Get.put(GemsController(), permanent: true);
+  Get.put(EnergyController(), permanent: true);
+  Get.put(StreakController(), permanent: true);
+  Get.put(XpLevelController(), permanent: true);
 
   runApp(const MainApp());
 }

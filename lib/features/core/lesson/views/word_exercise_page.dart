@@ -92,7 +92,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
                   // Header - sem botão voltar após verificar
                   ExerciseHeader(
                     progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
-                    energy: Get.find<GamificationController>().currentEnergy.value,
+                    energy: Get.find<EnergyController>().currentEnergy.value,
                     onBack: _hasChecked ? null : () => _onBackPressed(context),
                   ),
 
