@@ -100,7 +100,7 @@ class _FriendsViewState extends State<FriendsView> {
           Expanded(
             child: Obx(() {
               // Loading
-              if (_controller.isLoadingSocial.value) {
+              if (_controller.isLoading.value) {
                 return const Center(
                   child: CircularProgressIndicator(color: AppTheme.primary),
                 );

@@ -5,7 +5,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../../../inners/gamification/controllers/energy_controller.dart';
 import '../controllers/lesson_flow_controller.dart';
 import '../controllers/lesson_exercise_controller.dart';
 import '../controllers/lesson_progress_controller.dart';

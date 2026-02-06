@@ -15,6 +15,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Imports locais
+import '../../../inners/gamification/controllers/gems_controller.dart';
+import '../../../inners/gamification/controllers/xp_level_controller.dart';
+import '../../../inners/gamification/controllers/streak_controller.dart';
+import '../../../inners/gamification/controllers/energy_controller.dart';
 import '../views/forgot_password_view.dart';
 import '../views/new_password_view.dart';
 import '../views/verify_code_view.dart';

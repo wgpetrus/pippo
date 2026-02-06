@@ -258,7 +258,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [-] 3.12 Commit GamificationController refactoring
+  - [x] 3.12 Commit GamificationController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide GamificationController em 4 controllers menores"
     - Update lista-controllers.md to mark GamificationController as complete
@@ -317,6 +317,7 @@ Controllers will be refactored in order from largest to smallest:
   
   - [ ] 4.7 Delete old OnboardingController
     - Delete `features/core/onboarding/controllers/onboarding_controller.dart`
+    - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
@@ -367,6 +368,7 @@ Controllers will be refactored in order from largest to smallest:
   
   - [ ] 5.6 Delete old TreasureController
     - Delete `features/inners/treasure/controllers/treasure_controller.dart`
+    - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
@@ -417,6 +419,7 @@ Controllers will be refactored in order from largest to smallest:
   
   - [ ] 6.6 Delete old HomeController
     - Delete `features/inners/home/controllers/home_controller.dart`
+    - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   

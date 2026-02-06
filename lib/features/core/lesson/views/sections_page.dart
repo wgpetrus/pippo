@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/mocks/lesson_mocks.dart';
-import '../../../inners/gamification/controllers/gamification_controller.dart';
+import '../../../inners/gamification/controllers/energy_controller.dart';
 import '../controllers/lesson_flow_controller.dart';
 import '../widgets/low_energy_modal.dart';
 import '../widgets/section_card.dart';

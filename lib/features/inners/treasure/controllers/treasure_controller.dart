@@ -10,7 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 // Imports locais
-import '../../gamification/controllers/gamification_controller.dart';
+import '../../gamification/controllers/gems_controller.dart';
+import '../../gamification/controllers/xp_level_controller.dart';
 
 /// Controller de desafios (Treasure Challenges)
 /// 
