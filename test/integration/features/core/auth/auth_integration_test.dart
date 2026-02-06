@@ -12,7 +12,8 @@ import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Project imports
-import 'package:pippo/features/core/auth/controllers/auth_controller.dart';
+import 'package:pippo/features/core/auth/controllers/auth_credentials_controller.dart';
+import 'package:pippo/features/core/auth/controllers/auth_providers_controller.dart';
 import 'package:pippo/features/inners/splash/controllers/splash_controller.dart';
 
 import 'auth_integration_test.mocks.dart';

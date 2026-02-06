@@ -5,7 +5,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_providers_controller.dart';
 
 /// Tela de redefinição de senha
 class NewPasswordView extends StatefulWidget {
@@ -22,7 +22,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   final _confirmPasswordController = TextEditingController();
 
   // Estados
-  late final AuthController _controller;
+  late final AuthProvidersController _controller;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -30,7 +30,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<AuthController>();
+    _controller = Get.find<AuthProvidersController>();
   }
 
   @override
@@ -41,6 +41,12 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   }
 
   // Validadores
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Senha é obrigatória.';
+    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
+    return null;
+  }
+
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Confirmação de senha é obrigatória.';
@@ -83,7 +89,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                   hint: 'Digite sua nova senha',
                   controller: _newPasswordController,
                   obscureText: _obscureNewPassword,
-                  validator: _controller.validatePassword,
+                  validator: _validatePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureNewPassword

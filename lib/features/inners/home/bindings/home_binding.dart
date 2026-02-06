@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
-import '../../../core/auth/controllers/auth_controller.dart';
+import '../../../core/auth/controllers/auth_credentials_controller.dart';
+import '../../../core/auth/controllers/auth_providers_controller.dart';
 import '../../../core/lesson/controllers/lesson_flow_controller.dart';
 import '../../../core/lesson/controllers/lesson_exercise_controller.dart';
 import '../../../core/lesson/controllers/lesson_progress_controller.dart';
@@ -28,9 +29,12 @@ import '../controllers/home_stats_controller.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
-    // Garantir que AuthController está disponível
-    if (!Get.isRegistered<AuthController>()) {
-      Get.put(AuthController(), permanent: true);
+    // Garantir que AuthControllers estão disponíveis
+    if (!Get.isRegistered<AuthCredentialsController>()) {
+      Get.put(AuthCredentialsController(), permanent: true);
+    }
+    if (!Get.isRegistered<AuthProvidersController>()) {
+      Get.put(AuthProvidersController(), permanent: true);
     }
 
     // Garantir que GemsController está disponível (primeiro - sem dependências)

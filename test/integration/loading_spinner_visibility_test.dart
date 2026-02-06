@@ -3,9 +3,15 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/auth/controllers/auth_controller.dart';
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
-import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
+import 'package:pippo/features/core/auth/controllers/auth_credentials_controller.dart';
+import 'package:pippo/features/core/auth/controllers/auth_providers_controller.dart';
+import 'package:pippo/features/core/onboarding/controllers/onboarding_data_controller.dart';
+import 'package:pippo/features/core/onboarding/controllers/onboarding_flow_controller.dart';
+import 'package:pippo/features/core/onboarding/controllers/onboarding_validation_controller.dart';
+import 'package:pippo/features/inners/gamification/controllers/energy_controller.dart';
+import 'package:pippo/features/inners/gamification/controllers/gems_controller.dart';
+import 'package:pippo/features/inners/gamification/controllers/streak_controller.dart';
+import 'package:pippo/features/inners/gamification/controllers/xp_level_controller.dart';
 
 void main() {
   group('Integration Tests - Loading Spinner Visibility', () {

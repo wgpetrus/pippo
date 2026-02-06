@@ -6,7 +6,7 @@ import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_providers_controller.dart';
 
 /// Tela de recuperação de senha
 class ForgotPasswordView extends StatefulWidget {
@@ -22,19 +22,26 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   final _emailController = TextEditingController();
 
   // Estados
-  late final AuthController _controller;
+  late final AuthProvidersController _controller;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<AuthController>();
+    _controller = Get.find<AuthProvidersController>();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  // Validador de email
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) return 'E-mail é obrigatório.';
+    if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';
+    return null;
   }
 
   // Build
@@ -71,7 +78,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                   hint: 'Digite seu e-mail',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  validator: _controller.validateEmail,
+                  validator: _validateEmail,
                 ),
                 
                 const SizedBox(height: 32),

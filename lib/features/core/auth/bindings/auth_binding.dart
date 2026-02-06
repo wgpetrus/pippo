@@ -1,16 +1,14 @@
 import 'package:get/get.dart';
 
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_credentials_controller.dart';
+import '../controllers/auth_providers_controller.dart';
 
 /// Binding de autenticação
 class AuthBinding extends Bindings {
   @override
   void dependencies() {
-    // Garantir que AuthController está disponível
-    // Se já foi registrado no main.dart, não faz nada
-    // Se não, registra agora
-    if (!Get.isRegistered<AuthController>()) {
-      Get.put(AuthController(), permanent: true);
-    }
+    // Registrar controllers de autenticação
+    Get.lazyPut(() => AuthCredentialsController());
+    Get.lazyPut(() => AuthProvidersController());
   }
 }

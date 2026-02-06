@@ -2,7 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'features/core/auth/controllers/auth_controller.dart';
+import 'features/core/auth/controllers/auth_credentials_controller.dart';
+import 'features/core/auth/controllers/auth_providers_controller.dart';
 import 'features/inners/gamification/controllers/energy_controller.dart';
 import 'features/inners/gamification/controllers/gems_controller.dart';
 import 'features/inners/gamification/controllers/streak_controller.dart';
@@ -18,8 +19,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Register global controllers
-  Get.put(AuthController(), permanent: true);
+  // Register global auth controllers
+  Get.put(AuthCredentialsController(), permanent: true);
+  Get.put(AuthProvidersController(), permanent: true);
   
   // Register gamification controllers (order matters - dependencies first)
   Get.put(GemsController(), permanent: true);

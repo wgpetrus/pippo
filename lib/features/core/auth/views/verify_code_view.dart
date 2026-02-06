@@ -6,7 +6,7 @@ import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_pinput.dart';
 import '../../../../shared/widgets/app_resend_code.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_providers_controller.dart';
 
 /// Tela de verificação de código de recuperação de senha
 class VerifyCodeView extends StatefulWidget {
@@ -22,14 +22,14 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
   final _focusNode = FocusNode();
 
   // Estados
-  late final AuthController _controller;
+  late final AuthProvidersController _controller;
   bool _isComplete = false;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<AuthController>();
+    _controller = Get.find<AuthProvidersController>();
     _pinController.addListener(() {
       setState(() => _isComplete = _pinController.text.length == 5);
     });
@@ -45,7 +45,7 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
   // Métodos
   void _verifyCode() {
     if (_pinController.text.length == 5) {
-      _controller.verifyCode(_pinController.text);
+      _controller.verifyResetCode(_pinController.text);
     }
   }
 

@@ -7,7 +7,7 @@ import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_list_item.dart';
-import '../../../core/auth/controllers/auth_controller.dart';
+import '../../../core/auth/controllers/auth_providers_controller.dart';
 import '../controllers/profile_settings_controller.dart';
 import '../widgets/delete_account_modal.dart';
 import 'courses_page.dart';
@@ -24,14 +24,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late final AuthController _authController;
+  late final AuthProvidersController _authController;
   late final ProfileSettingsController _settingsController;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _authController = Get.find<AuthController>();
+    _authController = Get.find<AuthProvidersController>();
     _settingsController = Get.find<ProfileSettingsController>();
     
     // Carregar configurações ao abrir a página

@@ -378,7 +378,7 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark TreasureController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 6. Refactor HomeController (764 lines → 2 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
+- [x] 6. Refactor HomeController (764 lines → 2 controllers  + Add code that allows you to run tests that require Firebase to be initialized.)
   - [x] 6.1 Create HomeNavigationController
     - Create `features/inners/home/controllers/home_navigation_controller.dart`
     - Copy standard controller structure
@@ -423,14 +423,14 @@ Controllers will be refactored in order from largest to smallest:
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [-] 6.7 Commit HomeController refactoring
+  - [x] 6.7 Commit HomeController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide HomeController em 2 controllers menores"
     - Update lista-controllers.md to mark HomeController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 7. Refactor AuthController (718 lines → 2 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
-  - [ ] 7.1 Create AuthCredentialsController
+- [-] 7. Refactor AuthController (718 lines → 2 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
+  - [x] 7.1 Create AuthCredentialsController
     - Create `features/core/auth/controllers/auth_credentials_controller.dart`
     - Copy standard controller structure
     - Copy states: isLoading, errorMessage
@@ -438,7 +438,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.7, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 7.2 Create AuthProvidersController
+  - [x] 7.2 Create AuthProvidersController
     - Create `features/core/auth/controllers/auth_providers_controller.dart`
     - Copy standard controller structure
     - Copy states: isLoading, errorMessage
@@ -446,14 +446,14 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.7, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 7.3 Update AuthBinding
+  - [x] 7.3 Update AuthBinding
     - Open `features/core/auth/bindings/auth_binding.dart`
     - Remove `Get.lazyPut(() => AuthController())`
     - Add `Get.lazyPut(() => AuthCredentialsController())`
     - Add `Get.lazyPut(() => AuthProvidersController())`
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   
-  - [ ] 7.4 Update Auth views
+  - [x] 7.4 Update Auth views
     - Update signin_view.dart to use AuthCredentialsController
     - Update forgot_password_view.dart to use AuthProvidersController
     - Update verify_code_view.dart to use AuthProvidersController
@@ -461,7 +461,7 @@ Controllers will be refactored in order from largest to smallest:
     - Preserve all Obx() wrappers
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 7.5 Run all tests for Auth feature
+  - [x] 7.5 Run all tests for Auth feature
     - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
@@ -469,13 +469,13 @@ Controllers will be refactored in order from largest to smallest:
     - Verify all tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [ ] 7.6 Delete old AuthController
+  - [x] 7.6 Delete old AuthController
     - Delete `features/core/auth/controllers/auth_controller.dart`
     - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [ ] 7.7 Commit AuthController refactoring
+  - [-] 7.7 Commit AuthController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide AuthController em 2 controllers menores"
     - Update lista-controllers.md to mark AuthController as complete

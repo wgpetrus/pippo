@@ -24,8 +24,8 @@ void expect(dynamic actual, dynamic matcher, {String? reason}) {
 /// cópias exatas dos métodos do AuthController.
 /// Qualquer mudança no controller DEVE ser refletida aqui.
 void main() {
-  // Error handler extraído do AuthController
-  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_controller.dart
+  // Error handler extraído do AuthCredentialsController
+  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_credentials_controller.dart
   String handleFirebaseLoginError(String errorCode) {
     switch (errorCode) {
       case 'user-not-found':
@@ -47,8 +47,8 @@ void main() {
     }
   }
 
-  // Error handler do Google Sign-In extraído do AuthController
-  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_controller.dart
+  // Error handler do Google Sign-In extraído do AuthProvidersController
+  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_providers_controller.dart
   String handleGoogleSignInError(String errorType, String errorCode) {
     if (errorType == 'PlatformException' && errorCode == 'sign_in_canceled') {
       return '';
@@ -73,8 +73,8 @@ void main() {
     return 'Ocorreu um erro inesperado. Tente novamente.';
   }
 
-  // Validadores extraídos do AuthController
-  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_controller.dart
+  // Validadores extraídos do AuthCredentialsController
+  // IMPORTANTE: Manter sincronizado com lib/features/core/auth/controllers/auth_credentials_controller.dart
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) return 'E-mail é obrigatório.';
     if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';

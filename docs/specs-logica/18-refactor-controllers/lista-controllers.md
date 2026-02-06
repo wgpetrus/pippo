@@ -22,7 +22,7 @@
 ### 🟡 Acima do Limite (500-800 linhas)
 
 - [x] **06-HomeController** (764 → 2 controllers: HomeNavigation 65, HomeStats 798) ⚠️ *HomeStats excede limite*
-- [ ] **07-AuthController** (718 → 2 controllers de ~360)
+- [x] **07-AuthController** (718 → 2 controllers: AuthCredentials 241, AuthProviders 622) ✅ **COMPLETO**
 
 ### ✅ Dentro do Limite (≤500 linhas)
 
@@ -474,7 +474,7 @@
 
 **Controllers Novos (2):**
 
-#### AuthCredentialsController (~360 linhas)
+#### AuthCredentialsController (~241 linhas) ✅
 **Arquivo:** `lib/features/core/auth/controllers/auth_credentials_controller.dart`
 
 **Responsabilidade:** Gerenciar login/registro com email/senha
@@ -490,7 +490,7 @@
 
 ---
 
-#### AuthProvidersController (~360 linhas)
+#### AuthProvidersController (~622 linhas) ✅
 **Arquivo:** `lib/features/core/auth/controllers/auth_providers_controller.dart`
 
 **Responsabilidade:** Gerenciar login social e recuperação
@@ -505,6 +505,8 @@
 - `verifyResetCode(String code)`
 - `resetPassword(String code, String newPassword)`
 - `logout()`
+
+**Nota:** Este controller tem 622 linhas devido à complexidade do fluxo de Google Sign-In e recuperação de senha com OTP. O código foi migrado exatamente como estava (sem modificações), conforme requisito de refatoração.
 
 ---
 

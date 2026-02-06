@@ -8,7 +8,8 @@ import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_credentials_controller.dart';
+import '../controllers/auth_providers_controller.dart';
 import '../widgets/social_button.dart';
 
 /// Tela de login
@@ -27,13 +28,15 @@ class _SigninViewState extends State<SigninView> {
 
   // Estados
   bool _obscurePassword = true;
-  late final AuthController _controller;
+  late final AuthCredentialsController _credentialsController;
+  late final AuthProvidersController _providersController;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<AuthController>();
+    _credentialsController = Get.find<AuthCredentialsController>();
+    _providersController = Get.find<AuthProvidersController>();
   }
 
   @override
@@ -73,7 +76,7 @@ class _SigninViewState extends State<SigninView> {
                   hint: 'digite seu usuário / e-mail',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  validator: _controller.validateEmail,
+                  validator: _credentialsController.validateEmail,
                 ),
                 SizedBox(height: r.spacing16),
                 AppTextField(
@@ -81,7 +84,7 @@ class _SigninViewState extends State<SigninView> {
                   hint: 'digite sua senha',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  validator: _controller.validatePassword,
+                  validator: _credentialsController.validatePassword,
                   suffixIcon: IconButton(
                     icon: FaIcon(
                       _obscurePassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
@@ -94,49 +97,61 @@ class _SigninViewState extends State<SigninView> {
                 SizedBox(height: r.spacing12),
                 _buildForgotPassword(r),
                 SizedBox(height: r.spacing32),
-                Obx(() => _controller.errorMessage.value.isNotEmpty
-                    ? Padding(
-                        padding: EdgeInsets.only(bottom: r.spacing16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              _controller.errorMessage.value,
-                              style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
-                            ),
-                            // Botão "Fazer login" quando erro de conta existente com credencial diferente
-                            if (_controller.showLoginButton.value) ...[
-                              SizedBox(height: r.spacing12),
-                              AppButton(
-                                text: 'Fazer login com e-mail',
-                                isPrimary: false,
-                                onPressed: () {
-                                  // Limpar erro e focar no formulário
-                                  _controller.errorMessage.value = '';
-                                  _controller.showLoginButton.value = false;
-                                  _emailController.clear();
-                                  _passwordController.clear();
-                                },
-                              ),
-                            ],
-                          ],
+                Obx(() {
+                  // Mostrar erro de credentials ou providers (o que tiver conteúdo)
+                  final errorMsg = _credentialsController.errorMessage.value.isNotEmpty
+                      ? _credentialsController.errorMessage.value
+                      : _providersController.errorMessage.value;
+                  
+                  if (errorMsg.isEmpty) return const SizedBox.shrink();
+                  
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: r.spacing16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          errorMsg,
+                          style: AppTheme.textSmMedium.copyWith(color: AppTheme.error),
                         ),
-                      )
-                    : const SizedBox.shrink()),
-                Obx(() => AppButton(
-                      text: 'Entrar',
-                      isLoading: _controller.isLoading.value,
-                      onPressed: _controller.isLoading.value
-                          ? null
-                          : () {
-                              if (_formKey.currentState!.validate()) {
-                                _controller.login(
-                                  _emailController.text.trim(),
-                                  _passwordController.text,
-                                );
-                              }
+                        // Botão "Fazer login" quando erro de conta existente com credencial diferente
+                        if (_providersController.showLoginButton.value) ...[
+                          SizedBox(height: r.spacing12),
+                          AppButton(
+                            text: 'Fazer login com e-mail',
+                            isPrimary: false,
+                            onPressed: () {
+                              // Limpar erro e focar no formulário
+                              _credentialsController.errorMessage.value = '';
+                              _providersController.errorMessage.value = '';
+                              _providersController.showLoginButton.value = false;
+                              _emailController.clear();
+                              _passwordController.clear();
                             },
-                    )),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
+                Obx(() {
+                  final isLoading = _credentialsController.isLoading.value || 
+                                   _providersController.isLoading.value;
+                  return AppButton(
+                    text: 'Entrar',
+                    isLoading: isLoading,
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            if (_formKey.currentState!.validate()) {
+                              _credentialsController.login(
+                                _emailController.text.trim(),
+                                _passwordController.text,
+                              );
+                            }
+                          },
+                  );
+                }),
                 SizedBox(height: r.spacing16),
                 _buildSocialButtons(r),
               ],
@@ -149,51 +164,59 @@ class _SigninViewState extends State<SigninView> {
 
   // Widgets
   Widget _buildForgotPassword(ResponsiveUtils r) {
-    return Obx(() => GestureDetector(
-          onTap: _controller.isLoading.value ? null : _controller.goToForgotPassword,
-          child: Opacity(
-            opacity: _controller.isLoading.value ? 0.5 : 1.0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Esqueceu sua senha',
-                  style: AppTheme.textMdSemibold.copyWith(
-                    color: AppTheme.primary,
-                    fontSize: r.fontSize14,
-                  ),
-                ),
-                SizedBox(height: r.spacing4 / 2),
-                Container(
-                  height: 1.5,
-                  width: r.value(mobile: 165, tablet: 180, desktop: 200),
+    return Obx(() {
+      final isLoading = _credentialsController.isLoading.value || 
+                       _providersController.isLoading.value;
+      return GestureDetector(
+        onTap: isLoading ? null : _providersController.goToForgotPassword,
+        child: Opacity(
+          opacity: isLoading ? 0.5 : 1.0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Esqueceu sua senha',
+                style: AppTheme.textMdSemibold.copyWith(
                   color: AppTheme.primary,
+                  fontSize: r.fontSize14,
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: r.spacing4 / 2),
+              Container(
+                height: 1.5,
+                width: r.value(mobile: 165, tablet: 180, desktop: 200),
+                color: AppTheme.primary,
+              ),
+            ],
           ),
-        ));
+        ),
+      );
+    });
   }
 
   Widget _buildSocialButtons(ResponsiveUtils r) {
-    return Obx(() => Row(
-          children: [
-            Expanded(
-              child: SocialButton(
-                text: 'Facebook',
-                iconPath: AppAssets.logoFacebook,
-                onPressed: _controller.isLoading.value ? null : _controller.onFacebookTap,
-              ),
+    return Obx(() {
+      final isLoading = _credentialsController.isLoading.value || 
+                       _providersController.isLoading.value;
+      return Row(
+        children: [
+          Expanded(
+            child: SocialButton(
+              text: 'Facebook',
+              iconPath: AppAssets.logoFacebook,
+              onPressed: isLoading ? null : _providersController.onFacebookTap,
             ),
-            SizedBox(width: r.spacing12),
-            Expanded(
-              child: SocialButton(
-                text: 'Gmail',
-                iconPath: AppAssets.logoGoogle,
-                onPressed: _controller.isLoading.value ? null : _controller.signInWithGoogle,
-              ),
+          ),
+          SizedBox(width: r.spacing12),
+          Expanded(
+            child: SocialButton(
+              text: 'Gmail',
+              iconPath: AppAssets.logoGoogle,
+              onPressed: isLoading ? null : _providersController.signInWithGoogle,
             ),
-          ],
-        ));
+          ),
+        ],
+      );
+    });
   }
 }

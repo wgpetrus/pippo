@@ -3,7 +3,8 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/auth/controllers/auth_controller.dart';
+import 'package:pippo/features/core/auth/controllers/auth_credentials_controller.dart';
+import 'package:pippo/features/core/auth/controllers/auth_providers_controller.dart';
 
 void main() {
   group('Integration Tests - Authentication Flows', () {

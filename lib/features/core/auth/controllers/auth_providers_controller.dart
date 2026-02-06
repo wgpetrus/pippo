@@ -23,8 +23,8 @@ import '../views/forgot_password_view.dart';
 import '../views/new_password_view.dart';
 import '../views/verify_code_view.dart';
 
-/// Controller de autenticação
-class AuthController extends GetxController {
+/// Controller de provedores de autenticação (Google, Facebook, reset de senha)
+class AuthProvidersController extends GetxController {
   // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
@@ -57,126 +57,7 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
-  // Validadores
-
-  /// Valida email (retorna mensagem de erro ou null se válido)
-  String? validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return 'E-mail é obrigatório.';
-    if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';
-    return null;
-  }
-
-  /// Valida senha (retorna mensagem de erro ou null se válido)
-  String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Senha é obrigatória.';
-    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
-    return null;
-  }
-
   // Métodos públicos
-
-  /// Realiza login com email e senha
-  Future<void> login(String email, String password) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-    showLoginButton.value = false; // Resetar estado
-
-    try {
-      // VERIFICAR ANTES DE AUTENTICAR: Se email existe no Firestore com provider Google
-      if (kDebugMode) {
-        debugPrint('🔍 Verificando se email $email já existe no Firestore');
-      }
-      
-      final emailQuery = await _firestore
-          .collection('users')
-          .where('email', isEqualTo: email.trim().toLowerCase())
-          .limit(1)
-          .get()
-          .timeout(const Duration(seconds: 30));
-      
-      if (emailQuery.docs.isNotEmpty) {
-        // Email já existe - verificar provider
-        final existingUserData = emailQuery.docs.first.data();
-        final existingProvider = existingUserData['authProvider'] as String?;
-        
-        if (kDebugMode) {
-          debugPrint('⚠️ Email já existe com provider: $existingProvider');
-        }
-        
-        if (existingProvider == 'google') {
-          // Email já existe com login do Google - BLOQUEAR
-          errorMessage.value = 'Já existe uma conta com este e-mail usando login do Google. Por favor, faça login com Google.';
-          
-          if (kDebugMode) {
-            debugPrint('🚫 Login com email/senha bloqueado - email já tem conta Google');
-          }
-          
-          return;
-        }
-        // Se provider é 'email', pode continuar
-      }
-      
-      // Autenticar via Firebase Auth
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Buscar documento do usuário no Firestore
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get()
-          .timeout(const Duration(seconds: 30));
-
-      if (!userDoc.exists) {
-        // Documento não existe - criar documento básico e redirecionar para onboarding
-        await _firestore
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-          'id': userCredential.user!.uid,
-          'email': userCredential.user!.email,
-          'authProvider': 'email',
-          'onboardingCompleted': false,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }).timeout(const Duration(seconds: 30));
-        
-        // Navegar para onboarding com argumento skipWelcome
-        Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
-        return;
-      }
-
-      final userData = userDoc.data()!;
-      final onboardingCompleted = userData['onboardingCompleted'] ?? false;
-
-      if (!onboardingCompleted) {
-        // Onboarding incompleto - navegar com argumento skipWelcome
-        Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
-      } else {
-        // Onboarding completo - atualizar lastActiveAt e navegar para home
-        await _firestore
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .update({
-          'lastActiveAt': FieldValue.serverTimestamp(),
-        }).timeout(const Duration(seconds: 30));
-
-        Get.offAllNamed('/home');
-      }
-    } on TimeoutException {
-      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-    } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleFirebaseLoginError(e);
-    } catch (e) {
-      errorMessage.value = 'Não foi possível fazer login. Tente novamente.';
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // Métodos de autenticação social
 
   /// Placeholder para login com Facebook
   void onFacebookTap() {
@@ -326,38 +207,6 @@ class AuthController extends GetxController {
     }
   }
 
-  // Métodos privados
-
-  /// Gera código OTP de 5 dígitos
-  /// 
-  /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
-  /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
-  /// Para produção: implementar envio de email (ver comentários em sendPasswordResetCode)
-  String _generateOTP() {
-    final random = Random();
-    final code = (10000 + random.nextInt(90000)).toString();
-    return code;
-  }
-
-  /// Inicia timer de reenvio de 60 segundos
-  void _startResendTimer() {
-    resendTimer.value = 60;
-    _resendCountdownTimer?.cancel();
-
-    _resendCountdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) {
-        if (resendTimer.value > 0) {
-          resendTimer.value--;
-        } else {
-          timer.cancel();
-        }
-      },
-    );
-  }
-
-  // Métodos de recuperação de senha
-
   /// Cancela o processo de recuperação de senha
   /// Limpa dados temporários e volta para tela de login
   void cancelPasswordReset() {
@@ -380,12 +229,17 @@ class AuthController extends GetxController {
   /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
   /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
   /// Para produção: implementar envio de email via Cloud Function ou serviço de email
-  Future<void> sendPasswordResetCode(String email) async {
+  Future<void> sendPasswordResetEmail(String email) async {
     // Sanitizar e validar email
     final sanitizedEmail = email.trim().toLowerCase();
-    final emailError = validateEmail(sanitizedEmail);
-    if (emailError != null) {
-      errorMessage.value = emailError;
+    
+    // Validação básica de email
+    if (sanitizedEmail.isEmpty) {
+      errorMessage.value = 'E-mail é obrigatório.';
+      return;
+    }
+    if (!GetUtils.isEmail(sanitizedEmail)) {
+      errorMessage.value = 'Por favor, insira um e-mail válido.';
       return;
     }
 
@@ -437,9 +291,14 @@ class AuthController extends GetxController {
   Future<void> sendPasswordResetLink(String email) async {
     // Sanitizar e validar email
     final sanitizedEmail = email.trim().toLowerCase();
-    final emailError = validateEmail(sanitizedEmail);
-    if (emailError != null) {
-      errorMessage.value = emailError;
+    
+    // Validação básica de email
+    if (sanitizedEmail.isEmpty) {
+      errorMessage.value = 'E-mail é obrigatório.';
+      return;
+    }
+    if (!GetUtils.isEmail(sanitizedEmail)) {
+      errorMessage.value = 'Por favor, insira um e-mail válido.';
       return;
     }
 
@@ -491,7 +350,7 @@ class AuthController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }).timeout(const Duration(seconds: 30));
 
-      // TODO: [PRODUÇÃO] Implementar envio de email (ver sendPasswordResetCode)
+      // TODO: [PRODUÇÃO] Implementar envio de email (ver sendPasswordResetEmail)
 
       // Reiniciar timer de reenvio (60 segundos)
       _startResendTimer();
@@ -524,13 +383,13 @@ class AuthController extends GetxController {
   /// 3. Se válido, navega para tela de nova senha
   /// 
   /// COMO TESTAR AGORA:
-  /// 1. Executar sendPasswordResetCode()
+  /// 1. Executar sendPasswordResetEmail()
   /// 2. Acessar Firebase Console > Firestore > passwordResets > [seu-email]
   /// 3. Copiar o valor do campo "code"
   /// 4. Colar na tela de verificação
   /// 
   /// ⚠️ Em produção, o usuário receberá o código por email (quando implementado)
-  Future<void> verifyCode(String code) async {
+  Future<void> verifyResetCode(String code) async {
     // Sanitizar código (remover espaços)
     final sanitizedCode = code.trim();
 
@@ -541,7 +400,7 @@ class AuthController extends GetxController {
     }
 
     // Validar que o código contém apenas números
-    final digitRegex = RegExp(r'^\d{5}$$');
+    final digitRegex = RegExp(r'^\d{5}$');
     if (!digitRegex.hasMatch(sanitizedCode)) {
       errorMessage.value = 'O código deve conter apenas números.';
       return;
@@ -605,9 +464,12 @@ class AuthController extends GetxController {
   /// sem necessidade de enviar outro email.
   Future<void> resetPassword(String newPassword) async {
     // Validar senha
-    final passwordError = validatePassword(newPassword);
-    if (passwordError != null) {
-      errorMessage.value = passwordError;
+    if (newPassword.isEmpty) {
+      errorMessage.value = 'Senha é obrigatória.';
+      return;
+    }
+    if (newPassword.length < 6) {
+      errorMessage.value = 'A senha deve ter pelo menos 6 caracteres.';
       return;
     }
 
@@ -654,104 +516,6 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // Handlers
-
-  /// Handler de erros de login do Firebase Auth
-  String _handleFirebaseLoginError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'Não encontramos uma conta com este e-mail.';
-      case 'wrong-password':
-        return 'Senha incorreta. Verifique e tente novamente.';
-      case 'invalid-email':
-        return 'Por favor, insira um e-mail válido.';
-      case 'user-disabled':
-        return 'Esta conta foi desativada. Entre em contato com o suporte.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      case 'invalid-credential':
-        return 'E-mail ou senha incorretos.';
-      default:
-        return 'Não foi possível fazer login. Tente novamente.';
-    }
-  }
-
-  /// Handler de erros de reset de senha do Firebase Auth
-  String _handleFirebaseResetPasswordError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'Não encontramos uma conta com este e-mail.';
-      case 'invalid-email':
-        return 'Por favor, insira um e-mail válido.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      default:
-        return 'Não foi possível enviar o e-mail de recuperação. Tente novamente.';
-    }
-  }
-
-  /// Handler de erros do Firestore
-  String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
-  }
-
-  /// Handler de erros do Google Sign-In
-  String _handleGoogleSignInError(dynamic error) {
-    if (error is PlatformException && error.code == 'sign_in_canceled') {
-      return '';
-    }
-    if (error is PlatformException && error.code == 'network_error') {
-      return 'Verifique sua conexão com a internet.';
-    }
-    if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'account-exists-with-different-credential':
-          // Mostrar botão de login para este erro específico
-          showLoginButton.value = true;
-          return 'Este e-mail já tem uma conta. Faça login com e-mail e senha.';
-        case 'invalid-credential':
-          return 'Credenciais inválidas. Tente novamente.';
-        case 'operation-not-allowed':
-          return 'Login com Google não está habilitado. Entre em contato com o suporte.';
-        case 'user-disabled':
-          return 'Esta conta foi desativada. Entre em contato com o suporte.';
-        default:
-          return 'Não foi possível fazer login com Google. Tente novamente.';
-      }
-    }
-    return 'Ocorreu um erro inesperado. Tente novamente.';
-  }
-
-  // Navegação
-
-  void goToForgotPassword() => Get.to(() => const ForgotPasswordView());
-  void goToVerifyCode() => Get.to(() => const VerifyCodeView());
-  void goToNewPassword() => Get.to(() => const NewPasswordView());
-  void backToSignin() => Get.offAllNamed('/auth');
-
-  // Logout
 
   /// Realiza logout do usuário e reseta flag de primeiro acesso
   Future<void> logout() async {
@@ -833,4 +597,106 @@ class AuthController extends GetxController {
       errorMessage.value = 'Erro ao fazer logout. Tente novamente.';
     }
   }
+
+  // Métodos privados
+
+  /// Gera código OTP de 5 dígitos
+  /// 
+  /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
+  /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
+  /// Para produção: implementar envio de email (ver comentários em sendPasswordResetEmail)
+  String _generateOTP() {
+    final random = Random();
+    final code = (10000 + random.nextInt(90000)).toString();
+    return code;
+  }
+
+  /// Inicia timer de reenvio de 60 segundos
+  void _startResendTimer() {
+    resendTimer.value = 60;
+    _resendCountdownTimer?.cancel();
+
+    _resendCountdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (resendTimer.value > 0) {
+          resendTimer.value--;
+        } else {
+          timer.cancel();
+        }
+      },
+    );
+  }
+
+  /// Handler de erros de reset de senha do Firebase Auth
+  String _handleFirebaseResetPasswordError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'Não encontramos uma conta com este e-mail.';
+      case 'invalid-email':
+        return 'Por favor, insira um e-mail válido.';
+      case 'too-many-requests':
+        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+      case 'network-request-failed':
+        return 'Verifique sua conexão com a internet.';
+      default:
+        return 'Não foi possível enviar o e-mail de recuperação. Tente novamente.';
+    }
+  }
+
+  /// Handler de erros do Firestore
+  String _handleFirestoreError(FirebaseException e) {
+    switch (e.code) {
+      case 'permission-denied':
+        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
+      case 'unavailable':
+        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
+      case 'deadline-exceeded':
+        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      case 'resource-exhausted':
+        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
+      case 'unauthenticated':
+        return 'Usuário não autenticado. Faça login novamente.';
+      case 'not-found':
+        return 'Recurso não encontrado.';
+      case 'already-exists':
+        return 'Recurso já existe.';
+      default:
+        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
+    }
+  }
+
+  /// Handler de erros do Google Sign-In
+  String _handleGoogleSignInError(dynamic error) {
+    if (error is PlatformException && error.code == 'sign_in_canceled') {
+      return '';
+    }
+    if (error is PlatformException && error.code == 'network_error') {
+      return 'Verifique sua conexão com a internet.';
+    }
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'account-exists-with-different-credential':
+          // Mostrar botão de login para este erro específico
+          showLoginButton.value = true;
+          return 'Este e-mail já tem uma conta. Faça login com e-mail e senha.';
+        case 'invalid-credential':
+          return 'Credenciais inválidas. Tente novamente.';
+        case 'operation-not-allowed':
+          return 'Login com Google não está habilitado. Entre em contato com o suporte.';
+        case 'user-disabled':
+          return 'Esta conta foi desativada. Entre em contato com o suporte.';
+        default:
+          return 'Não foi possível fazer login com Google. Tente novamente.';
+      }
+    }
+    return 'Ocorreu um erro inesperado. Tente novamente.';
+  }
+
+  // Navegação
+
+  void goToForgotPassword() => Get.to(() => const ForgotPasswordView());
+  void goToVerifyCode() => Get.to(() => const VerifyCodeView());
+  void goToNewPassword() => Get.to(() => const NewPasswordView());
+  void backToSignin() => Get.offAllNamed('/auth');
 }
