@@ -3,7 +3,8 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
 import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
@@ -21,7 +22,8 @@ import '../../../../helpers/firebase_test_helper.dart';
 /// 
 /// **Validates: Requirements 8.4, 8.5, 8.6**
 void main() {
-  late LessonController controller;
+  late LessonRewardsController rewardsController;
+  late LessonProgressController progressController;
   late FakeFirebaseFirestore fakeFirestore;
   late MockFirebaseAuth mockAuth;
 
@@ -40,10 +42,15 @@ void main() {
       permanent: true,
     );
 
-    controller = LessonController();
+    // Register LessonProgressController
+    progressController = LessonProgressController();
+    Get.put<LessonProgressController>(progressController);
+
+    // Create LessonRewardsController (depends on progress controller)
+    rewardsController = LessonRewardsController();
   });
 
-  tearDown(() {
+  tearDown() {
     Get.reset();
   });
 
@@ -51,7 +58,7 @@ void main() {
     test('getTodayDateString returns YYYY-MM-DD format', () {
       // Property: Para qualquer execução, data deve estar no formato YYYY-MM-DD
       for (int iteration = 0; iteration < 100; iteration++) {
-        final dateString = controller.getTodayDateStringForTest();
+        final dateString = rewardsrewardsController.getTodayDateStringForTest();
 
         // Property: Date string matches YYYY-MM-DD format
         final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
@@ -94,9 +101,9 @@ void main() {
 
     test('getTodayDateString is deterministic within same day', () {
       // Property: Múltiplas chamadas no mesmo dia retornam mesma data
-      final date1 = controller.getTodayDateStringForTest();
-      final date2 = controller.getTodayDateStringForTest();
-      final date3 = controller.getTodayDateStringForTest();
+      final date1 = rewardsController.getTodayDateStringForTest();
+      final date2 = rewardsController.getTodayDateStringForTest();
+      final date3 = rewardsController.getTodayDateStringForTest();
 
       // Property: Same day = same date string
       expect(date1, equals(date2),
@@ -107,7 +114,7 @@ void main() {
 
     test('getTodayDateString uses user timezone not UTC', () {
       // Property: Data usa timezone do usuário, não UTC
-      final dateString = controller.getTodayDateStringForTest();
+      final dateString = rewardsController.getTodayDateStringForTest();
       final now = DateTime.now(); // User timezone
 
       // Parse date string
@@ -135,7 +142,7 @@ void main() {
     test('date format components are correctly padded', () {
       // Property: Mês e dia sempre têm 2 dígitos (zero-padded)
       for (int iteration = 0; iteration < 50; iteration++) {
-        final dateString = controller.getTodayDateStringForTest();
+        final dateString = rewardsController.getTodayDateStringForTest();
         final parts = dateString.split('-');
 
         // Property: Year has 4 digits
@@ -165,7 +172,7 @@ void main() {
 
       // Generate multiple date strings
       for (int i = 0; i < 10; i++) {
-        dates.add(controller.getTodayDateStringForTest());
+        dates.add(rewardsController.getTodayDateStringForTest());
       }
 
       // Property: Dates can be sorted lexicographically
@@ -185,7 +192,7 @@ void main() {
     test('date format is parseable by DateTime.parse', () {
       // Property: Formato pode ser parseado por DateTime.parse()
       for (int iteration = 0; iteration < 100; iteration++) {
-        final dateString = controller.getTodayDateStringForTest();
+        final dateString = rewardsController.getTodayDateStringForTest();
 
         // Property: Date string can be parsed
         DateTime? parsedDate;
@@ -265,7 +272,7 @@ void main() {
 
     test('history date format handles month boundaries', () {
       // Property: Formato funciona corretamente em mudanças de mês
-      final dateString = controller.getTodayDateStringForTest();
+      final dateString = rewardsController.getTodayDateStringForTest();
       final parts = dateString.split('-');
       final month = int.parse(parts[1]);
       final day = int.parse(parts[2]);
@@ -282,7 +289,7 @@ void main() {
 
     test('history date format handles year boundaries', () {
       // Property: Formato funciona corretamente em mudanças de ano
-      final dateString = controller.getTodayDateStringForTest();
+      final dateString = rewardsController.getTodayDateStringForTest();
       final parts = dateString.split('-');
       final year = int.parse(parts[0]);
       final month = int.parse(parts[1]);
@@ -314,7 +321,7 @@ void main() {
       final dates = <String>{};
 
       for (int iteration = 0; iteration < 100; iteration++) {
-        final dateString = controller.getTodayDateStringForTest();
+        final dateString = rewardsController.getTodayDateStringForTest();
 
         // Property: Date string matches format
         expect(dateString, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')),
@@ -382,7 +389,7 @@ void main() {
 
     test('date format handles leap years correctly', () {
       // Property: Formato funciona corretamente em anos bissextos
-      final dateString = controller.getTodayDateStringForTest();
+      final dateString = rewardsController.getTodayDateStringForTest();
       final parts = dateString.split('-');
       final year = int.parse(parts[0]);
       final month = int.parse(parts[1]);
@@ -408,7 +415,7 @@ void main() {
     test('history date format is URL-safe', () {
       // Property: Formato é seguro para uso em URLs (sem caracteres especiais)
       for (int iteration = 0; iteration < 50; iteration++) {
-        final dateString = controller.getTodayDateStringForTest();
+        final dateString = rewardsController.getTodayDateStringForTest();
 
         // Property: Date string contains only safe characters
         final safeCharsRegex = RegExp(r'^[0-9\-]+$');
@@ -428,7 +435,7 @@ void main() {
     test('history date format is database-friendly', () {
       // Property: Formato é adequado para uso como ID de documento
       for (int iteration = 0; iteration < 50; iteration++) {
-        final dateString = controller.getTodayDateStringForTest();
+        final dateString = rewardsController.getTodayDateStringForTest();
 
         // Property: Date string is not empty
         expect(dateString.isNotEmpty, isTrue,

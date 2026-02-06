@@ -7,7 +7,9 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
+import '../controllers/lesson_rewards_controller.dart';
 
 /// Página de conclusão da lição
 class CompletePage extends StatefulWidget {
@@ -18,16 +20,20 @@ class CompletePage extends StatefulWidget {
 }
 
 class _CompletePageState extends State<CompletePage> {
-  late final LessonController _controller;
+  late final LessonFlowController _flowController;
+  late final LessonProgressController _progressController;
+  late final LessonRewardsController _rewardsController;
   bool _rewardsClaimed = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<LessonController>();
+    _flowController = Get.find<LessonFlowController>();
+    _progressController = Get.find<LessonProgressController>();
+    _rewardsController = Get.find<LessonRewardsController>();
     
     // CORREÇÃO 1: Pausar o timer imediatamente ao entrar na tela
-    _controller.pauseLesson();
+    _progressController.pauseTimer();
     
     // CORREÇÃO 2: Calcular e armazenar XP e Gems imediatamente
     _calculateRewards();
@@ -35,11 +41,7 @@ class _CompletePageState extends State<CompletePage> {
   
   /// Calcula as recompensas e armazena nos observáveis para exibição
   Future<void> _calculateRewards() async {
-    final totalXp = await _controller.calculateTotalXPForTest();
-    final totalGems = _controller.calculateTotalGemsForTest();
-    
-    _controller.calculatedXp.value = totalXp;
-    _controller.calculatedGems.value = totalGems;
+    await _rewardsController.calculateRewards();
   }
 
   Future<void> _claimRewards() async {
@@ -51,9 +53,9 @@ class _CompletePageState extends State<CompletePage> {
 
     // Completa a lição e resgata recompensas
     // O timer já foi pausado no initState
-    await _controller.completeLesson();
+    await _rewardsController.applyRewards();
 
-    if (_controller.errorMessage.value.isEmpty) {
+    if (_rewardsController.errorMessage.value.isEmpty) {
       // Recarregar stats do GamificationController para atualizar UI
       try {
         final gamificationController = Get.find<GamificationController>();
@@ -68,7 +70,7 @@ class _CompletePageState extends State<CompletePage> {
       // Mostra erro se houver
       Get.snackbar(
         'Erro',
-        _controller.errorMessage.value,
+        _rewardsController.errorMessage.value,
         backgroundColor: AppTheme.red,
         colorText: AppTheme.white,
       );
@@ -84,7 +86,7 @@ class _CompletePageState extends State<CompletePage> {
     final gamificationController = Get.find<GamificationController>();
     
     // Calcula estatísticas
-    final accuracy = (_controller.accuracy).toStringAsFixed(0);
+    final accuracy = (_progressController.accuracy).toStringAsFixed(0);
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -145,10 +147,10 @@ class _CompletePageState extends State<CompletePage> {
               // Cards de estatísticas
               Obx(() {
                 // Usa valores calculados pelo controller (incluem todos os bônus)
-                final currentTotalXp = _controller.calculatedXp.value;
-                final currentTotalGems = _controller.calculatedGems.value;
-                final currentAccuracy = (_controller.accuracy).toStringAsFixed(0);
-                final currentTimeString = _controller.getFormattedTime();
+                final currentTotalXp = _rewardsController.calculatedXp.value;
+                final currentTotalGems = _rewardsController.calculatedGems.value;
+                final currentAccuracy = (_progressController.accuracy).toStringAsFixed(0);
+                final currentTimeString = _progressController.getFormattedTime();
                 
                 return r.isLandscape
                   ? Row(
@@ -168,7 +170,7 @@ class _CompletePageState extends State<CompletePage> {
                             r: r,
                             icon: AppAssets.treasureTarget,
                             value: '$currentAccuracy%',
-                            label: _controller.getAccuracyLabel(),
+                            label: _progressController.getAccuracyLabel(),
                             color: AppTheme.pink,
                           ),
                         ),
@@ -213,7 +215,7 @@ class _CompletePageState extends State<CompletePage> {
                                 r: r,
                                 icon: AppAssets.treasureTarget,
                                 value: '$currentAccuracy%',
-                                label: _controller.getAccuracyLabel(),
+                                label: _progressController.getAccuracyLabel(),
                                 color: AppTheme.pink,
                               ),
                             ),
@@ -252,8 +254,8 @@ class _CompletePageState extends State<CompletePage> {
               // Botão resgatar recompensa
               Obx(() => AppButton(
                     text: 'Resgatar Recompensa',
-                    isLoading: _controller.isLoading.value,
-                    onPressed: _controller.isLoading.value || _rewardsClaimed
+                    isLoading: _rewardsController.isLoading.value,
+                    onPressed: _rewardsController.isLoading.value || _rewardsClaimed
                         ? null
                         : _claimRewards,
                   )),

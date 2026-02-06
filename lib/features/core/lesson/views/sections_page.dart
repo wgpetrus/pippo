@@ -6,7 +6,7 @@ import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/mocks/lesson_mocks.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
 import '../widgets/low_energy_modal.dart';
 import '../widgets/section_card.dart';
 import 'lesson_exercise_container.dart';
@@ -182,7 +182,7 @@ class _SectionsPageState extends State<SectionsPage> {
   Future<void> _startLesson(BuildContext context) async {
     debugPrint('🎮 Iniciando lição...');
     
-    final lessonController = Get.find<LessonController>();
+    final flowController = Get.find<LessonFlowController>();
     final gamificationController = Get.find<GamificationController>();
 
     // Verifica se tem energia suficiente
@@ -212,9 +212,9 @@ class _SectionsPageState extends State<SectionsPage> {
     debugPrint('🎯 Iniciando lição $lessonId');
 
     // Iniciar lição do curso ativo
-    await lessonController.startLessonFromActiveCourse(lessonId);
+    await flowController.startLessonFromActiveCourse(lessonId);
     
-    if (lessonController.errorMessage.value.isEmpty) {
+    if (flowController.errorMessage.value.isEmpty) {
       debugPrint('✅ Lição iniciada, navegando para exercícios...');
       // Navegar para exercícios e aguardar retorno
       await Get.to(() => const LessonExerciseContainer());
@@ -223,10 +223,10 @@ class _SectionsPageState extends State<SectionsPage> {
       // Recarregar seções após completar lição
       await _loadSections();
     } else {
-      debugPrint('❌ Erro ao iniciar lição: ${lessonController.errorMessage.value}');
+      debugPrint('❌ Erro ao iniciar lição: ${flowController.errorMessage.value}');
       Get.snackbar(
         'Erro',
-        lessonController.errorMessage.value,
+        flowController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppTheme.error,
         colorText: AppTheme.white,

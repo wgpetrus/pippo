@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
 import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
 
-/// Testes unitários para cálculos de XP no LessonController
+/// Testes unitários para cálculos de XP no LessonRewardsController
 /// 
 /// Verifica a lógica de cálculo pura sem necessidade de
 /// inicialização completa do Firebase ou estado do controller.
@@ -15,17 +16,21 @@ void main() {
     await FirebaseTestHelper.setupFirebase();
   });
 
-  group('LessonController - Cálculos de XP', () {
+  group('LessonRewardsController - Cálculos de XP', () {
     test('calculateXPForNextLevel segue fórmula: currentLevel * 100', () {
       Get.testMode = true;
       
-      // Registrar GamificationController mínimo
+      // Registrar controllers necessários
       Get.put<GamificationController>(
         GamificationController(),
         permanent: true,
       );
+      Get.put<LessonProgressController>(
+        LessonProgressController(),
+        permanent: true,
+      );
       
-      final controller = LessonController();
+      final controller = LessonRewardsController();
       
       // Testar fórmula para vários níveis
       expect(controller.calculateXPForNextLevel(1), equals(100));
@@ -45,8 +50,12 @@ void main() {
         GamificationController(),
         permanent: true,
       );
+      Get.put<LessonProgressController>(
+        LessonProgressController(),
+        permanent: true,
+      );
       
-      final controller = LessonController();
+      final controller = LessonRewardsController();
       
       // Testar que todos os valores são positivos
       for (int level = 1; level <= 100; level++) {
@@ -65,8 +74,12 @@ void main() {
         GamificationController(),
         permanent: true,
       );
+      Get.put<LessonProgressController>(
+        LessonProgressController(),
+        permanent: true,
+      );
       
-      final controller = LessonController();
+      final controller = LessonRewardsController();
       
       // Testar que o mesmo input sempre produz o mesmo output
       for (int level = 1; level <= 50; level++) {
@@ -89,8 +102,12 @@ void main() {
         GamificationController(),
         permanent: true,
       );
+      Get.put<LessonProgressController>(
+        LessonProgressController(),
+        permanent: true,
+      );
       
-      final controller = LessonController();
+      final controller = LessonRewardsController();
       
       // Testar que cada nível requer mais XP que o anterior
       for (int level = 1; level < 100; level++) {
@@ -113,8 +130,12 @@ void main() {
         GamificationController(),
         permanent: true,
       );
+      Get.put<LessonProgressController>(
+        LessonProgressController(),
+        permanent: true,
+      );
       
-      final controller = LessonController();
+      final controller = LessonRewardsController();
       
       final highLevels = [100, 500, 1000, 5000, 10000];
       

@@ -7,7 +7,9 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_exercise_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
 import '../widgets/audio_word_button.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
@@ -26,21 +28,25 @@ class ImageExercisePage extends StatefulWidget {
 }
 
 class _ImageExercisePageState extends State<ImageExercisePage> {
-  late final LessonController _controller;
+  late final LessonFlowController _flowController;
+  late final LessonExerciseController _exerciseController;
+  late final LessonProgressController _progressController;
   int? _selectedIndex;
   bool _hasChecked = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<LessonController>();
+    _flowController = Get.find<LessonFlowController>();
+    _exerciseController = Get.find<LessonExerciseController>();
+    _progressController = Get.find<LessonProgressController>();
   }
 
   Map<String, dynamic> get _currentExercise {
-    if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+    if (_flowController.currentExerciseIndex.value >= _flowController.currentExercises.length) {
       return {};
     }
-    return _controller.currentExercises[_controller.currentExerciseIndex.value];
+    return _flowController.currentExercises[_flowController.currentExerciseIndex.value];
   }
 
   List<dynamic> get _options => _currentExercise['options'] as List? ?? [];
@@ -81,7 +87,7 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
 
                 // Header - sem botão voltar após verificar
                 Obx(() => ExerciseHeader(
-                      progress: _controller.progress,
+                      progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
                       energy: Get.find<GamificationController>().currentEnergy.value,
                       onBack: _hasChecked ? null : () => _onBackPressed(context),
                     )),
@@ -147,8 +153,8 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
                   padding: EdgeInsets.all(r.spacing16),
                   child: Obx(() => AppButton(
                         text: 'Verificar',
-                        isLoading: _controller.isLoading.value,
-                        onPressed: _selectedIndex != null && !_controller.isLoading.value && !_hasChecked
+                        isLoading: _exerciseController.isLoading.value,
+                        onPressed: _selectedIndex != null && !_exerciseController.isLoading.value && !_hasChecked
                             ? _onCheck
                             : null,
                       )),
@@ -179,19 +185,33 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
     final selectedOption = _options[_selectedIndex!];
     final selectedImageId = selectedOption['id'] as String;
 
-    await _controller.submitAnswer(selectedImageId, 'image');
+    await _exerciseController.submitAnswer(selectedImageId, 'image');
+
+    // Atualizar progresso
+    if (_exerciseController.isCorrectAnswer.value) {
+      _progressController.addCorrectAnswer();
+    } else {
+      _progressController.addWrongAnswer();
+      _progressController.loseHeart();
+      
+      // Verificar se perdeu todos os corações
+      if (_progressController.hearts.value <= 0) {
+        _progressController.lessonFailed.value = true;
+        return;
+      }
+    }
 
     // Mostrar feedback
     if (!mounted) return;
     
     FeedbackBottomSheet.show(
       context,
-      type: _controller.isCorrectAnswer.value 
+      type: _exerciseController.isCorrectAnswer.value 
           ? FeedbackType.correct 
           : FeedbackType.wrong,
-      correctAnswer: _controller.isCorrectAnswer.value 
+      correctAnswer: _exerciseController.isCorrectAnswer.value 
           ? null 
-          : _controller.correctAnswerText.value,
+          : _exerciseController.correctAnswerText.value,
       onContinue: _onContinue,
     );
   }
@@ -200,8 +220,11 @@ class _ImageExercisePageState extends State<ImageExercisePage> {
     // Fechar o modal primeiro
     Navigator.of(context).pop();
     
+    // Fechar feedback do controller
+    _exerciseController.closeFeedback();
+    
     // Depois avançar o índice do exercício
-    _controller.nextExercise();
+    _flowController.nextExercise();
   }
 
   // Métodos auxiliares

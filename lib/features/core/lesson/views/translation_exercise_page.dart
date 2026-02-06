@@ -7,7 +7,9 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_exercise_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/image_with_label.dart';
@@ -26,14 +28,18 @@ class TranslationExercisePage extends StatefulWidget {
 }
 
 class _TranslationExercisePageState extends State<TranslationExercisePage> {
-  late final LessonController _controller;
+  late final LessonFlowController _flowController;
+  late final LessonExerciseController _exerciseController;
+  late final LessonProgressController _progressController;
   int? _selectedIndex;
   bool _hasChecked = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<LessonController>();
+    _flowController = Get.find<LessonFlowController>();
+    _exerciseController = Get.find<LessonExerciseController>();
+    _progressController = Get.find<LessonProgressController>();
   }
 
   @override
@@ -41,7 +47,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
     final r = ResponsiveUtils(context);
     
     // Obter exercício atual do controller
-    if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+    if (_flowController.currentExerciseIndex.value >= _flowController.currentExercises.length) {
       return Scaffold(
         backgroundColor: AppTheme.white,
         body: Center(
@@ -53,7 +59,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
       );
     }
     
-    final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
+    final currentExercise = _flowController.currentExercises[_flowController.currentExerciseIndex.value];
     final options = currentExercise['options'] as List? ?? [];
     
     return WillPopScope(
@@ -75,7 +81,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
 
                 // Header - sem botão voltar após verificar
                 Obx(() => ExerciseHeader(
-                      progress: _controller.progress,
+                      progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
                       energy: Get.find<GamificationController>().currentEnergy.value,
                       onBack: _hasChecked ? null : () => _onBackPressed(context),
                     )),
@@ -130,8 +136,8 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
                   padding: EdgeInsets.all(r.spacing16),
                   child: Obx(() => AppButton(
                         text: 'Verificar',
-                        isLoading: _controller.isLoading.value,
-                        onPressed: _selectedIndex != null && !_controller.isLoading.value && !_hasChecked
+                        isLoading: _exerciseController.isLoading.value,
+                        onPressed: _selectedIndex != null && !_exerciseController.isLoading.value && !_hasChecked
                             ? _onCheck
                             : null,
                       )),
@@ -153,19 +159,19 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
   }
 
   void _onCheck() async {
-    if (_selectedIndex == null || _controller.isLoading.value) return;
+    if (_selectedIndex == null || _exerciseController.isLoading.value) return;
 
     setState(() {
       _hasChecked = true;
     });
 
-    final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
+    final currentExercise = _flowController.currentExercises[_flowController.currentExerciseIndex.value];
     final options = currentExercise['options'] as List;
     final selectedOption = options[_selectedIndex!];
     final selectedTranslation = selectedOption['text'] as String;
     
     // Submete a resposta ao controller
-    await _controller.submitAnswer(selectedTranslation, 'translation');
+    await _exerciseController.submitAnswer(selectedTranslation, 'translation');
     
     // Mostra feedback após processamento
     _showFeedback(options);
@@ -188,7 +194,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
       }
     }
     
-    final isCorrect = _controller.isCorrectAnswer.value;
+    final isCorrect = _exerciseController.isCorrectAnswer.value;
 
     FeedbackBottomSheet.show(
       context,
@@ -203,7 +209,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
     Navigator.of(context).pop();
     
     // Depois avançar o índice do exercício
-    _controller.nextExercise();
+    _flowController.nextExercise();
   }
 
   // Métodos auxiliares

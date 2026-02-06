@@ -1,18 +1,27 @@
 import 'package:get/get.dart';
 
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_exercise_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
+import '../controllers/lesson_rewards_controller.dart';
 
-/// Binding para injeção de dependência do LessonController
+/// Binding para injeção de dependência dos Lesson Controllers
 /// 
-/// Registra o LessonController com Get.lazyPut() para lazy initialization.
-/// O controller é criado apenas quando primeiro acessado via Get.find().
+/// Registra os controllers com Get.lazyPut() para lazy initialization.
+/// Os controllers são criados apenas quando primeiro acessados via Get.find().
 /// 
 /// Dependências:
 /// - GamificationController (registrado globalmente em main.dart)
 /// 
+/// Ordem de registro:
+/// 1. LessonProgressController (sem dependências de lesson)
+/// 2. LessonFlowController (depende de GamificationController)
+/// 3. LessonExerciseController (depende de LessonFlowController)
+/// 4. LessonRewardsController (depende de todos os anteriores)
+/// 
 /// Disposição:
-/// - GetX gerencia automaticamente a disposição do controller
+/// - GetX gerencia automaticamente a disposição dos controllers
 /// - Chamado quando a rota é removida do stack
 class LessonBinding extends Bindings {
   @override
@@ -22,11 +31,21 @@ class LessonBinding extends Bindings {
       Get.put(GamificationController(), permanent: true);
     }
 
-    // Registrar LessonController com lazy initialization
-    // Será criado apenas quando primeiro acessado
-    Get.lazyPut<LessonController>(
-      () => LessonController(),
-      tag: null,
+    // Registrar controllers na ordem de dependências
+    Get.lazyPut<LessonProgressController>(
+      () => LessonProgressController(),
+    );
+    
+    Get.lazyPut<LessonFlowController>(
+      () => LessonFlowController(),
+    );
+    
+    Get.lazyPut<LessonExerciseController>(
+      () => LessonExerciseController(),
+    );
+    
+    Get.lazyPut<LessonRewardsController>(
+      () => LessonRewardsController(),
     );
   }
 }

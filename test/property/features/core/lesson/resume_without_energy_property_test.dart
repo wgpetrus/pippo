@@ -4,8 +4,9 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import '../../../../../lib/features/core/lesson/controllers/lesson_controller.dart';
-import '../../../../../lib/features/inners/gamification/controllers/gamification_controller.dart';
+import '../../../../../lib/features/core/lesson/controllers/lesson_flow_flowController.dart';
+import '../../../../../lib/features/core/lesson/controllers/lesson_progress_flowController.dart';
+import '../../../../../lib/features/inners/gamification/controllers/gamification_flowController.dart';
 import '../../../../helpers/firebase_test_helper.dart';
 
 /// Feature: lesson-system, Property 20: Resume Without Energy Cost
@@ -17,7 +18,8 @@ import '../../../../helpers/firebase_test_helper.dart';
 void main() {
   late FakeFirebaseFirestore fakeFirestore;
   late MockFirebaseAuth mockAuth;
-  late LessonController controller;
+  late LessonFlowController flowController;
+  late LessonProgressController progressController;
   late GamificationController gamificationController;
 
   setUp(() async {
@@ -42,9 +44,12 @@ void main() {
       currentEnergy: 5,
     );
     
-    // Create lesson controller
-    controller = LessonController();
-    Get.put<LessonController>(controller);
+    // Create lesson controllers
+    progressController = LessonProgressController();
+    Get.put<LessonProgressController>(progressController);
+    
+    flowController = LessonFlowController();
+    Get.put<LessonFlowController>(flowController);
   });
 
   tearDown(() {
@@ -132,7 +137,7 @@ void main() {
         final initialEnergy = initialEnergyDoc.data()?['currentEnergy'] as int? ?? 5;
         
         // Action: Resume lesson
-        await controller.resumeLessonFromProgressForTest(courseId, lessonId);
+        await flowController.resumeLessonFromProgressForTest(courseId, lessonId);
         
         // Verify: Energy was NOT consumed
         final finalEnergyDoc = await fakeFirestore
@@ -153,70 +158,70 @@ void main() {
         
         // Verify: State was restored correctly
         expect(
-          controller.currentExerciseIndex.value,
+          flowController.currentExerciseIndex.value,
           equals(savedExerciseIndex),
           reason: 'Should restore currentExerciseIndex. '
-              'Expected: $savedExerciseIndex, Actual: ${controller.currentExerciseIndex.value}',
+              'Expected: $savedExerciseIndex, Actual: ${flowController.currentExerciseIndex.value}',
         );
         
         expect(
-          controller.hearts.value,
+          flowController.hearts.value,
           equals(savedHearts),
           reason: 'Should restore hearts. '
-              'Expected: $savedHearts, Actual: ${controller.hearts.value}',
+              'Expected: $savedHearts, Actual: ${flowController.hearts.value}',
         );
         
         expect(
-          controller.correctAnswers.value,
+          flowController.correctAnswers.value,
           equals(savedCorrectAnswers),
           reason: 'Should restore correctAnswers. '
-              'Expected: $savedCorrectAnswers, Actual: ${controller.correctAnswers.value}',
+              'Expected: $savedCorrectAnswers, Actual: ${flowController.correctAnswers.value}',
         );
         
         expect(
-          controller.totalAnswers.value,
+          flowController.totalAnswers.value,
           equals(savedTotalAnswers),
           reason: 'Should restore totalAnswers. '
-              'Expected: $savedTotalAnswers, Actual: ${controller.totalAnswers.value}',
+              'Expected: $savedTotalAnswers, Actual: ${flowController.totalAnswers.value}',
         );
         
         expect(
-          controller.accumulatedTime.value,
+          flowController.accumulatedTime.value,
           equals(savedAccumulatedTime),
           reason: 'Should restore accumulatedTime. '
-              'Expected: $savedAccumulatedTime, Actual: ${controller.accumulatedTime.value}',
+              'Expected: $savedAccumulatedTime, Actual: ${flowController.accumulatedTime.value}',
         );
         
         // Verify: Lesson data was loaded
         expect(
-          controller.currentLesson.value,
+          flowController.currentLesson.value,
           isNotNull,
           reason: 'Should load lesson data',
         );
         
         expect(
-          controller.currentExercises.length,
+          flowController.currentExercises.length,
           equals(5),
           reason: 'Should load all exercises',
         );
         
         // Verify: Time tracking was restarted
         expect(
-          controller.startTime.value,
+          flowController.startTime.value,
           isNotNull,
           reason: 'Should restart time tracking',
         );
         
         expect(
-          controller.pauseTime.value,
+          flowController.pauseTime.value,
           isNull,
           reason: 'Should not be paused after resume',
         );
         
         // Reset for next iteration
-        controller.currentLesson.value = null;
-        controller.currentExercises.clear();
-        controller.currentExerciseIndex.value = 0;
+        flowController.currentLesson.value = null;
+        flowController.currentExercises.clear();
+        flowController.currentExerciseIndex.value = 0;
       }
     });
 
@@ -250,7 +255,7 @@ void main() {
         final initialEnergy = initialEnergyDoc.data()?['currentEnergy'] as int? ?? 5;
         
         // Action: Try to resume (should fail)
-        await controller.resumeLessonFromProgressForTest(courseId, lessonId);
+        await flowController.resumeLessonFromProgressForTest(courseId, lessonId);
         
         // Verify: Energy was NOT consumed even on failure
         final finalEnergyDoc = await fakeFirestore
@@ -270,14 +275,14 @@ void main() {
         
         // Verify: Error message was set
         expect(
-          controller.errorMessage.value,
+          flowController.errorMessage.value,
           isNotEmpty,
           reason: 'Should set error message on failure',
         );
         
         // Verify: Lesson was not loaded
         expect(
-          controller.currentLesson.value,
+          flowController.currentLesson.value,
           isNull,
           reason: 'Should not load lesson on failure',
         );
@@ -331,7 +336,7 @@ void main() {
         final initialEnergy = initialEnergyDoc.data()?['currentEnergy'] as int? ?? 5;
         
         // Action: Try to resume completed lesson (should fail)
-        await controller.resumeLessonFromProgressForTest(courseId, lessonId);
+        await flowController.resumeLessonFromProgressForTest(courseId, lessonId);
         
         // Verify: Energy was NOT consumed
         final finalEnergyDoc = await fakeFirestore
@@ -351,7 +356,7 @@ void main() {
         
         // Verify: Error message was set
         expect(
-          controller.errorMessage.value,
+          flowController.errorMessage.value,
           isNotEmpty,
           reason: 'Should set error message when trying to resume completed lesson',
         );
@@ -430,7 +435,7 @@ void main() {
         final initialEnergy = initialEnergyDoc.data()?['currentEnergy'] as int? ?? 5;
         
         // Action: Resume
-        await controller.resumeLessonFromProgressForTest(courseId, lessonId);
+        await flowController.resumeLessonFromProgressForTest(courseId, lessonId);
         
         // Verify: No energy consumed
         final finalEnergyDoc = await fakeFirestore
@@ -449,22 +454,22 @@ void main() {
         
         // Verify: Correct exercise index restored
         expect(
-          controller.currentExerciseIndex.value,
+          flowController.currentExerciseIndex.value,
           equals(exerciseIndex),
           reason: 'Should restore to exercise index $exerciseIndex',
         );
         
         // Verify: Can continue from restored point
         expect(
-          controller.currentExerciseIndex.value,
-          lessThan(controller.currentExercises.length),
+          flowController.currentExerciseIndex.value,
+          lessThan(flowController.currentExercises.length),
           reason: 'Restored index should be valid for continuing lesson',
         );
         
         // Reset for next iteration
-        controller.currentLesson.value = null;
-        controller.currentExercises.clear();
-        controller.currentExerciseIndex.value = 0;
+        flowController.currentLesson.value = null;
+        flowController.currentExercises.clear();
+        flowController.currentExerciseIndex.value = 0;
       }
     });
 
@@ -541,7 +546,7 @@ void main() {
       
       // Action: Resume multiple times
       for (int i = 0; i < 10; i++) {
-        await controller.resumeLessonFromProgressForTest(courseId, lessonId);
+        await flowController.resumeLessonFromProgressForTest(courseId, lessonId);
         
         // Verify: Energy never changes
         final currentEnergyDoc = await fakeFirestore
@@ -560,9 +565,9 @@ void main() {
         );
         
         // Reset controller state for next resume
-        controller.currentLesson.value = null;
-        controller.currentExercises.clear();
-        controller.currentExerciseIndex.value = 0;
+        flowController.currentLesson.value = null;
+        flowController.currentExercises.clear();
+        flowController.currentExerciseIndex.value = 0;
       }
     });
 
@@ -638,17 +643,17 @@ void main() {
         });
         
         // Action: Resume with 0 energy
-        await controller.resumeLessonFromProgressForTest(courseId, lessonId);
+        await flowController.resumeLessonFromProgressForTest(courseId, lessonId);
         
         // Verify: Resume succeeded
         expect(
-          controller.errorMessage.value,
+          flowController.errorMessage.value,
           isEmpty,
           reason: 'Resume should succeed even with 0 energy',
         );
         
         expect(
-          controller.currentLesson.value,
+          flowController.currentLesson.value,
           isNotNull,
           reason: 'Should load lesson even with 0 energy',
         );
@@ -669,9 +674,9 @@ void main() {
         );
         
         // Reset for next iteration
-        controller.currentLesson.value = null;
-        controller.currentExercises.clear();
-        controller.currentExerciseIndex.value = 0;
+        flowController.currentLesson.value = null;
+        flowController.currentExercises.clear();
+        flowController.currentExerciseIndex.value = 0;
         
         // Reset energy for next test
         await fakeFirestore

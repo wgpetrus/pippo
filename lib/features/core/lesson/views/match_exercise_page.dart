@@ -6,7 +6,9 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_exercise_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
 import '../widgets/audio_card.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
@@ -26,7 +28,9 @@ class MatchExercisePage extends StatefulWidget {
 
 class _MatchExercisePageState extends State<MatchExercisePage> {
   // Controllers
-  late final LessonController _controller;
+  late final LessonFlowController _flowController;
+  late final LessonExerciseController _exerciseController;
+  late final LessonProgressController _progressController;
   
   // Estados
   int? _selectedAudioIndex;
@@ -38,7 +42,9 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<LessonController>();
+    _flowController = Get.find<LessonFlowController>();
+    _exerciseController = Get.find<LessonExerciseController>();
+    _progressController = Get.find<LessonProgressController>();
   }
 
   // Build
@@ -47,13 +53,13 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     final r = ResponsiveUtils(context);
     
     // Obter exercício atual do controller
-    if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+    if (_flowController.currentExerciseIndex.value >= _flowController.currentExercises.length) {
       return const Scaffold(
         body: Center(child: Text('Exercício não encontrado')),
       );
     }
     
-    final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
+    final currentExercise = _flowController.currentExercises[_flowController.currentExerciseIndex.value];
     final pairs = (currentExercise['pairs'] as List?) ?? [];
     
     return WillPopScope(
@@ -75,7 +81,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
                 // Header - sem botão voltar após verificar
                 Obx(() => ExerciseHeader(
-                      progress: _controller.progress,
+                      progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
                       energy: Get.find<GamificationController>().currentEnergy.value,
                       onBack: _hasChecked ? null : () => _onBackPressed(context),
                     )),
@@ -131,8 +137,8 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
                   padding: EdgeInsets.all(r.spacing16),
                   child: Obx(() => AppButton(
                         text: 'Verificar',
-                        isLoading: _controller.isLoading.value,
-                        onPressed: _matchedPairs.length == pairs.length && !_controller.isLoading.value && !_hasChecked
+                        isLoading: _exerciseController.isLoading.value,
+                        onPressed: _matchedPairs.length == pairs.length && !_exerciseController.isLoading.value && !_hasChecked
                             ? _onCheck
                             : null,
                       )),
@@ -228,7 +234,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
     // Criar mapa de pares para submeter
     final Map<String, String> userPairs = {};
-    final pairs = _controller.currentExercises[_controller.currentExerciseIndex.value]['pairs'] as List;
+    final pairs = _flowController.currentExercises[_flowController.currentExerciseIndex.value]['pairs'] as List;
     
     for (final index in _matchedPairs) {
       final pair = pairs[index];
@@ -236,19 +242,19 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     }
 
     // Submete resposta ao controller
-    await _controller.submitAnswer(userPairs, 'match');
+    await _exerciseController.submitAnswer(userPairs, 'match');
 
     // Mostra feedback
     if (!mounted) return;
     
     FeedbackBottomSheet.show(
       context,
-      type: _controller.isCorrectAnswer.value 
+      type: _exerciseController.isCorrectAnswer.value 
           ? FeedbackType.correct 
           : FeedbackType.wrong,
-      correctAnswer: _controller.isCorrectAnswer.value 
+      correctAnswer: _exerciseController.isCorrectAnswer.value 
           ? null 
-          : _controller.correctAnswerText.value,
+          : _exerciseController.correctAnswerText.value,
       onContinue: _onContinue,
     );
   }
@@ -258,7 +264,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     Navigator.of(context).pop();
     
     // Depois avançar o índice do exercício
-    _controller.nextExercise();
+    _flowController.nextExercise();
   }
 
   // Métodos auxiliares

@@ -1,7 +1,10 @@
 import 'package:get/get.dart';
 
 import '../../../core/auth/controllers/auth_controller.dart';
-import '../../../core/lesson/controllers/lesson_controller.dart';
+import '../../../core/lesson/controllers/lesson_flow_controller.dart';
+import '../../../core/lesson/controllers/lesson_exercise_controller.dart';
+import '../../../core/lesson/controllers/lesson_progress_controller.dart';
+import '../../../core/lesson/controllers/lesson_rewards_controller.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
 import '../../gamification/controllers/gamification_controller.dart';
 import '../../leaderboard/controllers/leaderboard_controller.dart';
@@ -35,8 +38,11 @@ class HomeBinding extends Bindings {
     Get.lazyPut<ProfileCoursesController>(() => ProfileCoursesController());
     Get.lazyPut<ProfileAuthController>(() => ProfileAuthController());
 
-    // Instanciar LessonController
-    Get.lazyPut<LessonController>(() => LessonController());
+    // Instanciar LessonControllers (4 novos controllers)
+    Get.lazyPut<LessonFlowController>(() => LessonFlowController());
+    Get.lazyPut<LessonExerciseController>(() => LessonExerciseController());
+    Get.lazyPut<LessonProgressController>(() => LessonProgressController());
+    Get.lazyPut<LessonRewardsController>(() => LessonRewardsController());
 
     // Instanciar LeaderboardController
     Get.lazyPut<LeaderboardController>(() => LeaderboardController());

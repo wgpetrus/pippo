@@ -7,7 +7,9 @@ import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/gamification_controller.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_exercise_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/mascot_bubble.dart';
@@ -27,7 +29,9 @@ class WordExercisePage extends StatefulWidget {
 }
 
 class _WordExercisePageState extends State<WordExercisePage> {
-  late final LessonController _controller;
+  late final LessonFlowController _flowController;
+  late final LessonExerciseController _exerciseController;
+  late final LessonProgressController _progressController;
   
   // Palavras selecionadas (resposta)
   final List<String> _selectedWords = [];
@@ -36,7 +40,9 @@ class _WordExercisePageState extends State<WordExercisePage> {
   @override
   void initState() {
     super.initState();
-    _controller = Get.find<LessonController>();
+    _flowController = Get.find<LessonFlowController>();
+    _exerciseController = Get.find<LessonExerciseController>();
+    _progressController = Get.find<LessonProgressController>();
   }
 
   @override
@@ -45,11 +51,11 @@ class _WordExercisePageState extends State<WordExercisePage> {
     
     return Obx(() {
       // Tratamento de erro
-      if (_controller.errorMessage.value.isNotEmpty) {
+      if (_exerciseController.errorMessage.value.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Get.snackbar(
             'Erro',
-            _controller.errorMessage.value,
+            _exerciseController.errorMessage.value,
             backgroundColor: AppTheme.red,
             colorText: AppTheme.white,
           );
@@ -57,13 +63,13 @@ class _WordExercisePageState extends State<WordExercisePage> {
       }
 
       // Obter exercício atual do controller
-      if (_controller.currentExerciseIndex.value >= _controller.currentExercises.length) {
+      if (_flowController.currentExerciseIndex.value >= _flowController.currentExercises.length) {
         return const Scaffold(
           body: Center(child: Text('Exercício não encontrado')),
         );
       }
       
-      final currentExercise = _controller.currentExercises[_controller.currentExerciseIndex.value];
+      final currentExercise = _flowController.currentExercises[_flowController.currentExerciseIndex.value];
       final words = (currentExercise['words'] as List?)?.cast<String>() ?? [];
       
       return WillPopScope(
@@ -85,7 +91,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
                   // Header - sem botão voltar após verificar
                   ExerciseHeader(
-                    progress: _controller.progress,
+                    progress: _flowController.currentExerciseIndex.value / _flowController.currentExercises.length,
                     energy: Get.find<GamificationController>().currentEnergy.value,
                     onBack: _hasChecked ? null : () => _onBackPressed(context),
                   ),
@@ -141,8 +147,8 @@ class _WordExercisePageState extends State<WordExercisePage> {
                     padding: EdgeInsets.all(r.spacing16),
                     child: AppButton(
                       text: 'Verificar',
-                      isLoading: _controller.isLoading.value,
-                      onPressed: _selectedWords.isNotEmpty && !_controller.isLoading.value && !_hasChecked
+                      isLoading: _exerciseController.isLoading.value,
+                      onPressed: _selectedWords.isNotEmpty && !_exerciseController.isLoading.value && !_hasChecked
                           ? _onCheck
                           : null,
                     ),
@@ -196,14 +202,14 @@ class _WordExercisePageState extends State<WordExercisePage> {
     });
 
     // TODO: [etapa 8] submeter resposta ao controller
-    await _controller.submitAnswer(_selectedWords, 'word_order');
+    await _exerciseController.submitAnswer(_selectedWords, 'word_order');
 
     // Mostra feedback
     if (!mounted) return;
     FeedbackBottomSheet.show(
       context,
-      type: _controller.isCorrectAnswer.value ? FeedbackType.correct : FeedbackType.wrong,
-      correctAnswer: _controller.correctAnswerText.value,
+      type: _exerciseController.isCorrectAnswer.value ? FeedbackType.correct : FeedbackType.wrong,
+      correctAnswer: _exerciseController.correctAnswerText.value,
       onContinue: _onContinue,
     );
   }
@@ -213,7 +219,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
     Navigator.of(context).pop();
     
     // Depois avançar o índice do exercício
-    _controller.nextExercise();
+    _flowController.nextExercise();
   }
 
   // Métodos auxiliares

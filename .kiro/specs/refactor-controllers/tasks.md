@@ -19,7 +19,7 @@ Controllers will be refactored in order from largest to smallest:
 
 ## Tasks
 
-- [-] 1. Refactor ProfileController (2045 lines → 5 controllers)
+- [x] 1. Refactor ProfileController (2045 lines → 5 controllers)
   - [x] 1.1 Create ProfileDataController
     - Create `features/inners/profile/controllers/profile_data_controller.dart`
     - Copy standard controller structure (Firebase instances, isLoading, errorMessage)
@@ -97,8 +97,8 @@ Controllers will be refactored in order from largest to smallest:
     - Update lista-controllers.md to mark ProfileController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 2. Refactor LessonController (1810 lines → 4 controllers)
-  - [ ] 2.1 Create LessonFlowController
+- [ ] 2. Refactor LessonController (1810 lines → 4 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
+  - [x] 2.1 Create LessonFlowController
     - Create `features/core/lesson/controllers/lesson_flow_controller.dart`
     - Copy standard controller structure
     - Copy states: currentLesson, currentExercises, currentExerciseIndex, isLoading, errorMessage
@@ -107,7 +107,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.2, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 2.2 Create LessonExerciseController
+  - [x] 2.2 Create LessonExerciseController
     - Create `features/core/lesson/controllers/lesson_exercise_controller.dart`
     - Copy standard controller structure
     - Copy states: showFeedback, isCorrectAnswer, correctAnswerText, isLoading, errorMessage
@@ -116,7 +116,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.2, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 2.3 Create LessonProgressController
+  - [x] 2.3 Create LessonProgressController
     - Create `features/core/lesson/controllers/lesson_progress_controller.dart`
     - Copy standard controller structure
     - Copy states: hearts, correctAnswers, totalAnswers, startTime, pauseTime, accumulatedTime, lessonFailed, isLoading, errorMessage
@@ -125,7 +125,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.2, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 2.4 Create LessonRewardsController
+  - [x] 2.4 Create LessonRewardsController
     - Create `features/core/lesson/controllers/lesson_rewards_controller.dart`
     - Copy standard controller structure
     - Copy states: calculatedXp, calculatedGems, isLoading, errorMessage
@@ -134,7 +134,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.2, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 2.5 Update LessonBinding
+  - [x] 2.5 Update LessonBinding
     - Open `features/core/lesson/bindings/lesson_binding.dart`
     - Remove `Get.lazyPut(() => LessonController())`
     - Add `Get.lazyPut(() => LessonFlowController())`
@@ -143,7 +143,7 @@ Controllers will be refactored in order from largest to smallest:
     - Add `Get.lazyPut(() => LessonRewardsController())`
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   
-  - [ ] 2.6 Update Lesson views
+  - [x] 2.6 Update Lesson views
     - Identify all views that use LessonController
     - Update `Get.find<LessonController>()` to appropriate new controllers
     - Update all state and method references
@@ -151,19 +151,20 @@ Controllers will be refactored in order from largest to smallest:
     - Views to update: sections_page.dart, image_exercise_page.dart, translation_exercise_page.dart, word_exercise_page.dart, match_exercise_page.dart, complete_page.dart
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 2.7 Run all tests for Lesson feature
+  - [x] 2.7 Run all tests for Lesson feature
+    - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
     - Execute integration tests
     - Verify all tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [ ] 2.8 Delete old LessonController
+  - [x] 2.8 Delete old LessonController
     - Delete `features/core/lesson/controllers/lesson_controller.dart`
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [ ] 2.9 Commit LessonController refactoring
+  - [-] 2.9 Commit LessonController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide LessonController em 4 controllers menores"
     - Update lista-controllers.md to mark LessonController as complete
@@ -245,6 +246,7 @@ Controllers will be refactored in order from largest to smallest:
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
   - [ ] 3.10 Run all tests for Gamification feature
+    - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
     - Execute integration tests
@@ -306,6 +308,7 @@ Controllers will be refactored in order from largest to smallest:
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
   - [ ] 4.6 Run all tests for Onboarding feature
+    - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
     - Execute integration tests

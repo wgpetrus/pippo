@@ -241,23 +241,23 @@ class ProfileCoursesController extends GetxController {
   String _getLanguageFlag(String code) {
     switch (code.toLowerCase()) {
       case 'en':
-        return AppAssets.usaFlag;
+        return AppAssets.flagUsa;
       case 'es':
-        return AppAssets.spanishFlag;
+        return AppAssets.flagSpain;
       case 'fr':
-        return AppAssets.frenchFlag;
+        return AppAssets.flagFrance;
       case 'de':
-        return AppAssets.germanyFlag;
+        return AppAssets.flagGermany;
       case 'pt':
-        return AppAssets.brazilFlag;
+        return AppAssets.flagBrazil;
       case 'zh':
-        return AppAssets.chinaFlag;
+        return AppAssets.flagChina;
       case 'ja':
-        return AppAssets.japanFlag;
+        return AppAssets.flagJapan;
       case 'ar':
-        return AppAssets.sauditFlag;
+        return AppAssets.flagSaudit;
       default:
-        return AppAssets.usaFlag;
+        return AppAssets.flagUsa;
     }
   }
 

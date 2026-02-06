@@ -377,7 +377,7 @@ class ProfileAuthController extends GetxController {
     }
     // Remove formatação
     final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
-    if (digitsOnly.length < 10) {
+    if (digitsOnly.length < 10 || digitsOnly.length > 15) {
       return 'Número de telefone inválido.';
     }
     return null;

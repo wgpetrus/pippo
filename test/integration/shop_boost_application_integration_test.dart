@@ -3,7 +3,10 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_flow_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_exercise_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
 import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
 
 import '../helpers/firebase_test_helper.dart';
@@ -30,7 +33,10 @@ void main() {
   late FakeFirebaseFirestore firestore;
   late MockFirebaseAuth auth;
   late MockUser user;
-  late LessonController lessonController;
+  late LessonFlowController lessonFlowController;
+  late LessonExerciseController lessonExerciseController;
+  late LessonProgressController lessonProgressController;
+  late LessonRewardsController lessonRewardsController;
   late GamificationController gamificationController;
 
   setUp(() async {
@@ -56,8 +62,17 @@ void main() {
     gamificationController = GamificationController();
     Get.put<GamificationController>(gamificationController);
 
-    lessonController = LessonController();
-    Get.put<LessonController>(lessonController);
+    lessonFlowController = LessonFlowController();
+    Get.put<LessonFlowController>(lessonFlowController);
+    
+    lessonExerciseController = LessonExerciseController();
+    Get.put<LessonExerciseController>(lessonExerciseController);
+    
+    lessonProgressController = LessonProgressController();
+    Get.put<LessonProgressController>(lessonProgressController);
+    
+    lessonRewardsController = LessonRewardsController();
+    Get.put<LessonRewardsController>(lessonRewardsController);
 
     // Wait for controllers to initialize
     await Future.delayed(const Duration(milliseconds: 100));

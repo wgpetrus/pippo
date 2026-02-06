@@ -6,7 +6,10 @@ import 'package:get/get.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/language_helper.dart';
 import '../../../../shared/widgets/app_lesson_button.dart';
-import '../../../core/lesson/controllers/lesson_controller.dart';
+import '../../../core/lesson/controllers/lesson_flow_controller.dart';
+import '../../../core/lesson/controllers/lesson_exercise_controller.dart';
+import '../../../core/lesson/controllers/lesson_progress_controller.dart';
+import '../../../core/lesson/controllers/lesson_rewards_controller.dart';
 import '../../../core/lesson/views/sections_page.dart';
 import '../../../core/onboarding/controllers/onboarding_controller.dart';
 import '../../gamification/controllers/gamification_controller.dart';
@@ -490,9 +493,13 @@ class HomeController extends GetxController {
     // Marcar que há lição em progresso IMEDIATAMENTE
     showContinue.value = true;
     
-    // Garantir que o LessonController está registrado antes de navegar
-    if (!Get.isRegistered<LessonController>()) {
-      Get.put(LessonController());
+    // Garantir que os controllers de lição estão registrados antes de navegar
+    if (!Get.isRegistered<LessonFlowController>()) {
+      // Registrar na ordem de dependência
+      Get.lazyPut(() => LessonProgressController());
+      Get.lazyPut(() => LessonExerciseController());
+      Get.lazyPut(() => LessonRewardsController());
+      Get.lazyPut(() => LessonFlowController());
     }
     
     debugPrint('🎯 onStartTap: buttonIndex=$buttonIndex');

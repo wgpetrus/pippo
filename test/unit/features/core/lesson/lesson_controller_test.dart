@@ -5,18 +5,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 // Imports locais
-import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_flow_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_exercise_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
 import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
 
-/// Testes unitários para LessonController
+/// Testes unitários para LessonFlowController
 /// Foco em exemplos específicos e edge cases
 /// 
 /// **Valida: Requisitos 1.3 (caso de 0 energia)**
 void main() {
   // Variáveis de teste
-  late LessonController controller;
+  late LessonFlowController flowController;
+  late LessonExerciseController exerciseController;
+  late LessonProgressController progressController;
+  late LessonRewardsController rewardsController;
   late _MockGamificationController mockGamification;
   late MockFirebaseAuth mockAuth;
   late FakeFirebaseFirestore mockFirestore;
@@ -42,31 +48,42 @@ void main() {
       currentEnergy: 0, // 0 energia para testes
     );
 
-    controller = LessonController();
+    // Criar controllers na ordem de dependência
+    progressController = LessonProgressController();
+    Get.put<LessonProgressController>(progressController);
+    
+    exerciseController = LessonExerciseController();
+    Get.put<LessonExerciseController>(exerciseController);
+    
+    rewardsController = LessonRewardsController();
+    Get.put<LessonRewardsController>(rewardsController);
+    
+    flowController = LessonFlowController();
+    Get.put<LessonFlowController>(flowController);
   });
 
   tearDown(() {
     Get.reset();
   });
 
-  group('LessonController - Caso de 0 Energia', () {
+  group('LessonFlowController - Caso de 0 Energia', () {
     test('mostra mensagem de erro quando energia é 0', () async {
       // Configuração: Sem energia disponível
       mockGamification.hasEnergyValue = false;
       mockGamification.hasUnlimitedValue = false;
 
       // Tentar iniciar lição
-      await controller.startLesson('course_1', '1');
+      await flowController.startLesson('course_1', '1');
 
       // Verificar: Mensagem de erro é exibida
       expect(
-        controller.errorMessage.value,
+        flowController.errorMessage.value,
         isNotEmpty,
         reason: 'Deve mostrar mensagem de erro quando energia é 0',
       );
 
       expect(
-        controller.errorMessage.value,
+        flowController.errorMessage.value,
         contains('energia suficiente'),
         reason: 'Mensagem de erro deve mencionar energia insuficiente',
       );
@@ -78,23 +95,23 @@ void main() {
       mockGamification.hasUnlimitedValue = false;
 
       // Tentar iniciar lição
-      await controller.startLesson('course_1', '1');
+      await flowController.startLesson('course_1', '1');
 
       // Verificar: Lição não iniciou
       expect(
-        controller.currentLesson.value,
+        flowController.currentLesson.value,
         isNull,
         reason: 'Lição atual deve permanecer null',
       );
 
       expect(
-        controller.currentExercises.isEmpty,
+        flowController.currentExercises.isEmpty,
         isTrue,
         reason: 'Exercícios devem permanecer vazios',
       );
 
       expect(
-        controller.startTime.value,
+        progressController.startTime.value,
         isNull,
         reason: 'Tempo de início deve permanecer null',
       );
@@ -107,7 +124,7 @@ void main() {
       mockGamification.energyConsumed = false;
 
       // Tentar iniciar lição
-      await controller.startLesson('course_1', '1');
+      await flowController.startLesson('course_1', '1');
 
       // Verificar: Energia NÃO foi consumida
       expect(
@@ -123,28 +140,28 @@ void main() {
       mockGamification.hasUnlimitedValue = false;
 
       // Definir valores não-padrão para verificar que não mudam
-      controller.hearts.value = 999;
-      controller.correctAnswers.value = 999;
-      controller.totalAnswers.value = 999;
+      progressController.hearts.value = 999;
+      progressController.correctAnswers.value = 999;
+      progressController.totalAnswers.value = 999;
 
       // Tentar iniciar lição
-      await controller.startLesson('course_1', '1');
+      await flowController.startLesson('course_1', '1');
 
       // Verificar: Estado NÃO foi inicializado (valores inalterados)
       expect(
-        controller.hearts.value,
+        progressController.hearts.value,
         equals(999),
         reason: 'Corações não devem ser resetados quando lição falha ao iniciar',
       );
 
       expect(
-        controller.correctAnswers.value,
+        progressController.correctAnswers.value,
         equals(999),
         reason: 'Respostas corretas não devem ser resetadas',
       );
 
       expect(
-        controller.totalAnswers.value,
+        progressController.totalAnswers.value,
         equals(999),
         reason: 'Total de respostas não deve ser resetado',
       );
@@ -156,11 +173,11 @@ void main() {
       mockGamification.hasUnlimitedValue = false;
 
       // Tentar iniciar lição
-      await controller.startLesson('course_1', '1');
+      await flowController.startLesson('course_1', '1');
 
       // Verificar: isLoading é false
       expect(
-        controller.isLoading.value,
+        flowController.isLoading.value,
         isFalse,
         reason: 'isLoading deve ser false após falha ao iniciar',
       );
@@ -175,12 +192,12 @@ void main() {
       mockGamification.energyConsumed = false;
 
       // Tentar iniciar lição (falhará no Firestore mas deve passar verificação de energia)
-      await controller.startLesson('course_1', '1');
+      await flowController.startLesson('course_1', '1');
 
       // Verificar: NÃO mostrou erro de energia
       // (mostrará erro diferente sobre dados faltando no Firestore)
       expect(
-        controller.errorMessage.value,
+        flowController.errorMessage.value,
         isNot(contains('energia suficiente')),
         reason: 'Não deve mostrar erro de energia quando ilimitada está ativa',
       );
@@ -212,9 +229,12 @@ class _MockGamificationController extends GetxController
 
   @override
   Future<void> onLessonStart() async {
-    energyConsumed = true;
-    if (currentEnergy.value > 0) {
-      currentEnergy.value--;
+    // Só consumir energia se não tiver energia ilimitada
+    if (!hasUnlimitedValue) {
+      energyConsumed = true;
+      if (currentEnergy.value > 0) {
+        currentEnergy.value--;
+      }
     }
   }
 

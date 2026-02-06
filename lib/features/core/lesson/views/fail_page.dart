@@ -5,7 +5,8 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../controllers/lesson_controller.dart';
+import '../controllers/lesson_flow_controller.dart';
+import '../controllers/lesson_progress_controller.dart';
 
 /// Página de falha da lição (quando perde todos os corações)
 class FailPage extends StatelessWidget {
@@ -14,7 +15,8 @@ class FailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    final controller = Get.find<LessonController>();
+    final flowController = Get.find<LessonFlowController>();
+    final progressController = Get.find<LessonProgressController>();
 
     return Scaffold(
       backgroundColor: AppTheme.white,
@@ -75,7 +77,8 @@ class FailPage extends StatelessWidget {
                 text: 'Tentar Novamente',
                 onPressed: () {
                   // Reseta o estado da lição
-                  controller.onClose();
+                  flowController.onClose();
+                  progressController.onClose();
                   
                   // Volta para a tela de seções (2 vezes: FailPage -> LessonExerciseContainer -> SectionsPage)
                   Get.back();

@@ -3,8 +3,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
-import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_progress_progressController.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_rewards_progressController.dart';
+import 'package:pippo/features/inners/gamification/controllers/gamification_progressController.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
 
@@ -22,7 +23,8 @@ import '../../../../helpers/firebase_test_helper.dart';
 /// 
 /// **Validates: Requirements 8.2, 8.3**
 void main() {
-  late LessonController controller;
+  late LessonProgressController progressController;
+  late LessonRewardsController rewardsController;
   late FakeFirebaseFirestore fakeFirestore;
   late MockFirebaseAuth mockAuth;
 
@@ -41,7 +43,12 @@ void main() {
       permanent: true,
     );
 
-    controller = LessonController();
+    // Create progress controller
+    progressController = LessonProgressController();
+    Get.put<LessonProgressController>(progressController);
+
+    // Create rewards controller (depends on progress controller)
+    rewardsController = LessonRewardsController();
   });
 
   tearDown(() {
@@ -53,9 +60,9 @@ void main() {
       // Property: Para qualquer lição completada, todos os campos obrigatórios devem estar presentes
       for (int iteration = 0; iteration < 100; iteration++) {
         // Setup: Simular estado da lição
-        controller.correctAnswers.value = 8 + (iteration % 3);
-        controller.totalAnswers.value = 10;
-        controller.startTime.value = DateTime.now().subtract(
+        progressController.correctAnswers.value = 8 + (iteration % 3);
+        progressController.totalAnswers.value = 10;
+        progressController.startTime.value = DateTime.now().subtract(
           Duration(minutes: 5 + (iteration % 10)),
         );
 
@@ -66,7 +73,7 @@ void main() {
 
         // Act: Salvar progresso
         try {
-          await controller.saveLessonProgressForTest(
+          await progressController.saveLessonProgressForTest(
             courseId,
             lessonId,
             xpEarned,
@@ -78,7 +85,7 @@ void main() {
         }
 
         // Property: accuracy deve estar entre 0 e 100
-        final accuracy = controller.accuracy;
+        final accuracy = progressController.accuracy;
         expect(accuracy, greaterThanOrEqualTo(0.0),
             reason: 'Accuracy must be >= 0');
         expect(accuracy, lessThanOrEqualTo(100.0),
@@ -86,21 +93,21 @@ void main() {
 
         // Property: accuracy = (correctAnswers / totalAnswers) * 100
         final expectedAccuracy =
-            (controller.correctAnswers.value / controller.totalAnswers.value) *
+            (progressController.correctAnswers.value / progressController.totalAnswers.value) *
                 100;
         expect(accuracy, equals(expectedAccuracy),
             reason: 'Accuracy calculation must be correct');
 
         // Property: mistakes = totalAnswers - correctAnswers
         final mistakes =
-            controller.totalAnswers.value - controller.correctAnswers.value;
+            progressController.totalAnswers.value - progressController.correctAnswers.value;
         expect(mistakes, greaterThanOrEqualTo(0),
             reason: 'Mistakes must be non-negative');
-        expect(mistakes, lessThanOrEqualTo(controller.totalAnswers.value),
+        expect(mistakes, lessThanOrEqualTo(progressController.totalAnswers.value),
             reason: 'Mistakes cannot exceed total answers');
 
         // Property: timeSpent deve ser em segundos e positivo
-        final timeSpent = controller.calculateTimeSpentForTest();
+        final timeSpent = progressController.calculateTimeSpentForTest();
         expect(timeSpent, greaterThan(0), reason: 'Time spent must be positive');
         expect(timeSpent, lessThan(3600),
             reason: 'Time spent should be reasonable (< 1 hour)');
@@ -111,27 +118,27 @@ void main() {
       // Property: Todos os campos têm tipos e ranges corretos
       for (int iteration = 0; iteration < 100; iteration++) {
         // Setup: Variar valores
-        controller.correctAnswers.value = iteration % 11; // 0-10
-        controller.totalAnswers.value = 10;
-        controller.startTime.value = DateTime.now().subtract(
+        progressController.correctAnswers.value = iteration % 11; // 0-10
+        progressController.totalAnswers.value = 10;
+        progressController.startTime.value = DateTime.now().subtract(
           Duration(seconds: 30 + (iteration % 300)),
         );
 
         // Property: accuracy é um double entre 0 e 100
-        final accuracy = controller.accuracy;
+        final accuracy = progressController.accuracy;
         expect(accuracy, isA<double>(), reason: 'Accuracy must be a double');
         expect(accuracy, inInclusiveRange(0.0, 100.0),
             reason: 'Accuracy must be in range [0, 100]');
 
         // Property: mistakes é um int não-negativo
         final mistakes =
-            controller.totalAnswers.value - controller.correctAnswers.value;
+            progressController.totalAnswers.value - progressController.correctAnswers.value;
         expect(mistakes, isA<int>(), reason: 'Mistakes must be an int');
         expect(mistakes, greaterThanOrEqualTo(0),
             reason: 'Mistakes must be non-negative');
 
         // Property: timeSpent é um int positivo
-        final timeSpent = controller.calculateTimeSpentForTest();
+        final timeSpent = progressController.calculateTimeSpentForTest();
         expect(timeSpent, isA<int>(), reason: 'Time spent must be an int');
         expect(timeSpent, greaterThan(0),
             reason: 'Time spent must be positive');
@@ -151,10 +158,10 @@ void main() {
       ];
 
       for (final testCase in testCases) {
-        controller.correctAnswers.value = testCase.correct;
-        controller.totalAnswers.value = testCase.total;
+        progressController.correctAnswers.value = testCase.correct;
+        progressController.totalAnswers.value = testCase.total;
 
-        final accuracy = controller.accuracy;
+        final accuracy = progressController.accuracy;
 
         // Property: Accuracy matches expected calculation
         expect(accuracy, equals(testCase.expectedAccuracy),
@@ -162,15 +169,15 @@ void main() {
                 'Accuracy for ${testCase.correct}/${testCase.total} should be ${testCase.expectedAccuracy}');
 
         // Property: Accuracy is deterministic (same input = same output)
-        final accuracy2 = controller.accuracy;
+        final accuracy2 = progressController.accuracy;
         expect(accuracy, equals(accuracy2),
             reason: 'Accuracy calculation must be deterministic');
       }
       
       // Test case with floating point - use closeTo matcher
-      controller.correctAnswers.value = 1;
-      controller.totalAnswers.value = 3;
-      final accuracy = controller.accuracy;
+      progressController.correctAnswers.value = 1;
+      progressController.totalAnswers.value = 3;
+      final accuracy = progressController.accuracy;
       expect(accuracy, closeTo(33.33, 0.01),
           reason: 'Accuracy for 1/3 should be approximately 33.33%');
     });
@@ -181,8 +188,8 @@ void main() {
         final totalAnswers = 5 + (iteration % 15); // 5-19
         final correctAnswers = iteration % (totalAnswers + 1); // 0-totalAnswers
 
-        controller.totalAnswers.value = totalAnswers;
-        controller.correctAnswers.value = correctAnswers;
+        progressController.totalAnswers.value = totalAnswers;
+        progressController.correctAnswers.value = correctAnswers;
 
         final mistakes = totalAnswers - correctAnswers;
 
@@ -206,10 +213,10 @@ void main() {
       // Property: timeSpent = (now - startTime) em segundos
       for (int iteration = 0; iteration < 100; iteration++) {
         final secondsAgo = 10 + (iteration % 500); // 10-509 seconds
-        controller.startTime.value =
+        progressController.startTime.value =
             DateTime.now().subtract(Duration(seconds: secondsAgo));
 
-        final timeSpent = controller.calculateTimeSpentForTest();
+        final timeSpent = progressController.calculateTimeSpentForTest();
 
         // Property: timeSpent should be approximately secondsAgo
         // Allow 1 second tolerance for test execution time
@@ -226,23 +233,23 @@ void main() {
       // Property: Lições perfeitas (100% accuracy) têm dados completos
       for (int iteration = 0; iteration < 50; iteration++) {
         final totalAnswers = 5 + (iteration % 10); // 5-14
-        controller.correctAnswers.value = totalAnswers; // All correct
-        controller.totalAnswers.value = totalAnswers;
-        controller.startTime.value = DateTime.now().subtract(
+        progressController.correctAnswers.value = totalAnswers; // All correct
+        progressController.totalAnswers.value = totalAnswers;
+        progressController.startTime.value = DateTime.now().subtract(
           Duration(minutes: 2 + (iteration % 5)),
         );
 
         // Property: Perfect accuracy = 100.0
-        expect(controller.accuracy, equals(100.0),
+        expect(progressController.accuracy, equals(100.0),
             reason: 'Perfect lesson should have 100% accuracy');
 
         // Property: Perfect lesson has 0 mistakes
         final mistakes =
-            controller.totalAnswers.value - controller.correctAnswers.value;
+            progressController.totalAnswers.value - progressController.correctAnswers.value;
         expect(mistakes, equals(0), reason: 'Perfect lesson has no mistakes');
 
         // Property: isPerfect is true
-        expect(controller.isPerfect, isTrue,
+        expect(progressController.isPerfect, isTrue,
             reason: 'isPerfect should be true for 100% accuracy');
       }
     });
@@ -252,15 +259,15 @@ void main() {
       for (int iteration = 0; iteration < 50; iteration++) {
         final totalAnswers = 5 + (iteration % 10); // 5-14
         final correctAnswers = iteration % totalAnswers; // Some wrong
-        controller.correctAnswers.value = correctAnswers;
-        controller.totalAnswers.value = totalAnswers;
-        controller.startTime.value = DateTime.now().subtract(
+        progressController.correctAnswers.value = correctAnswers;
+        progressController.totalAnswers.value = totalAnswers;
+        progressController.startTime.value = DateTime.now().subtract(
           Duration(minutes: 2 + (iteration % 5)),
         );
 
         // Property: Accuracy < 100 when there are mistakes
         if (correctAnswers < totalAnswers) {
-          expect(controller.accuracy, lessThan(100.0),
+          expect(progressController.accuracy, lessThan(100.0),
               reason: 'Lesson with mistakes should have accuracy < 100%');
         }
 
@@ -273,7 +280,7 @@ void main() {
 
         // Property: isPerfect is false when accuracy < 100
         if (correctAnswers < totalAnswers) {
-          expect(controller.isPerfect, isFalse,
+          expect(progressController.isPerfect, isFalse,
               reason: 'isPerfect should be false when accuracy < 100%');
         }
       }
@@ -296,17 +303,17 @@ void main() {
       ];
 
       for (final testCase in edgeCases) {
-        controller.correctAnswers.value = testCase.correct;
-        controller.totalAnswers.value = testCase.total;
+        progressController.correctAnswers.value = testCase.correct;
+        progressController.totalAnswers.value = testCase.total;
 
         // Property: Accuracy matches expected
-        expect(controller.accuracy, equals(testCase.expectedAccuracy),
+        expect(progressController.accuracy, equals(testCase.expectedAccuracy),
             reason:
                 'Accuracy for ${testCase.correct}/${testCase.total} should be ${testCase.expectedAccuracy}');
 
         // Property: Mistakes matches expected
         final mistakes =
-            controller.totalAnswers.value - controller.correctAnswers.value;
+            progressController.totalAnswers.value - progressController.correctAnswers.value;
         expect(mistakes, equals(testCase.expectedMistakes),
             reason:
                 'Mistakes for ${testCase.correct}/${testCase.total} should be ${testCase.expectedMistakes}');
@@ -316,9 +323,9 @@ void main() {
     test('xpEarned and gemsEarned are preserved correctly', () {
       // Property: XP e gems salvos devem corresponder aos valores calculados
       for (int iteration = 0; iteration < 100; iteration++) {
-        controller.correctAnswers.value = 8 + (iteration % 3);
-        controller.totalAnswers.value = 10;
-        controller.startTime.value = DateTime.now().subtract(
+        progressController.correctAnswers.value = 8 + (iteration % 3);
+        progressController.totalAnswers.value = 10;
+        progressController.startTime.value = DateTime.now().subtract(
           Duration(minutes: 3),
         );
 
@@ -345,23 +352,23 @@ void main() {
     test('progress data is consistent across multiple saves', () {
       // Property: Salvar progresso múltiplas vezes produz dados consistentes
       for (int iteration = 0; iteration < 50; iteration++) {
-        controller.correctAnswers.value = 7 + (iteration % 4);
-        controller.totalAnswers.value = 10;
-        controller.startTime.value = DateTime.now().subtract(
+        progressController.correctAnswers.value = 7 + (iteration % 4);
+        progressController.totalAnswers.value = 10;
+        progressController.startTime.value = DateTime.now().subtract(
           Duration(minutes: 5),
         );
 
-        final accuracy1 = controller.accuracy;
+        final accuracy1 = progressController.accuracy;
         final mistakes1 =
-            controller.totalAnswers.value - controller.correctAnswers.value;
-        final timeSpent1 = controller.calculateTimeSpentForTest();
+            progressController.totalAnswers.value - progressController.correctAnswers.value;
+        final timeSpent1 = progressController.calculateTimeSpentForTest();
 
         // Wait a moment
         Future.delayed(Duration(milliseconds: 10));
 
-        final accuracy2 = controller.accuracy;
+        final accuracy2 = progressController.accuracy;
         final mistakes2 =
-            controller.totalAnswers.value - controller.correctAnswers.value;
+            progressController.totalAnswers.value - progressController.correctAnswers.value;
 
         // Property: Accuracy is consistent
         expect(accuracy1, equals(accuracy2),
@@ -372,7 +379,7 @@ void main() {
             reason: 'Mistakes count should be consistent');
 
         // Property: Time spent increases (or stays same if < 1 second passed)
-        final timeSpent2 = controller.calculateTimeSpentForTest();
+        final timeSpent2 = progressController.calculateTimeSpentForTest();
         expect(timeSpent2, greaterThanOrEqualTo(timeSpent1),
             reason: 'Time spent should not decrease');
       }
