@@ -785,7 +785,8 @@ class AuthController extends GetxController {
       final controllersToDelete = [
         'HomeController',
         'LessonController',
-        'TreasureController',
+        'TreasureChallengesController',
+        'TreasureRewardsController',
         'ShopController',
         'LeaderboardController',
         'ProfileController',

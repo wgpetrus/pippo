@@ -18,6 +18,7 @@ import '../../gamification/controllers/xp_level_controller.dart';
 import '../../gamification/controllers/streak_controller.dart';
 import '../../gamification/controllers/energy_controller.dart';
 import '../../profile/controllers/profile_data_controller.dart';
+import '../../treasure/controllers/treasure_challenges_controller.dart';
 import '../../profile/controllers/profile_social_controller.dart';
 import '../../treasure/controllers/treasure_controller.dart';
 import '../widgets/home_appbar.dart';
@@ -457,12 +458,12 @@ class HomeController extends GetxController {
   /// Recarrega dados da página Treasure quando usuário retorna à tab
   void _refreshTreasurePage() {
     try {
-      if (Get.isRegistered<TreasureController>()) {
-        final treasureController = Get.find<TreasureController>();
-        treasureController.loadChallenges();
+      if (Get.isRegistered<TreasureChallengesController>()) {
+        final challengesController = Get.find<TreasureChallengesController>();
+        challengesController.loadChallenges();
       }
     } catch (e) {
-      // TreasureController não registrado - não é crítico
+      // TreasureChallengesController não registrado - não é crítico
     }
   }
 

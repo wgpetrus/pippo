@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/utils/responsive_utils.dart';
-import '../controllers/treasure_controller.dart';
+import '../controllers/treasure_challenges_controller.dart';
+import '../controllers/treasure_rewards_controller.dart';
 import '../widgets/challenge_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/treasure_header.dart';
@@ -43,8 +44,8 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Recarregar desafios quando app volta ao foreground
     if (state == AppLifecycleState.resumed) {
-      final controller = Get.find<TreasureController>();
-      controller.loadChallenges();
+      final challengesController = Get.find<TreasureChallengesController>();
+      challengesController.loadChallenges();
     }
   }
 
@@ -53,7 +54,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   Widget build(BuildContext context) {
     super.build(context); // Necessário para AutomaticKeepAliveClientMixin
     
-    final controller = Get.find<TreasureController>();
+    final challengesController = Get.find<TreasureChallengesController>();
     final r = ResponsiveUtils(context);
 
     return Scaffold(
@@ -72,7 +73,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
         children: [
           // Botão para deletar todos os desafios
           FloatingActionButton.extended(
-            onPressed: () => _deleteAllChallenges(controller),
+            onPressed: () => _deleteAllChallenges(challengesController),
             backgroundColor: AppTheme.error,
             foregroundColor: AppTheme.white,
             icon: const Icon(Icons.delete_forever),
@@ -82,7 +83,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
           SizedBox(height: r.spacing12),
           // Botão para gerar desafios
           FloatingActionButton.extended(
-            onPressed: () => _generateChallenges(controller),
+            onPressed: () => _generateChallenges(challengesController),
             backgroundColor: AppTheme.primary,
             foregroundColor: AppTheme.white,
             icon: const Icon(Icons.add_task),
@@ -94,14 +95,14 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       body: SafeArea(
         child: Obx(() {
           // Loading state
-          if (controller.isLoading.value) {
+          if (challengesController.isLoading.value) {
             return const Center(
               child: CircularProgressIndicator(color: AppTheme.primary),
             );
           }
 
           // Error state
-          if (controller.errorMessage.value.isNotEmpty) {
+          if (challengesController.errorMessage.value.isNotEmpty) {
             return Center(
               child: Padding(
                 padding: EdgeInsets.all(r.spacing24),
@@ -109,13 +110,13 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      controller.errorMessage.value,
+                      challengesController.errorMessage.value,
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: r.spacing16),
                     ElevatedButton(
-                      onPressed: () => controller.loadChallenges(),
+                      onPressed: () => challengesController.loadChallenges(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: AppTheme.white,
@@ -129,13 +130,13 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
           }
 
           // Empty state
-          if (controller.challenges.isEmpty) {
+          if (challengesController.challenges.isEmpty) {
             return const EmptyState();
           }
 
           // Challenges list
           return RefreshIndicator(
-            onRefresh: () => controller.loadChallenges(),
+            onRefresh: () => challengesController.loadChallenges(),
             color: AppTheme.primary,
             child: SingleChildScrollView(
               controller: _scrollController,
@@ -151,7 +152,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
                   const TreasureHeader(),
 
                   // Challenges grouped by type
-                  _buildChallengesByType(controller, r),
+                  _buildChallengesByType(challengesController, r),
                 ],
               ),
             ),
@@ -164,7 +165,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   // Métodos privados
 
   /// Deleta todos os desafios (para limpar dados incorretos)
-  Future<void> _deleteAllChallenges(TreasureController controller) async {
+  Future<void> _deleteAllChallenges(TreasureChallengesController challengesController) async {
     // Confirmar ação
     final confirm = await AppDialog.confirm(
       context: context,
@@ -182,7 +183,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
 
     try {
       // Deletar todos os desafios
-      await controller.deleteAllChallenges();
+      await challengesController.deleteAllChallenges();
 
       // Fechar loading
       Get.back();
@@ -207,14 +208,14 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   }
 
   /// Gera desafios diários e semanais para desenvolvimento/testes
-  Future<void> _generateChallenges(TreasureController controller) async {
+  Future<void> _generateChallenges(TreasureChallengesController challengesController) async {
     // Mostrar loading
     AppDialog.loading(context: context, message: 'Gerando desafios...');
 
     try {
       // Gerar desafios
-      await controller.generateDailyChallenges();
-      await controller.generateWeeklyChallenges();
+      await challengesController.generateDailyChallenges();
+      await challengesController.generateWeeklyChallenges();
 
       // Fechar loading
       Get.back();
@@ -241,17 +242,17 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   // Widgets privados
 
   /// Constrói desafios agrupados por tipo (daily, weekly, special)
-  Widget _buildChallengesByType(TreasureController controller, ResponsiveUtils r) {
-    debugPrint('🎨 _buildChallengesByType() - Total de desafios: ${controller.challenges.length}');
+  Widget _buildChallengesByType(TreasureChallengesController challengesController, ResponsiveUtils r) {
+    debugPrint('🎨 _buildChallengesByType() - Total de desafios: ${challengesController.challenges.length}');
     
     // Agrupar desafios por tipo
-    final dailyChallenges = controller.challenges
+    final dailyChallenges = challengesController.challenges
         .where((c) => c['type'] == 'daily')
         .toList();
-    final weeklyChallenges = controller.challenges
+    final weeklyChallenges = challengesController.challenges
         .where((c) => c['type'] == 'weekly')
         .toList();
-    final specialChallenges = controller.challenges
+    final specialChallenges = challengesController.challenges
         .where((c) => c['type'] == 'special')
         .toList();
 
@@ -263,21 +264,21 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
         // Daily Challenges
         if (dailyChallenges.isNotEmpty) ...[
           _buildSectionTitle('Desafios Diários', r),
-          _buildChallengesList(dailyChallenges, controller, r),
+          _buildChallengesList(dailyChallenges, r),
           SizedBox(height: r.spacing8),
         ],
 
         // Weekly Challenges
         if (weeklyChallenges.isNotEmpty) ...[
           _buildSectionTitle('Missões Semanais', r),
-          _buildChallengesList(weeklyChallenges, controller, r),
+          _buildChallengesList(weeklyChallenges, r),
           SizedBox(height: r.spacing8),
         ],
 
         // Special Challenges
         if (specialChallenges.isNotEmpty) ...[
           _buildSectionTitle('Desafios Especiais', r),
-          _buildChallengesList(specialChallenges, controller, r),
+          _buildChallengesList(specialChallenges, r),
         ],
       ],
     );
@@ -297,7 +298,6 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   /// Constrói lista de desafios
   Widget _buildChallengesList(
     List<Map<String, dynamic>> challenges,
-    TreasureController controller,
     ResponsiveUtils r,
   ) {
     return Padding(

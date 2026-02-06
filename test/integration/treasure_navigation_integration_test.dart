@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:pippo/features/inners/home/controllers/home_controller.dart';
-import 'package:pippo/features/inners/treasure/controllers/treasure_controller.dart';
+import 'package:pippo/features/inners/treasure/controllers/treasure_challenges_controller.dart';
+import 'package:pippo/features/inners/treasure/controllers/treasure_rewards_controller.dart';
 import 'package:pippo/shared/theme/theme.dart';
 
 import '../helpers/firebase_test_helper.dart';
@@ -27,9 +28,11 @@ void main() {
     testWidgets('Tab 3 navigates to TreasurePage', (tester) async {
       // Setup
       final homeController = HomeController();
-      final treasureController = TreasureController();
+      final challengesController = TreasureChallengesController();
+      final rewardsController = TreasureRewardsController();
       Get.put(homeController);
-      Get.put(treasureController);
+      Get.put(challengesController);
+      Get.put(rewardsController);
 
       // Verificar estado inicial
       expect(homeController.currentNavIndex.value, 0);
@@ -86,9 +89,11 @@ void main() {
     testWidgets('Treasure page refreshes when returning to tab', (tester) async {
       // Setup
       final homeController = HomeController();
-      final treasureController = TreasureController();
+      final challengesController = TreasureChallengesController();
+      final rewardsController = TreasureRewardsController();
       Get.put(homeController);
-      Get.put(treasureController);
+      Get.put(challengesController);
+      Get.put(rewardsController);
 
       // Navegar para tab 3
       homeController.onNavTap(3);
@@ -106,15 +111,20 @@ void main() {
       expect(homeController.currentNavIndex.value, 3);
     });
 
-    test('TreasureController is registered in HomeBinding', () {
-      // Verificar que TreasureController pode ser encontrado
-      final treasureController = TreasureController();
-      Get.put(treasureController);
+    test('TreasureChallengesController and TreasureRewardsController are registered in HomeBinding', () {
+      // Verificar que os novos controllers podem ser encontrados
+      final challengesController = TreasureChallengesController();
+      final rewardsController = TreasureRewardsController();
+      Get.put(challengesController);
+      Get.put(rewardsController);
 
-      expect(Get.isRegistered<TreasureController>(), true);
+      expect(Get.isRegistered<TreasureChallengesController>(), true);
+      expect(Get.isRegistered<TreasureRewardsController>(), true);
       
-      final found = Get.find<TreasureController>();
-      expect(found, isNotNull);
+      final foundChallenges = Get.find<TreasureChallengesController>();
+      final foundRewards = Get.find<TreasureRewardsController>();
+      expect(foundChallenges, isNotNull);
+      expect(foundRewards, isNotNull);
     });
   });
 }

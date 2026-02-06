@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import '../../../inners/gamification/controllers/xp_level_controller.dart';
 import '../../../inners/gamification/controllers/gems_controller.dart';
 import '../../../inners/home/controllers/home_controller.dart';
-import '../../../inners/treasure/controllers/treasure_controller.dart';
+import '../../../inners/treasure/controllers/treasure_challenges_controller.dart';
 import 'lesson_flow_controller.dart';
 import 'lesson_progress_controller.dart';
 
@@ -133,13 +133,13 @@ class LessonRewardsController extends GetxController {
         // Step 9: Atualizar desafios
         await _updateChallenges();
         
-        // Step 10: Integração com TreasureController (se disponível)
+        // Step 10: Integração com TreasureChallengesController (se disponível)
         try {
-          if (Get.isRegistered<TreasureController>()) {
-            final treasureController = Get.find<TreasureController>();
+          if (Get.isRegistered<TreasureChallengesController>()) {
+            final challengesController = Get.find<TreasureChallengesController>();
             
-            await treasureController.updateChallengeProgress('lessons', 1);
-            await treasureController.updateChallengeProgress(
+            await challengesController.updateChallengeProgress('lessons', 1);
+            await challengesController.updateChallengeProgress(
               'correct_exercises', 
               _progressController.correctAnswers.value,
             );

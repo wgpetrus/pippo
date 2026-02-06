@@ -4,9 +4,10 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../controllers/treasure_controller.dart';
+import '../controllers/treasure_challenges_controller.dart';
+import '../controllers/treasure_rewards_controller.dart';
 
-/// Card de desafio conectado ao TreasureController
+/// Card de desafio conectado aos TreasureControllers
 /// 
 /// Exibe informações do desafio e permite coletar recompensa quando completado.
 /// Usa Map<String, dynamic> diretamente do Firestore (sem models).
@@ -36,7 +37,8 @@ class ChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
-    final controller = Get.find<TreasureController>();
+    final challengesController = Get.find<TreasureChallengesController>();
+    final rewardsController = Get.find<TreasureRewardsController>();
 
     // Extrair dados do map (Requirement 11.4)
     final title = challengeData['title'] as String? ?? 'Desafio';
@@ -49,11 +51,11 @@ class ChallengeCard extends StatelessWidget {
     final challengeId = challengeData['id'] as String? ?? '';
 
     // Calcular porcentagem de progresso usando helper do controller
-    final progressPercentage = controller.getProgressPercentage(challengeData);
+    final progressPercentage = challengesController.getProgressPercentage(challengeData);
     final progressPercent = (progressPercentage * 100).toInt();
 
     // Determinar estado do desafio
-    final isCompleted = controller.isCompletedState(challengeData);
+    final isCompleted = challengesController.isCompletedState(challengeData);
     final barColor = isCompleted ? AppTheme.green : AppTheme.primary;
 
     // Determinar ícone de recompensa baseado no tipo
@@ -74,7 +76,7 @@ class ChallengeCard extends StatelessWidget {
           bottom: const BorderSide(color: AppTheme.gray600, width: 4),
         ),
         // Glow animation quando completado (Requirement 11.6)
-        boxShadow: controller.shouldShowGlowAnimation(challengeData)
+        boxShadow: rewardsController.shouldShowGlowAnimation(challengeData)
             ? [
                 BoxShadow(
                   color: AppTheme.green.withOpacity(0.3),
@@ -204,18 +206,18 @@ class ChallengeCard extends StatelessWidget {
 
           // Botão de coletar recompensa (Requirements 11.5, 11.6, 11.7, 13.1)
           Obx(() => _buildClaimButton(
-                controller: controller,
+                rewardsController: rewardsController,
                 challengeId: challengeId,
                 isCompleted: isCompleted,
               )),
 
           // Mensagem de erro (Requirements 10.5, 13.7)
           Obx(() {
-            if (controller.errorMessage.value.isNotEmpty) {
+            if (rewardsController.errorMessage.value.isNotEmpty) {
               return Padding(
                 padding: EdgeInsets.only(top: r.spacing8),
                 child: Text(
-                  controller.errorMessage.value,
+                  rewardsController.errorMessage.value,
                   style: AppTheme.textSmRegular.copyWith(
                     color: AppTheme.red,
                   ),
@@ -301,15 +303,15 @@ class ChallengeCard extends StatelessWidget {
   /// - **Completado** (Requirement 11.6): Botão habilitado com cor verde primária
   /// - **Loading** (Requirement 11.7): Spinner durante coleta de recompensa
   /// 
-  /// Ação (Requirement 13.1): Chama controller.claimReward() ao clicar
+  /// Ação (Requirement 13.1): Chama rewardsController.claimReward() ao clicar
   Widget _buildClaimButton({
-    required TreasureController controller,
+    required TreasureRewardsController rewardsController,
     required String challengeId,
     required bool isCompleted,
   }) {
     // Verificar se botão está habilitado
-    final isEnabled = controller.isClaimButtonEnabled(challengeData);
-    final isLoading = controller.isClaimingReward.value;
+    final isEnabled = rewardsController.isClaimButtonEnabled(challengeData);
+    final isLoading = rewardsController.isClaimingReward.value;
 
     // Determinar cor do botão (Requirement 11.6: primary color when completed)
     final buttonColor = isCompleted ? AppTheme.green : null;
@@ -321,10 +323,10 @@ class ChallengeCard extends StatelessWidget {
       onPressed: isEnabled
           ? () async {
               // Limpar mensagem de erro anterior
-              controller.errorMessage.value = '';
+              rewardsController.errorMessage.value = '';
               
               // Coletar recompensa (Requirement 13.1)
-              await controller.claimReward(challengeId);
+              await rewardsController.claimReward(challengeId);
             }
           : null, // Requirement 11.5: Disable button when in progress
     );

@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/inners/treasure/controllers/treasure_controller.dart';
+import 'package:pippo/features/inners/treasure/controllers/treasure_challenges_controller.dart';
+import 'package:pippo/features/inners/treasure/controllers/treasure_rewards_controller.dart';
 import 'package:pippo/features/inners/treasure/views/treasure_page.dart';
 import 'package:pippo/features/inners/treasure/widgets/challenge_card.dart';
 import 'package:pippo/features/inners/treasure/widgets/empty_state.dart';
@@ -20,32 +21,41 @@ import '../helpers/firebase_test_helper.dart';
 /// - Challenge cards are displayed when challenges exist
 /// - Error state is handled properly
 /// 
-/// **Note**: These tests use a mock controller to avoid Firebase initialization
-/// issues in test environment. The controller's onInit is bypassed by manually
+/// **Note**: These tests use mock controllers to avoid Firebase initialization
+/// issues in test environment. The controllers' onInit is bypassed by manually
 /// setting states instead of relying on automatic loading.
 void main() {
   group('Treasure UI Integration Tests', () {
-    late TreasureController controller;
+    late TreasureChallengesController challengesController;
+    late TreasureRewardsController rewardsController;
 
     setUpAll(() async {
       // Initialize Firebase for tests
       await FirebaseTestHelper.setupFirebase();
     });
 
-    setUp(() {
+    setUp(() async {
       // Initialize GetX
       Get.testMode = true;
       
-      // Create controller without calling onInit (to avoid Firebase calls)
-      controller = TreasureController();
+      // Create and register controllers
+      // Note: onInit() will be called but we'll override the states immediately after
+      challengesController = TreasureChallengesController();
+      rewardsController = TreasureRewardsController();
       
-      // Manually set initial state to prevent automatic loading
-      controller.isLoading.value = false;
-      controller.errorMessage.value = '';
-      controller.challenges.clear();
+      Get.put<TreasureChallengesController>(challengesController);
+      Get.put<TreasureRewardsController>(rewardsController);
       
-      // Register controller
-      Get.put<TreasureController>(controller);
+      // Wait a bit for onInit to complete (or fail)
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      // Manually set initial state to override any Firebase loading
+      challengesController.isLoading.value = false;
+      challengesController.errorMessage.value = '';
+      challengesController.challenges.clear();
+      
+      rewardsController.isLoading.value = false;
+      rewardsController.errorMessage.value = '';
     });
 
     tearDown(() {
@@ -55,7 +65,7 @@ void main() {
     testWidgets('TreasurePage displays loading state initially',
         (WidgetTester tester) async {
       // Set loading state
-      controller.isLoading.value = true;
+      challengesController.isLoading.value = true;
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -76,8 +86,8 @@ void main() {
     testWidgets('TreasurePage displays empty state when no challenges',
         (WidgetTester tester) async {
       // Set empty state
-      controller.isLoading.value = false;
-      controller.challenges.clear();
+      challengesController.isLoading.value = false;
+      challengesController.challenges.clear();
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -100,8 +110,8 @@ void main() {
     testWidgets('TreasurePage displays challenges when available',
         (WidgetTester tester) async {
       // Add mock challenges
-      controller.isLoading.value = false;
-      controller.challenges.value = [
+      challengesController.isLoading.value = false;
+      challengesController.challenges.value = [
         {
           'id': 'challenge_1',
           'type': 'daily',
@@ -143,8 +153,8 @@ void main() {
     testWidgets('TreasurePage displays error state correctly',
         (WidgetTester tester) async {
       // Set error state
-      controller.isLoading.value = false;
-      controller.errorMessage.value = 'Erro ao carregar desafios';
+      challengesController.isLoading.value = false;
+      challengesController.errorMessage.value = 'Erro ao carregar desafios';
 
       await tester.pumpWidget(
         GetMaterialApp(
@@ -172,8 +182,8 @@ void main() {
     testWidgets('TreasurePage groups challenges by type',
         (WidgetTester tester) async {
       // Add challenges of different types
-      controller.isLoading.value = false;
-      controller.challenges.value = [
+      challengesController.isLoading.value = false;
+      challengesController.challenges.value = [
         {
           'id': 'daily_1',
           'type': 'daily',
@@ -229,8 +239,8 @@ void main() {
     testWidgets('TreasurePage supports pull-to-refresh',
         (WidgetTester tester) async {
       // Set initial state with challenges
-      controller.isLoading.value = false;
-      controller.challenges.value = [
+      challengesController.isLoading.value = false;
+      challengesController.challenges.value = [
         {
           'id': 'challenge_1',
           'type': 'daily',

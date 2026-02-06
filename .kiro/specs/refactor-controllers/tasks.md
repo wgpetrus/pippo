@@ -321,14 +321,14 @@ Controllers will be refactored in order from largest to smallest:
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [-] 4.8 Commit OnboardingController refactoring
+  - [x] 4.8 Commit OnboardingController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide OnboardingController em 3 controllers menores"
     - Update lista-controllers.md to mark OnboardingController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 5. Refactor TreasureController (897 lines → 2 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
-  - [ ] 5.1 Create TreasureChallengesController
+- [x] 5. Refactor TreasureController (897 lines → 2 controllers + Add code that allows you to run tests that require Firebase to be initialized.)
+  - [x] 5.1 Create TreasureChallengesController
     - Create `features/inners/treasure/controllers/treasure_challenges_controller.dart`
     - Copy standard controller structure
     - Copy states: dailyChallenges, weeklyChallenges, challengeProgress, isLoading, errorMessage
@@ -336,7 +336,7 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.5, 4.2, 5.1, 5.2, 5.3_
   
-  - [ ] 5.2 Create TreasureRewardsController
+  - [x] 5.2 Create TreasureRewardsController
     - Create `features/inners/treasure/controllers/treasure_rewards_controller.dart`
     - Copy standard controller structure
     - Copy states: claimedRewards, pendingRewards, isLoading, errorMessage
@@ -345,20 +345,20 @@ Controllers will be refactored in order from largest to smallest:
     - Verify file is ≤ 500 lines
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.5, 4.2, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3_
   
-  - [ ] 5.3 Update TreasureBinding
+  - [x] 5.3 Update TreasureBinding
     - Open `features/inners/treasure/bindings/treasure_binding.dart`
     - Remove `Get.lazyPut(() => TreasureController())`
     - Add `Get.lazyPut(() => TreasureChallengesController())`
     - Add `Get.lazyPut(() => TreasureRewardsController())`
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   
-  - [ ] 5.4 Update Treasure views
+  - [x] 5.4 Update Treasure views
     - Update treasure_page.dart to use new controllers
     - Update challenge_card.dart to use TreasureChallengesController
     - Preserve all Obx() wrappers
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 5.5 Run all tests for Treasure feature
+  - [x] 5.5 Run all tests for Treasure feature
     - Fix the old tests with the new controllers
     - Execute unit tests
     - Execute property tests
@@ -366,13 +366,13 @@ Controllers will be refactored in order from largest to smallest:
     - Verify all tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [ ] 5.6 Delete old TreasureController
+  - [x] 5.6 Delete old TreasureController
     - Delete `features/inners/treasure/controllers/treasure_controller.dart`
     - Carefully check that the imports are correct
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [ ] 5.7 Commit TreasureController refactoring
+  - [x] 5.7 Commit TreasureController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide TreasureController em 2 controllers menores"
     - Update lista-controllers.md to mark TreasureController as complete
