@@ -15,8 +15,15 @@ import '../../../../shared/utils/error_handler.dart';
 /// Controller da splash screen
 class SplashController extends GetxController {
   // Instâncias Firebase
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  // Constructor com DI
+  SplashController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Estados obrigatórios
   final isLoading = true.obs;

@@ -4,8 +4,15 @@ import 'package:get/get.dart';
 
 /// Controller para gerenciar progresso da lição (hearts, accuracy, time, stats)
 class LessonProgressController extends GetxController {
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  // Constructor com DI
+  LessonProgressController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   final isLoading = false.obs;
   final errorMessage = ''.obs;

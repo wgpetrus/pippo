@@ -11,8 +11,15 @@ import 'lesson_progress_controller.dart';
 
 /// Controller para gerenciar recompensas (XP, gems, achievements)
 class LessonRewardsController extends GetxController {
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  // Constructor com DI
+  LessonRewardsController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
   
   late final XpLevelController _xpLevelController;
   late final GemsController _gemsController;
