@@ -9,8 +9,8 @@ import '../../../../shared/utils/error_handler.dart';
 /// Responsibility: Manage user settings (notifications, learning controls)
 class ProfileSettingsController extends GetxController {
   // Firebase Instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -25,6 +25,13 @@ class ProfileSettingsController extends GetxController {
   final leaderboardUpdates = true.obs;
   final friendActivity = true.obs;
   final dailyGoal = 10.obs;
+
+  /// Constructor com DI opcional (backward compatible)
+  ProfileSettingsController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Métodos públicos
 

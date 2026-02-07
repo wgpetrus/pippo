@@ -8,8 +8,8 @@ import 'package:get/get.dart';
 /// Responsibility: Manage authentication actions (password, phone, delete account)
 class ProfileAuthController extends GetxController {
   // Firebase Instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -19,6 +19,13 @@ class ProfileAuthController extends GetxController {
   final phone = ''.obs;
   final phoneVerified = false.obs;
   final verificationId = ''.obs;
+
+  /// Constructor com DI opcional (backward compatible)
+  ProfileAuthController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Métodos públicos
 

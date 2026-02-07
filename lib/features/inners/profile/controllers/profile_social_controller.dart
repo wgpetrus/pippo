@@ -8,8 +8,8 @@ import '../../../../shared/utils/language_helper.dart';
 /// ProfileSocialController - Manages social features
 class ProfileSocialController extends GetxController {
   // Firebase Instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -28,6 +28,13 @@ class ProfileSocialController extends GetxController {
   final weeklyProgress = <Map<String, dynamic>>[].obs;
   final viewedUserWeeklyProgress = <Map<String, dynamic>>[].obs;
   final isLoadingProgress = false.obs;
+
+  /// Constructor com DI opcional (backward compatible)
+  ProfileSocialController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Métodos públicos
 

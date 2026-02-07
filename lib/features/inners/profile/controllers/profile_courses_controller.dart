@@ -10,8 +10,8 @@ import '../../../../shared/utils/language_helper.dart';
 /// Responsibility: Manage user courses (add, remove, set primary)
 class ProfileCoursesController extends GetxController {
   // Firebase Instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -20,6 +20,13 @@ class ProfileCoursesController extends GetxController {
   // Courses States
   final userCourses = <Map<String, dynamic>>[].obs;
   final primaryCourseId = ''.obs;
+
+  /// Constructor com DI opcional (backward compatible)
+  ProfileCoursesController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Lifecycle
   @override

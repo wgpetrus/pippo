@@ -10,8 +10,8 @@ import '../../../../shared/utils/error_handler.dart';
 /// Responsibility: Manage user profile data (name, avatar, bio, stats)
 class ProfileDataController extends GetxController {
   // Firebase Instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   // Estados obrigatórios
   final isLoading = false.obs;
@@ -38,6 +38,13 @@ class ProfileDataController extends GetxController {
   // Username Availability
   final isUsernameAvailable = true.obs;
   final isCheckingUsername = false.obs;
+
+  /// Constructor com DI opcional (backward compatible)
+  ProfileDataController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Métodos públicos
 
