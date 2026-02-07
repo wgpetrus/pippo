@@ -240,15 +240,22 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
    - Adicionar setup de Firebase mocks
    - Registrar AuthCredentialsController e AuthProvidersController
 
-### Fase 3: Converter Testes de Documentação
+### Fase 3: Converter Testes de Documentação ⚠️ PRECISA ATUALIZAÇÃO DI
 
-2. **`shop/shop_purchase_flow_integration_test.dart`**
-   - Implementar testes funcionais com Firebase mocks
-   - Testar fluxo completo de compra
+**IMPORTANTE:** Estes testes foram marcados como "completos" mas ainda são testes de DOCUMENTAÇÃO.
+Agora que TODOS os 22 controllers suportam DI, estes testes DEVEM ser convertidos para testes FUNCIONAIS.
 
-3. **`shop/shop_boost_application_integration_test.dart`**
-   - Verificar uso correto de Firebase mocks
-   - Adicionar testes de fluxo completo
+2. **`shop/shop_purchase_flow_integration_test.dart`** ⚠️ AINDA É DOCUMENTAÇÃO
+   - Status: Marcado como completo mas ainda é teste de documentação
+   - Problema: Comentários dizem "LIMITAÇÃO TÉCNICA" - isso NÃO É MAIS VERDADE
+   - Solução: Converter para testes funcionais usando DI
+   - Controllers disponíveis: GemsController, EnergyController, ShopController (TODOS com DI)
+
+3. **`shop/shop_boost_application_integration_test.dart`** ⚠️ AINDA É DOCUMENTAÇÃO
+   - Status: Marcado como completo mas ainda é teste de documentação
+   - Problema: Comentários dizem "LIMITAÇÃO TÉCNICA" - isso NÃO É MAIS VERDADE
+   - Solução: Converter para testes funcionais usando DI
+   - Controllers disponíveis: XpLevelController, GemsController, StreakController, EnergyController (TODOS com DI)
 
 ### Fase 4: Atualizar para Novos Controllers
 

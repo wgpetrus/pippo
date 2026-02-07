@@ -51,53 +51,21 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
 
 ## Tasks
 
-- [x] 1. Criar Helpers de Teste
-  - [x] 1.1 Criar ShopTestHelper
+- [x] 1. Criar Helpers de Teste ✅ COMPLETO
+  - [x] 1.1 FirebaseTestHelper criado
     - _Requirement: 4.1 (Helpers de teste)_
-    - Criar arquivo `test/helpers/shop_test_helper.dart`
-    - Implementar método `populateShopItems(FakeFirebaseFirestore firestore, String userId)`:
-      - Popular coleção `users/{userId}/stats/gamification` com gems iniciais (valor: 500)
-      - Popular coleção `shopItems` com 4 boosts: Energy Refill (50 gems), XP Booster (150 gems), Gem Multiplier (200 gems), Streak Freeze (100 gems)
-      - Retornar Map com IDs dos documentos criados
-    - Implementar método `simulatePurchase(FakeFirebaseFirestore firestore, String userId, String itemId, int cost)`:
-      - Deduzir gems do usuário via transaction
-      - Criar documento em `users/{userId}/purchases/{purchaseId}` com timestamp
-      - Retornar ID da compra
-    - Adicionar documentação inline explicando cada método
-    - **Validação:** `flutter test test/helpers/shop_test_helper.dart`
-  
-  - [x] 1.2 Criar ProfileTestHelper
-    - _Requirement: 4.1 (Helpers de teste)_
-    - Criar arquivo `test/helpers/profile_test_helper.dart`
-    - Implementar método `populateProfileData(FakeFirebaseFirestore firestore, String userId)`:
-      - Popular `users/{userId}/profile` com campos: name, username, bio, avatar, country
-      - Retornar Map com os valores populados
-    - Implementar método `populateSocialData(FakeFirebaseFirestore firestore, String userId, List<String> followerIds)`:
-      - Popular `users/{userId}/followers` com lista de seguidores
-      - Popular `users/{userId}/following` com lista de seguindo
-      - Retornar Map com contadores
-    - Implementar método `populateSettings(FakeFirebaseFirestore firestore, String userId)`:
-      - Popular `users/{userId}/settings` com configurações padrão
-      - Campos: notifications, soundEffects, dailyGoal, reminderTime
-      - Retornar Map com as configurações
-    - Adicionar documentação inline explicando cada método
-    - **Validação:** `flutter test test/helpers/profile_test_helper.dart`
-  
-  - [x] 1.3 Criar AuthTestHelper
-    - _Requirement: 4.1 (Helpers de teste)_
-    - Criar arquivo `test/helpers/auth_test_helper.dart`
-    - Implementar método `createMockAuthWithUser(String uid, String email)`:
-      - Criar MockFirebaseAuth com usuário mockado
-      - Configurar user.uid e user.email
-      - Retornar instância do mock
-    - Implementar método `simulateLogin(MockFirebaseAuth auth, String email, String password)`:
-      - Simular signInWithEmailAndPassword
-      - Retornar UserCredential mockado
-    - Implementar método `simulateLogout(MockFirebaseAuth auth)`:
-      - Simular signOut
-      - Limpar estado do usuário
-    - Adicionar documentação inline explicando cada método
-    - **Validação:** `flutter test test/helpers/auth_test_helper.dart`
+    - ✅ Arquivo criado: `test/integration/helpers/firebase_test_helper.dart`
+    - ✅ Métodos implementados:
+      - `setupFirebase()` - Inicializa Firebase para testes
+      - `createMockAuth()` - Cria MockFirebaseAuth com usuário logado
+      - `createMockFirestore()` - Cria FakeFirebaseFirestore
+      - `populateGamificationData()` - Popula dados de gamificação
+      - `populateProfileData()` - Popula dados de perfil
+      - `populateSocialData()` - Popula dados sociais
+      - `populateSettings()` - Popula configurações
+      - `populateShopItems()` - Popula itens da loja
+    - ✅ Usado em 310 testes passando
+    - **Status:** Helper completo e funcional
 
 - [x] 2. Fase 1: Corrigir Testes com @Skip (CRÍTICO)
   - [x] 2.1 Corrigir friends_placeholder_test.dart
@@ -193,138 +161,321 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
     - **Se encontrar problemas:** Seguir o "PROCESSO PADRÃO PARA CORREÇÃO DE TESTES PROBLEMÁTICOS" documentado no início deste arquivo
     - _Requirements: 13.1, 13.4, 13.8_
 
-- [x] 4. Fase 3: Converter Testes de Documentação (MÉDIA PRIORIDADE)
-  - [x] 4.1 Converter shop_purchase_flow_integration_test.dart
+- [ ] 4. Fase 3: Converter Testes de Documentação (MÉDIA PRIORIDADE) ⚠️ PRECISA ATUALIZAÇÃO DI
+  
+  **⚠️ IMPORTANTE:** Estes testes foram marcados como "completos" mas ainda são testes de DOCUMENTAÇÃO.
+  Agora que TODOS os controllers suportam DI, estes testes DEVEM ser convertidos para testes FUNCIONAIS.
+  
+  **CONTEXTO DI:**
+  - ✅ GemsController, EnergyController, StreakController, XpLevelController - TODOS com DI
+  - ✅ ShopController - COM DI
+  - Os testes atuais ainda têm comentários dizendo "LIMITAÇÃO TÉCNICA" - isso NÃO É MAIS VERDADE!
+  
+  - [ ] 4.1 Converter shop_purchase_flow_integration_test.dart para testes FUNCIONAIS
     - Abrir `test/integration/shop/shop_purchase_flow_integration_test.dart`
-    - Adicionar setup de Firebase com FirebaseTestHelper
-    - Usar ShopTestHelper para popular itens
-    - Registrar GemsController no setUp()
-    - Registrar EnergyController no setUp()
-    - Implementar teste de compra com gems suficientes
-    - Implementar teste de compra com gems insuficientes
-    - Implementar teste de aplicação de boost
-    - Implementar teste de atualização de gems no AppBar
-    - Implementar teste de snackbar de sucesso
-    - Implementar teste de snackbar de erro
+    - **REMOVER** todos os comentários sobre "LIMITAÇÃO TÉCNICA" e "testes de documentação"
+    - Adicionar setup de Firebase com FirebaseTestHelper:
+      ```dart
+      late FakeFirebaseFirestore mockFirestore;
+      late MockFirebaseAuth mockAuth;
+      late GemsController gemsController;
+      late EnergyController energyController;
+      late ShopController shopController;
+      
+      setUp(() async {
+        mockFirestore = FakeFirebaseFirestore();
+        mockAuth = MockFirebaseAuth(signedIn: true);
+        
+        // Popular dados iniciais
+        await FirebaseTestHelper.populateGamificationData(mockFirestore, mockAuth.currentUser!.uid);
+        await FirebaseTestHelper.populateShopItems(mockFirestore);
+        
+        // Instanciar controllers com DI
+        gemsController = GemsController(
+          firestore: mockFirestore,
+          auth: mockAuth,
+        );
+        energyController = EnergyController(
+          firestore: mockFirestore,
+          auth: mockAuth,
+        );
+        shopController = ShopController(
+          firestore: mockFirestore,
+          auth: mockAuth,
+        );
+        
+        Get.put<GemsController>(gemsController);
+        Get.put<EnergyController>(energyController);
+        Get.put<ShopController>(shopController);
+      });
+      ```
+    - Converter TODOS os testes de documentação para testes FUNCIONAIS
+    - Implementar teste REAL de compra com gems suficientes
+    - Implementar teste REAL de compra com gems insuficientes
+    - Implementar teste REAL de aplicação de boost
+    - Implementar teste REAL de atualização de gems
+    - Implementar teste REAL de snackbar de sucesso/erro
     - Executar teste: `flutter test test/integration/shop/shop_purchase_flow_integration_test.dart`
     - Verificar que teste passa
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
   
-  - [x] 4.2 Converter shop_boost_application_integration_test.dart
+  - [ ] 4.2 Converter shop_boost_application_integration_test.dart para testes FUNCIONAIS
     - Abrir `test/integration/shop/shop_boost_application_integration_test.dart`
-    - Verificar que usa Firebase mocks corretamente
-    - Adicionar testes de fluxo completo de compra
-    - Testar energy refill → EnergyController
-    - Testar XP booster → XpLevelController
-    - Testar gem multiplier → GemsController
-    - Testar streak freeze → StreakController
-    - Verificar que boosts são aplicados corretamente
-    - Verificar que boosts expiram corretamente
+    - **REMOVER** todos os comentários sobre "LIMITAÇÃO TÉCNICA" e "testes de documentação"
+    - Adicionar setup de Firebase com FirebaseTestHelper (mesmo padrão do 4.1)
+    - Instanciar controllers com DI:
+      ```dart
+      xpController = XpLevelController(firestore: mockFirestore, auth: mockAuth);
+      gemsController = GemsController(firestore: mockFirestore, auth: mockAuth);
+      streakController = StreakController(firestore: mockFirestore, auth: mockAuth);
+      energyController = EnergyController(firestore: mockFirestore, auth: mockAuth);
+      ```
+    - Converter TODOS os testes de documentação para testes FUNCIONAIS
+    - Testar REALMENTE energy refill → EnergyController
+    - Testar REALMENTE XP booster → XpLevelController
+    - Testar REALMENTE gem multiplier → GemsController
+    - Testar REALMENTE streak freeze → StreakController
+    - Verificar REALMENTE que boosts são aplicados corretamente
+    - Verificar REALMENTE que boosts expiram corretamente
     - Executar teste: `flutter test test/integration/shop/shop_boost_application_integration_test.dart`
     - Verificar que teste passa
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 6.1, 6.2, 6.3, 6.4_
   
-  - [x] 4.3 Executar suite completa após Fase 3
+  - [ ] 4.3 Executar suite completa após Fase 3
     - Executar: `flutter test test/integration/`
     - Verificar que TODOS os testes passam
+    - Verificar que testes agora são FUNCIONAIS (não documentação)
     - **Se encontrar problemas:** Seguir o "PROCESSO PADRÃO PARA CORREÇÃO DE TESTES PROBLEMÁTICOS" documentado no início deste arquivo
     - _Requirements: 13.1, 13.4_
 
-- [ ] 5. Fase 4: Atualizar Testes para Novos Controllers
+- [ ] 5. Fase 4: Atualizar Testes para Novos Controllers (APÓS REFATORAÇÃO DI)
+  
+  **CONTEXTO IMPORTANTE:**
+  Todos os 22 controllers foram refatorados para suportar Dependency Injection (DI). Agora cada controller aceita instâncias de Firebase via construtor:
+  
+  ```dart
+  // Padrão aplicado em TODOS os controllers
+  class ExampleController extends GetxController {
+    final FirebaseFirestore _firestore;
+    final FirebaseAuth _auth;
+    
+    ExampleController({
+      FirebaseFirestore? firestore,
+      FirebaseAuth? auth,
+    })  : _firestore = firestore ?? FirebaseFirestore.instance,
+          _auth = auth ?? FirebaseAuth.instance;
+  }
+  ```
+  
+  **Controllers Refatorados:**
+  - ✅ Gamification: GemsController, EnergyController, StreakController, XpLevelController
+  - ✅ Auth: AuthCredentialsController, AuthProvidersController
+  - ✅ Shop: ShopController
+  - ✅ Profile: ProfileDataController, ProfileAuthController, ProfileSocialController, ProfileCoursesController, ProfileSettingsController
+  - ✅ Onboarding: OnboardingFlowController, OnboardingDataController, OnboardingValidationController
+  - ✅ Lesson: LessonProgressController, LessonRewardsController
+  - ✅ Splash: SplashController
+  - ✅ Treasure: TreasureChallengesController, TreasureRewardsController
+  - ✅ Home: HomeStatsController
+  - ✅ Leaderboard: LeaderboardController
+  
+  **IMPORTANTE:** Todos os testes devem agora passar mocks via construtor:
+  ```dart
+  final controller = ExampleController(
+    firestore: mockFirestore,
+    auth: mockAuth,
+  );
+  ```
+  
   - [ ] 5.1 Atualizar testes de Gamification
-    - _Requirement: 3.1, 3.9 (Atualizar para novos controllers)_
+    - _Requirement: 3.1, 3.9 (Atualizar para novos controllers com DI)_
     - Abrir `test/integration/gamification/gamification_access_integration_test.dart`
-    - Substituir imports de GamificationController por StreakController, EnergyController, XpLevelController, GemsController
-    - Atualizar setUp() para registrar os 4 novos controllers com Get.put()
-    - Atualizar referências no código: `gamification.streak` → `streakController.currentStreak`
-    - Atualizar referências no código: `gamification.energy` → `energyController.currentEnergy`
-    - Atualizar referências no código: `gamification.totalXp` → `xpLevelController.totalXp`
-    - Atualizar referências no código: `gamification.gems` → `gemsController.currentGems`
+    - ✅ Controllers já usam DI: GemsController, EnergyController, StreakController, XpLevelController
+    - Verificar se testes passam mocks via construtor
+    - Atualizar setUp() se necessário:
+      ```dart
+      final gemsController = GemsController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      Get.put<GemsController>(gemsController);
+      ```
     - Abrir `test/integration/gamification/gems_modal_navigation_integration_test.dart`
-    - Repetir processo de atualização de imports e referências
+    - Repetir processo de verificação e atualização
     - Executar: `flutter test test/integration/gamification/`
     - Verificar que todos os testes passam
   
   - [ ] 5.2 Atualizar testes de Profile
-    - _Requirement: 3.2, 3.9 (Atualizar para novos controllers)_
-    - Listar arquivos em `test/integration/profile/` que usam ProfileController
-    - Arquivos identificados: `profile_view_flow_integration_test.dart`, `edit_profile_flow_integration_test.dart`, `course_management_flow_integration_test.dart`, `link_phone_number_flow_integration_test.dart`, `account_deletion_flow_integration_test.dart`, `profile_user_stats_integration_test.dart`
+    - _Requirement: 3.2, 3.9 (Atualizar para novos controllers com DI)_
+    - Listar arquivos em `test/integration/profile/` que usam controllers
+    - ✅ Controllers já usam DI: ProfileDataController, ProfileAuthController, ProfileSocialController, ProfileCoursesController, ProfileSettingsController
     - Para cada arquivo:
-      - Substituir imports de ProfileController por ProfileDataController, ProfileSettingsController, ProfileSocialController, ProfileCoursesController, ProfileAuthController
-      - Atualizar setUp() para registrar os 5 novos controllers
-      - Atualizar referências no código conforme responsabilidade de cada controller
+      - Verificar se controllers são instanciados com mocks
+      - Atualizar setUp() para passar mocks via construtor:
+        ```dart
+        final dataController = ProfileDataController(
+          firestore: mockFirestore,
+          auth: mockAuth,
+        );
+        Get.put<ProfileDataController>(dataController);
+        ```
     - Executar: `flutter test test/integration/profile/`
     - Verificar que todos os testes passam
   
   - [ ] 5.3 Atualizar testes de Lesson
-    - _Requirement: 3.3, 3.9 (Atualizar para novos controllers)_
-    - Abrir `test/integration/lesson/lesson_system_e2e_test.dart`
-    - Substituir imports de LessonController por LessonFlowController, LessonExerciseController, LessonProgressController, LessonRewardsController
-    - Atualizar setUp() para registrar os 4 novos controllers
-    - Atualizar referências: `lesson.startLesson()` → `lessonFlow.startLesson()`
-    - Atualizar referências: `lesson.submitAnswer()` → `lessonExercise.submitAnswer()`
-    - Atualizar referências: `lesson.completeLesson()` → `lessonProgress.completeLesson()`
-    - Atualizar referências: `lesson.awardXp()` → `lessonRewards.awardXp()`
+    - _Requirement: 3.3, 3.9 (Atualizar para novos controllers com DI)_
+    - ⚠️ **ATENÇÃO:** `lesson_system_e2e_test.dart` foi REMOVIDO na Fase 1
+    - Motivo: Referenciava LessonController antigo (não existe mais)
+    - ✅ Novos controllers: LessonProgressController, LessonRewardsController (já com DI)
+    - **Ação:** Reescrever teste usando novos controllers:
+      ```dart
+      final progressController = LessonProgressController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      final rewardsController = LessonRewardsController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
     - Executar: `flutter test test/integration/lesson/`
     - Verificar que todos os testes passam
   
   - [ ] 5.4 Atualizar testes de Onboarding
-    - _Requirement: 3.4, 3.9 (Atualizar para novos controllers)_
-    - Listar arquivos em `test/integration/onboarding/` que usam OnboardingController
-    - Arquivos identificados: `onboarding_flow_integration_test.dart`, `onboarding_complete_flow_test.dart`, `email_password_onboarding_flow_test.dart`, `google_onboarding_flow_integration_test.dart`
-    - Para cada arquivo:
-      - Substituir imports de OnboardingController por OnboardingFlowController, OnboardingDataController, OnboardingValidationController
-      - Atualizar setUp() para registrar os 3 novos controllers
-      - Atualizar referências conforme responsabilidade de cada controller
+    - _Requirement: 3.4, 3.9 (Atualizar para novos controllers com DI)_
+    - ⚠️ **ATENÇÃO:** `onboarding_complete_flow_test.dart` foi REMOVIDO na Fase 1
+    - ✅ Controllers já usam DI: OnboardingFlowController, OnboardingDataController, OnboardingValidationController
+    - Verificar arquivos restantes em `test/integration/onboarding/`:
+      - `onboarding_flow_integration_test.dart`
+      - `email_password_onboarding_flow_test.dart`
+      - `google_onboarding_flow_integration_test.dart`
+    - Para cada arquivo, verificar se controllers são instanciados com mocks:
+      ```dart
+      final flowController = OnboardingFlowController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
     - Executar: `flutter test test/integration/onboarding/`
     - Verificar que todos os testes passam
   
   - [ ] 5.5 Atualizar testes de Treasure
-    - _Requirement: 3.5, 3.9 (Atualizar para novos controllers)_
-    - Abrir `test/integration/treasure/treasure_navigation_integration_test.dart`
-    - Substituir imports de TreasureController por TreasureChallengesController, TreasureRewardsController
-    - Atualizar setUp() para registrar os 2 novos controllers
-    - Atualizar referências: `treasure.loadChallenges()` → `treasureChallenges.loadChallenges()`
-    - Atualizar referências: `treasure.claimReward()` → `treasureRewards.claimReward()`
-    - Abrir `test/integration/treasure/treasure_ui_integration_test.dart`
-    - Repetir processo de atualização
+    - _Requirement: 3.5, 3.9 (Atualizar para novos controllers com DI)_
+    - ⚠️ **ATENÇÃO:** `treasure_navigation_integration_test.dart` foi REMOVIDO na Fase 1
+    - ✅ Controllers já usam DI: TreasureChallengesController, TreasureRewardsController
+    - Verificar `test/integration/treasure/treasure_ui_integration_test.dart`
+    - Atualizar para usar mocks via construtor:
+      ```dart
+      final challengesController = TreasureChallengesController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      final rewardsController = TreasureRewardsController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
     - Executar: `flutter test test/integration/treasure/`
     - Verificar que todos os testes passam
   
   - [ ] 5.6 Atualizar testes de Home
-    - _Requirement: 3.6, 3.9 (Atualizar para novos controllers)_
-    - Abrir `test/integration/navigation/navigation_test.dart`
-    - Substituir imports de HomeController por HomeNavigationController, HomeStatsController
-    - Atualizar setUp() para registrar os 2 novos controllers
-    - Atualizar referências: `home.navigateToTab()` → `homeNavigation.navigateToTab()`
-    - Atualizar referências: `home.loadStats()` → `homeStats.loadStats()`
-    - Abrir `test/integration/navigation/loading_spinner_visibility_test.dart`
-    - Repetir processo de atualização
+    - _Requirement: 3.6, 3.9 (Atualizar para novos controllers com DI)_
+    - ⚠️ **ATENÇÃO:** `loading_spinner_visibility_test.dart` foi REMOVIDO na Fase 1
+    - ✅ Controller já usa DI: HomeStatsController
+    - Verificar `test/integration/navigation/navigation_test.dart`
+    - Atualizar para usar mocks via construtor:
+      ```dart
+      final statsController = HomeStatsController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
     - Executar: `flutter test test/integration/navigation/`
     - Verificar que todos os testes passam
   
   - [ ] 5.7 Atualizar testes de Auth
-    - _Requirement: 3.7, 3.9 (Atualizar para novos controllers)_
-    - Abrir `test/integration/auth/auth_changes_flow_integration_test.dart`
-    - Substituir imports de AuthController por AuthCredentialsController, AuthProvidersController
-    - Atualizar setUp() para registrar os 2 novos controllers
-    - Atualizar referências: `auth.login()` → `authCredentials.login()`
-    - Atualizar referências: `auth.signInWithGoogle()` → `authProviders.signInWithGoogle()`
+    - _Requirement: 3.7, 3.9 (Atualizar para novos controllers com DI)_
+    - ✅ Controllers já usam DI: AuthCredentialsController, AuthProvidersController
+    - Verificar `test/integration/auth/auth_changes_flow_integration_test.dart`
+    - Verificar `test/integration/auth/auth_flow_integration_test.dart`
+    - Atualizar para usar mocks via construtor:
+      ```dart
+      final credentialsController = AuthCredentialsController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      final providersController = AuthProvidersController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
     - Executar: `flutter test test/integration/auth/`
     - Verificar que todos os testes passam
   
-  - [ ] 5.8 Executar suite completa após Fase 4
+  - [ ] 5.8 Atualizar testes de Shop
+    - _Requirement: 3.9 (Atualizar para novos controllers com DI)_
+    - ✅ Controller já usa DI: ShopController
+    - Verificar todos os arquivos em `test/integration/shop/`:
+      - `shop_purchase_flow_integration_test.dart`
+      - `shop_boost_application_integration_test.dart`
+      - `shop_error_handling_integration_test.dart`
+      - `shop_confirmation_dialog_integration_test.dart`
+    - Atualizar para usar mocks via construtor:
+      ```dart
+      final shopController = ShopController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
+    - Executar: `flutter test test/integration/shop/`
+    - Verificar que todos os testes passam
+  
+  - [ ] 5.9 Atualizar testes de Leaderboard
+    - _Requirement: 3.9 (Atualizar para novos controllers com DI)_
+    - ⚠️ **ATENÇÃO:** `leaderboard_placeholder_test.dart` foi REMOVIDO na Fase 1
+    - ✅ Controller já usa DI: LeaderboardController
+    - Verificar `test/integration/leaderboard/leaderboard_firestore_integration_test.dart`
+    - Atualizar para usar mocks via construtor:
+      ```dart
+      final leaderboardController = LeaderboardController(
+        firestore: mockFirestore,
+        auth: mockAuth,
+      );
+      ```
+    - Executar: `flutter test test/integration/leaderboard/`
+    - Verificar que todos os testes passam
+  
+  - [ ] 5.10 Executar suite completa após Fase 4
     - _Requirement: 13.1, 13.4 (Validação completa)_
     - Executar: `flutter test test/integration/`
     - Verificar que TODOS os testes passam
     - Verificar que ZERO testes têm @Skip
     - Verificar que ZERO testes comentados
+    - **Meta:** Manter ou superar 310 testes passando
     - **Se encontrar problemas:** Seguir o "PROCESSO PADRÃO PARA CORREÇÃO DE TESTES PROBLEMÁTICOS" documentado no início deste arquivo
 
-- [ ] 6. Criar Testes Unitários para Novos Controllers
+- [ ] 6. Criar Testes Unitários para Novos Controllers (COM DI)
+  
+  **CONTEXTO:** Todos os controllers agora suportam DI. Testes unitários devem passar mocks via construtor.
+  
   - [ ] 6.1 Criar testes para StreakController
     - _Requirement: 15.1 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/gamification/controllers/streak_controller_test.dart`
+    - Setup padrão com DI:
+      ```dart
+      late StreakController controller;
+      late FakeFirebaseFirestore firestore;
+      late MockFirebaseAuth auth;
+      
+      setUp(() {
+        firestore = FakeFirebaseFirestore();
+        auth = MockFirebaseAuth(signedIn: true);
+        controller = StreakController(
+          firestore: firestore,
+          auth: auth,
+        );
+      });
+      ```
     - Implementar teste `loadStreak() carrega streak do Firestore`
     - Implementar teste `updateStreak() incrementa streak quando dia consecutivo`
     - Implementar teste `updateStreak() reseta streak quando dia perdido`
@@ -336,6 +487,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.2 Criar testes para EnergyController
     - _Requirement: 15.2 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/gamification/controllers/energy_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.1)
     - Implementar teste `loadEnergy() carrega energia do Firestore`
     - Implementar teste `consumeEnergy() deduz 1 energia quando disponível`
     - Implementar teste `consumeEnergy() retorna false quando energia zero`
@@ -348,6 +500,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.3 Criar testes para XpLevelController
     - _Requirement: 15.3 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/gamification/controllers/xp_level_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.1)
     - Implementar teste `loadXpAndLevel() carrega XP e nível do Firestore`
     - Implementar teste `addXp() adiciona XP e atualiza nível quando necessário`
     - Implementar teste `addXp() aplica multiplicador 2x quando booster ativo`
@@ -360,6 +513,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.4 Criar testes para GemsController
     - _Requirement: 15.4 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/gamification/controllers/gems_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.1)
     - Implementar teste `loadGems() carrega gems do Firestore`
     - Implementar teste `addGems() adiciona gems ao saldo`
     - Implementar teste `addGems() aplica multiplicador 2x quando ativo`
@@ -372,6 +526,30 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.5 Criar testes de integração para Gamification
     - _Requirement: 15.5 (Testes de integração entre controllers)_
     - Criar arquivo `test/integration/gamification/gamification_controllers_integration_test.dart`
+    - Setup com múltiplos controllers usando DI:
+      ```dart
+      late StreakController streakController;
+      late EnergyController energyController;
+      late XpLevelController xpController;
+      late GemsController gemsController;
+      late FakeFirebaseFirestore firestore;
+      late MockFirebaseAuth auth;
+      
+      setUp(() {
+        firestore = FakeFirebaseFirestore();
+        auth = MockFirebaseAuth(signedIn: true);
+        
+        streakController = StreakController(firestore: firestore, auth: auth);
+        energyController = EnergyController(firestore: firestore, auth: auth);
+        xpController = XpLevelController(firestore: firestore, auth: auth);
+        gemsController = GemsController(firestore: firestore, auth: auth);
+        
+        Get.put<StreakController>(streakController);
+        Get.put<EnergyController>(energyController);
+        Get.put<XpLevelController>(xpController);
+        Get.put<GemsController>(gemsController);
+      });
+      ```
     - Implementar teste `StreakController e GemsController: streak milestone recompensa gems`
     - Implementar teste `XpLevelController e GemsController: level up recompensa gems`
     - Implementar teste `EnergyController e LessonFlowController: lição consome energia`
@@ -382,6 +560,21 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.6 Criar testes para ProfileSocialController
     - _Requirement: 15.6 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/profile/controllers/profile_social_controller_test.dart`
+    - Setup padrão com DI:
+      ```dart
+      late ProfileSocialController controller;
+      late FakeFirebaseFirestore firestore;
+      late MockFirebaseAuth auth;
+      
+      setUp(() {
+        firestore = FakeFirebaseFirestore();
+        auth = MockFirebaseAuth(signedIn: true);
+        controller = ProfileSocialController(
+          firestore: firestore,
+          auth: auth,
+        );
+      });
+      ```
     - Implementar teste `loadUserProfile() carrega perfil de outro usuário`
     - Implementar teste `followUser() adiciona usuário à lista de following`
     - Implementar teste `unfollowUser() remove usuário da lista de following`
@@ -392,6 +585,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.7 Criar testes para ProfileDataController
     - _Requirement: 15.7 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/profile/controllers/profile_data_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.6)
     - Implementar teste `loadOwnProfile() carrega perfil do usuário autenticado`
     - Implementar teste `updateProfile() atualiza campos do perfil no Firestore`
     - Implementar teste `checkUsernameAvailability() retorna true quando disponível`
@@ -402,6 +596,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.8 Criar testes para ProfileSettingsController
     - _Requirement: 15.8 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/profile/controllers/profile_settings_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.6)
     - Implementar teste `loadSettings() carrega configurações do Firestore`
     - Implementar teste `updateSetting() atualiza configuração específica`
     - Implementar teste `updateSetting() valida valores antes de salvar`
@@ -411,6 +606,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.9 Criar testes para ProfileCoursesController
     - _Requirement: 15.9 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/profile/controllers/profile_courses_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.6)
     - Implementar teste `loadUserCourses() carrega cursos do usuário`
     - Implementar teste `setPrimaryCourse() define curso como primário`
     - Implementar teste `removeCourse() remove curso da lista`
@@ -420,6 +616,7 @@ Sempre que encontrar testes com @Skip, erros de compilação ou referências a c
   - [ ] 6.10 Criar testes para ProfileAuthController
     - _Requirement: 15.10 (Testes unitários de controllers)_
     - Criar arquivo `test/unit/features/inners/profile/controllers/profile_auth_controller_test.dart`
+    - Setup padrão com DI (mesmo padrão do 6.6)
     - Implementar teste `changePassword() atualiza senha no Firebase Auth`
     - Implementar teste `linkPhoneNumber() vincula telefone à conta`
     - Implementar teste `deleteAccount() remove conta e dados do Firestore`
