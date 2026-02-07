@@ -16,8 +16,15 @@ import 'onboarding_flow_controller.dart';
 
 /// Controller de validação do onboarding
 class OnboardingValidationController extends GetxController {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  // Constructor com DI
+  OnboardingValidationController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Estados obrigatórios
   final isLoading = false.obs;

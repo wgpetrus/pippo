@@ -15,8 +15,15 @@ import '../../../../shared/utils/validation_helper.dart';
 
 /// Controller de dados do onboarding
 class OnboardingDataController extends GetxController {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  // Constructor com DI
+  OnboardingDataController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Estados obrigatórios
   final isLoading = false.obs;
