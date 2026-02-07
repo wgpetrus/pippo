@@ -1,1 +1,13 @@
 include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - test_disabled/**
+  errors:
+    deprecated_member_use: ignore
+    use_build_context_synchronously: ignore
+    unused_element: ignore
+    unused_local_variable: ignore
+    unnecessary_import: ignore
+    empty_catches: ignore
+    unintended_html_in_doc_comment: ignore

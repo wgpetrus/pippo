@@ -14,9 +14,9 @@ class ProfileBinding extends Bindings {
     // Instantiate in dependency order (no dependencies first)
     Get.lazyPut<ProfileDataController>(() => ProfileDataController());
     Get.lazyPut<ProfileSettingsController>(() => ProfileSettingsController());
+    Get.lazyPut<ProfileAuthController>(() => ProfileAuthController());
     Get.lazyPut<ProfileSocialController>(() => ProfileSocialController());
     Get.lazyPut<ProfileSearchController>(() => ProfileSearchController());
     Get.lazyPut<ProfileCoursesController>(() => ProfileCoursesController());
-    Get.lazyPut<ProfileAuthController>(() => ProfileAuthController());
   }
 }

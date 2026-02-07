@@ -1,4 +1,3 @@
-import 'package:flutter_test/flutter_test.dart' hide expect, test, group;
 import 'package:glados/glados.dart';
 
 /// Classe auxiliar de teste - lógica de gamificação isolada sem dependências do Firebase

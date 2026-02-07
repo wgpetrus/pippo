@@ -118,7 +118,7 @@ Ao clicar no botão **"Gerar Desafios"**, o sistema:
 ### "Botão não aparece"
 
 - ✅ Verifique se está na Tab 3 (Treasure)
-- ✅ Verifique se o `TreasureController` está registrado no `HomeBinding`
+- ✅ Verifique se o `TreasureChallengesController` e `TreasureRewardsController` estão registrados no `HomeBinding`
 
 ### "Erro ao gerar desafios"
 
@@ -136,7 +136,7 @@ Ao clicar no botão **"Gerar Desafios"**, o sistema:
 
 ### "Progresso não atualiza ao completar lição"
 
-- ✅ Verifique se a integração está ativa no `LessonController`
+- ✅ Verifique se a integração está ativa no `LessonRewardsController`
 - ✅ Veja os logs do console para mensagens de erro
 - ✅ Verifique se o tipo do desafio corresponde ('lessons', 'xp', etc)
 
@@ -199,7 +199,7 @@ floatingActionButton: FloatingActionButton.extended(
 ),
 
 // Método privado
-Future<void> _generateChallenges(TreasureController controller) async {
+Future<void> _generateChallenges(TreasureChallengesController controller) async {
   try {
     // Mostrar loading
     Get.dialog(
@@ -307,4 +307,5 @@ flutter run
 
 - [Como Funcionam os Desafios](./como-funcionam-desafios.md)
 - [Spec de Treasure Challenges](../../.kiro/specs/treasure-challenges/tasks.md)
-- [TreasureController](../../lib/features/inners/treasure/controllers/treasure_controller.dart)
+- [TreasureChallengesController](../../lib/features/inners/treasure/controllers/treasure_challenges_controller.dart)
+- [TreasureRewardsController](../../lib/features/inners/treasure/controllers/treasure_rewards_controller.dart)

@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/app_dialog.dart';
-import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import '../controllers/onboarding_flow_controller.dart';
 import 'bouncing_mascot.dart';

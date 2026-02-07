@@ -15,10 +15,6 @@ import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/mascot_bubble.dart';
 import '../widgets/word_chip.dart';
 import '../widgets/word_zone.dart';
-import 'complete_page.dart';
-import 'image_exercise_page.dart';
-import 'translation_exercise_page.dart';
-import 'match_exercise_page.dart';
 
 /// Página de exercício de ordenação de palavras
 class WordExercisePage extends StatefulWidget {
@@ -31,7 +27,6 @@ class WordExercisePage extends StatefulWidget {
 class _WordExercisePageState extends State<WordExercisePage> {
   late final LessonFlowController _flowController;
   late final LessonExerciseController _exerciseController;
-  late final LessonProgressController _progressController;
   
   // Palavras selecionadas (resposta)
   final List<String> _selectedWords = [];
@@ -42,7 +37,6 @@ class _WordExercisePageState extends State<WordExercisePage> {
     super.initState();
     _flowController = Get.find<LessonFlowController>();
     _exerciseController = Get.find<LessonExerciseController>();
-    _progressController = Get.find<LessonProgressController>();
   }
 
   @override
@@ -203,6 +197,15 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
     // TODO: [etapa 8] submeter resposta ao controller
     await _exerciseController.submitAnswer(_selectedWords, 'word_order');
+
+    // CORREÇÃO: Registrar resposta no progresso
+    final _progressController = Get.find<LessonProgressController>();
+    if (_exerciseController.isCorrectAnswer.value) {
+      _progressController.addCorrectAnswer();
+    } else {
+      _progressController.addWrongAnswer();
+      _progressController.loseHeart();
+    }
 
     // Mostra feedback
     if (!mounted) return;

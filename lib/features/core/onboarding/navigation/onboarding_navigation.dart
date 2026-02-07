@@ -25,7 +25,6 @@ import '../views/profile_view/user_password_page.dart';
 import '../views/profile_view/verify_code_page.dart';
 
 // Controller
-import '../controllers/onboarding_data_controller.dart';
 
 /// Navegação do onboarding
 class OnboardingNavigation {

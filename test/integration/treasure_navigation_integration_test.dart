@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:pippo/features/inners/home/controllers/home_navigation_controller.dart';
 import 'package:pippo/features/inners/treasure/controllers/treasure_challenges_controller.dart';
 import 'package:pippo/features/inners/treasure/controllers/treasure_rewards_controller.dart';
-import 'package:pippo/shared/theme/theme.dart';
 
 import '../helpers/firebase_test_helper.dart';
 

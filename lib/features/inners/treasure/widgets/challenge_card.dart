@@ -10,7 +10,7 @@ import '../controllers/treasure_rewards_controller.dart';
 /// Card de desafio conectado aos TreasureControllers
 /// 
 /// Exibe informações do desafio e permite coletar recompensa quando completado.
-/// Usa Map<String, dynamic> diretamente do Firestore (sem models).
+/// Usa `Map<String, dynamic>` diretamente do Firestore (sem models).
 /// 
 /// **Requisitos Implementados:**
 /// - 11.4: Exibe título, descrição, barra de progresso, texto de objetivo, ícone e valor da recompensa

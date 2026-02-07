@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
 import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
 

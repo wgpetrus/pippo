@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
 
 /// Property 5: Loading State Consistency
 /// 

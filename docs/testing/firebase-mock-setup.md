@@ -29,9 +29,9 @@ Criado helper centralizado em `test/helpers/firebase_test_helper.dart` que:
 
 ### Limitação Atual
 
-Os controllers (`LessonController`, `GamificationController`) usam instâncias singleton do Firebase (`FirebaseAuth.instance`, `FirebaseFirestore.instance`), o que dificulta o mock completo em testes.
+Os controllers usam instâncias singleton do Firebase (`FirebaseAuth.instance`, `FirebaseFirestore.instance`), o que dificulta o mock completo em testes.
 
-**Solução temporária:** Testar métodos puros que não dependem de Firebase (como `_calculateXPForNextLevel()`).
+**Solução temporária:** Testar métodos puros que não dependem de Firebase.
 
 **Solução futura:** Refatorar controllers para aceitar Firebase instances via dependency injection.
 
@@ -44,7 +44,7 @@ Os controllers (`LessonController`, `GamificationController`) usam instâncias s
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_controller.dart';
+import 'package:pippo/features/core/lesson/controllers/lesson_flow_controller.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
 
@@ -54,16 +54,16 @@ void main() {
     await FirebaseTestHelper.setupFirebase();
   });
 
-  test('calculateXPForNextLevel follows formula', () {
+  test('test pure method', () {
     Get.testMode = true;
     
-    // Nota: GamificationController tentará acessar Firebase Auth
+    // Nota: Controllers tentarão acessar Firebase Auth
     // Isso causará erro, mas o teste pode prosseguir se testar apenas métodos puros
     
-    final controller = LessonController();
+    final controller = LessonFlowController();
     
     // Testar método puro
-    expect(controller.calculateXPForNextLevelForTest(1), equals(100));
+    expect(controller.somePublicMethod(), equals(expectedValue));
     
     Get.reset();
   });

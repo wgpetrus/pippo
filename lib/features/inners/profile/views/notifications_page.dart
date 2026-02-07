@@ -56,7 +56,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               trailing: Switch(
                 value: _controller.practiceReminders.value,
                 onChanged: (value) => _controller.updateSetting('practiceReminders', value),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
@@ -70,7 +70,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               trailing: Switch(
                 value: _controller.leaderboardUpdates.value,
                 onChanged: (value) => _controller.updateSetting('leaderboardUpdates', value),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
@@ -99,7 +99,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               trailing: Switch(
                 value: _controller.friendActivity.value,
                 onChanged: (value) => _controller.updateSetting('friendActivity', value),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,

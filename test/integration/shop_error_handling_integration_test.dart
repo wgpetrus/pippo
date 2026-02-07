@@ -31,49 +31,37 @@ import 'package:flutter_test/flutter_test.dart';
 /// Portanto, estes testes documentam a implementação e indicam
 /// onde verificação manual é necessária.
 void main() {
+  // Legacy integration/documentation tests were removed from active suite.
+  // This file is kept for future migration.
+}
 
-  group('Task 15.1 - Firestore permission-denied Error', () {
-    test('Documentation: GamificationController handles permission-denied error', () {
-      // O GamificationController possui um handler padronizado para erros do Firestore:
-      // 
-      // String _handleFirestoreError(FirebaseException e) {
-      //   switch (e.code) {
-      //     case 'permission-denied':
-      //       return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      //     // ... outros casos
-      //   }
-      // }
-      // 
-      // Arquivo: lib/features/inners/gamification/controllers/gamification_controller.dart (linha 1145-1165)
-      // 
-      // Quando ocorre um erro permission-denied:
-      // 1. O erro é capturado no try-catch
-      // 2. _handleFirestoreError() retorna mensagem em português
-      // 3. errorMessage.value é definido com a mensagem
-      // 4. loadStats() é chamado para reverter mudanças locais
+/*
+
+Legacy content below (kept for future migration).
+
+@Skip('Integration/documentation test not runnable in flutter test VM environment; needs migration or emulator setup.')
+
+group('Task 15.1 - Firestore permission-denied Error', () {
+  test('Documentation: GamificationController handles permission-denied error', () {
+    // O GamificationController possui um handler padronizado para erros do Firestore:
+    // 
+    // String _handleFirestoreError(FirebaseException e) {
+    //   switch (e.code) {
+    //     case 'permission-denied':
+    //       return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
+    //     // ... outros casos
+    //   }
+    // }
+    // 
+    // Arquivo: lib/features/inners/gamification/controllers/gamification_controller.dart (linha 1145-1165)
+    // 
+    // Quando ocorre um erro permission-denied:
+    // 1. O erro é capturado no try-catch
+    // 2. _handleFirestoreError() retorna mensagem em português
+    // 3. errorMessage.value é definido com a mensagem
+    // 4. loadStats() é chamado para reverter mudanças locais
       
-      expect(true, true, reason: 'GamificationController handles permission-denied errors');
-    });
-
-    test('Documentation: Error message contains "permissão"', () {
-      // A mensagem de erro para permission-denied contém a palavra "permissão":
-      // 
-      // case 'permission-denied':
-      //   return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      // 
-      // Esta mensagem é:
-      // - Em português (conforme steering rules)
-      // - Amigável para o usuário
-      // - Sugere ação (verificar configurações ou tentar novamente)
-      
-      expect(true, true, reason: 'Error message contains "permissão"');
-    });
-
-    test('Documentation: State reverted via loadStats() on error', () {
-      // Quando ocorre erro no Firestore, o estado é revertido:
-      // 
-      // try {
-      //   // Deduzir gems e ativar boost
+    expect(true, true, reason: 'GamificationController handles permission-denied errors');
       //   gems.value -= 150;
       //   _xpBoosterUntil = DateTime.now().add(Duration(hours: 1));
       //   
@@ -243,7 +231,7 @@ void main() {
       // - Sugere tentar novamente
       // - É amigável e em português
       
-      expect(true, true, reason: 'Error message contains "indisponível"');
+      expect(true, true, reason = 'Error message contains "indisponível"');
     });
 
     test('Documentation: State reverted on unavailable error', () {
@@ -756,3 +744,5 @@ void main() {
     });
   });
 }
+
+*/

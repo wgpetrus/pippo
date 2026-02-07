@@ -13,7 +13,7 @@ Ao completar um desafio e coletar a recompensa, o XP não era adicionado ao usu�
 ### 2. Dados duplicados no Firebase
 
 Havia dados de gems e XP em dois locais diferentes:
-- **Local correto**: `users/{userId}/stats/gamification` (gerenciado pelo `GamificationController`)
+- **Local correto**: `users/{userId}/stats/gamification` (gerenciado pelos controllers de gamificação)
 - **Local incorreto**: `users/{userId}` (dados desatualizados/incorretos)
 
 **Exemplo do problema:**
@@ -31,10 +31,10 @@ users/avsLDBw3kCMpRWdrvb1DZ9ae9r63
 
 ## Causa Raiz
 
-O método `TreasureController._distributeReward()` estava:
+O método `TreasureRewardsController._distributeReward()` estava:
 1. Atualizando `users/{userId}` diretamente ao invés de `users/{userId}/stats/gamification`
 2. Não usando `FieldValue.increment()` para atomicidade
-3. Tentando atualizar o estado do `GamificationController` manualmente ao invés de recarregar
+3. Tentando atualizar o estado dos controllers de gamificação manualmente ao invés de recarregar
 
 ---
 
@@ -86,19 +86,20 @@ transaction.update(gamificationDocRef, {
 });
 ```
 
-### 3. Recarregar Stats do GamificationController
+### 3. Recarregar Stats dos Controllers de Gamificação
 
 Ao invés de tentar atualizar manualmente, recarrega os stats:
 
 ```dart
-// Recarregar stats do GamificationController após distribuir recompensa
+// Recarregar stats dos controllers de gamificação após distribuir recompensa
 try {
-  final gamificationController = Get.find<dynamic>();
-  if (gamificationController.toString().contains('GamificationController')) {
-    await gamificationController.loadStats();
-  }
+  final gemsController = Get.find<GemsController>();
+  await gemsController.loadGems();
+  
+  final xpController = Get.find<XpLevelController>();
+  await xpController.loadXpAndLevel();
 } catch (e) {
-  debugPrint('⚠️ GamificationController não encontrado para recarregar stats: $e');
+  debugPrint('⚠️ Controllers de gamificação não encontrados para recarregar stats: $e');
 }
 ```
 
@@ -139,7 +140,7 @@ users/{userId}/
 1. **XP e Gems são recebidos corretamente** ao completar desafios
 2. **Dados centralizados** em um único local (`stats/gamification`)
 3. **Atomicidade garantida** com `FieldValue.increment()`
-4. **Sincronização automática** com `GamificationController.loadStats()`
+4. **Sincronização automática** com os controllers de gamificação
 5. **Evita race conditions** em atualizações concorrentes
 
 ---
@@ -183,7 +184,7 @@ await _firestore.collection('users').doc(userId).update({
 
 ## Arquivos Modificados
 
-- `lib/features/inners/treasure/controllers/treasure_controller.dart`
+- `lib/features/inners/treasure/controllers/treasure_rewards_controller.dart`
   - Método `_distributeReward()` corrigido
   - Import `package:flutter/foundation.dart` adicionado
 

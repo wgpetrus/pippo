@@ -221,7 +221,7 @@ void main() {
           for (int j = 0; j < notExpiredCount; j++) {
             final daysInFuture = random.nextInt(30) + 1; // 1-30 dias no futuro
             challenges.add({
-              'id': 'not_expired_$i\_$j',
+              'id': 'not_expired_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'expirationDate': now.add(Duration(
                 days: daysInFuture,
@@ -236,7 +236,7 @@ void main() {
           for (int j = 0; j < expiredCount; j++) {
             final daysInPast = random.nextInt(30) + 1; // 1-30 dias no passado
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'expirationDate': now.subtract(Duration(
                 days: daysInPast,
@@ -250,7 +250,7 @@ void main() {
           final nowCount = random.nextInt(2); // 0-1 desafios
           for (int j = 0; j < nowCount; j++) {
             challenges.add({
-              'id': 'now_$i\_$j',
+              'id': 'now_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'expirationDate': now,
             });
@@ -346,7 +346,7 @@ void main() {
             final expiration = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
             challenges.add({
-              'id': 'today_$i\_$j',
+              'id': 'today_${i}_$j',
               'type': 'daily',
               'createdAt': creationTime,
               'expirationDate': expiration,
@@ -371,7 +371,7 @@ void main() {
             final expiration = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
 
             challenges.add({
-              'id': 'yesterday_$i\_$j',
+              'id': 'yesterday_${i}_$j',
               'type': 'daily',
               'createdAt': creationTime,
               'expirationDate': expiration,
@@ -459,7 +459,7 @@ void main() {
             );
 
             challenges.add({
-              'id': 'this_week_$i\_$j',
+              'id': 'this_week_${i}_$j',
               'type': 'weekly',
               'expirationDate': expiration,
             });
@@ -484,7 +484,7 @@ void main() {
             );
 
             challenges.add({
-              'id': 'last_week_$i\_$j',
+              'id': 'last_week_${i}_$j',
               'type': 'weekly',
               'expirationDate': expiration,
             });
@@ -565,7 +565,7 @@ void main() {
             ));
 
             challenges.add({
-              'id': 'future_$i\_$j',
+              'id': 'future_${i}_$j',
               'type': 'special',
               'expirationDate': customExpiration,
             });
@@ -583,7 +583,7 @@ void main() {
             ));
 
             challenges.add({
-              'id': 'past_$i\_$j',
+              'id': 'past_${i}_$j',
               'type': 'special',
               'expirationDate': customExpiration,
             });
@@ -659,7 +659,7 @@ void main() {
           final activeCount = random.nextInt(5) + 1; // 1-5 desafios ativos
           for (int j = 0; j < activeCount; j++) {
             challenges.add({
-              'id': 'active_$i\_$j',
+              'id': 'active_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'progress': random.nextInt(5),
               'goal': 5,
@@ -672,7 +672,7 @@ void main() {
           final expiredCount = random.nextInt(3); // 0-2 desafios expirados
           for (int j = 0; j < expiredCount; j++) {
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'progress': random.nextInt(5),
               'goal': 5,
@@ -686,7 +686,7 @@ void main() {
           final claimedCount = random.nextInt(3); // 0-2 desafios coletados
           for (int j = 0; j < claimedCount; j++) {
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'progress': 5,
               'goal': 5,
@@ -748,7 +748,7 @@ void main() {
           final activeCount = random.nextInt(5) + 1; // 1-5 desafios ativos
           for (int j = 0; j < activeCount; j++) {
             challenges.add({
-              'id': 'active_$i\_$j',
+              'id': 'active_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'progress': random.nextInt(5),
               'goal': 5,
@@ -765,7 +765,7 @@ void main() {
           final expiredCount = random.nextInt(5) + 1; // 1-5 desafios expirados
           for (int j = 0; j < expiredCount; j++) {
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'type': ['daily', 'weekly', 'special'][random.nextInt(3)],
               'progress': random.nextInt(5),
               'goal': 5,
@@ -843,7 +843,7 @@ void main() {
           for (int j = 0; j < matchingCount; j++) {
             final initialProgress = random.nextInt(5);
             challenges.add({
-              'id': 'matching_$i\_$j',
+              'id': 'matching_${i}_$j',
               'type': eventType,
               'progress': initialProgress,
               'goal': 10,
@@ -859,7 +859,7 @@ void main() {
             final otherType = otherTypes[random.nextInt(otherTypes.length)];
             final initialProgress = random.nextInt(5);
             challenges.add({
-              'id': 'non_matching_$i\_$j',
+              'id': 'non_matching_${i}_$j',
               'type': otherType,
               'progress': initialProgress,
               'goal': 10,
@@ -873,7 +873,7 @@ void main() {
           for (int j = 0; j < expiredCount; j++) {
             final initialProgress = random.nextInt(5);
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'type': eventType,
               'progress': initialProgress,
               'goal': 10,
@@ -887,7 +887,7 @@ void main() {
           for (int j = 0; j < claimedCount; j++) {
             final initialProgress = random.nextInt(5);
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'type': eventType,
               'progress': initialProgress,
               'goal': 10,
@@ -980,7 +980,7 @@ void main() {
           for (int j = 0; j < equalCount; j++) {
             final goal = random.nextInt(20) + 1; // 1-20
             challenges.add({
-              'id': 'equal_$i\_$j',
+              'id': 'equal_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isCompleted': false,
@@ -993,7 +993,7 @@ void main() {
             final goal = random.nextInt(20) + 1; // 1-20
             final progress = goal + random.nextInt(10) + 1; // goal + 1 a goal + 10
             challenges.add({
-              'id': 'greater_$i\_$j',
+              'id': 'greater_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isCompleted': false,
@@ -1006,7 +1006,7 @@ void main() {
             final goal = random.nextInt(20) + 5; // 5-24 (garantir espaço para progresso menor)
             final progress = random.nextInt(goal); // 0 a goal-1
             challenges.add({
-              'id': 'lesser_$i\_$j',
+              'id': 'lesser_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isCompleted': false,
@@ -1089,7 +1089,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = goal + random.nextInt(5); // Progresso >= goal
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': true,
@@ -1105,7 +1105,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = goal + random.nextInt(5); // Progresso >= goal
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -1123,7 +1123,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = goal + random.nextInt(5); // Progresso >= goal
             challenges.add({
-              'id': 'both_$i\_$j',
+              'id': 'both_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': true,
@@ -1139,7 +1139,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = goal + random.nextInt(5); // Progresso >= goal
             challenges.add({
-              'id': 'valid_$i\_$j',
+              'id': 'valid_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -1262,7 +1262,7 @@ void main() {
           // Adicionar desafios
           final challengeCount = random.nextInt(5) + 1; // 1-5 desafios
           for (int j = 0; j < challengeCount; j++) {
-            final id = 'challenge_$i\_$j';
+            final id = 'challenge_${i}_$j';
             final initialProgress = random.nextInt(5);
             challenges.add({
               'id': id,
@@ -1331,7 +1331,7 @@ void main() {
           for (int j = 0; j < challengeCount; j++) {
             final initialProgress = random.nextInt(10);
             challenges.add({
-              'id': 'challenge_$i\_$j',
+              'id': 'challenge_${i}_$j',
               'progress': initialProgress,
               'goal': 10,
             });
@@ -1425,7 +1425,7 @@ void main() {
             final goal = random.nextInt(20) + 5; // 5-24
             final progress = random.nextInt(goal); // 0 a goal-1 (sempre menor)
             challenges.add({
-              'id': 'incomplete_$i\_$j',
+              'id': 'incomplete_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -1488,7 +1488,7 @@ void main() {
           for (int j = 0; j < claimedCount; j++) {
             final goal = random.nextInt(20) + 1; // 1-20
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': true,
@@ -1550,7 +1550,7 @@ void main() {
           for (int j = 0; j < expiredCount; j++) {
             final goal = random.nextInt(20) + 1; // 1-20
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -1619,7 +1619,7 @@ void main() {
           for (int j = 0; j < ownChallengeCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'own_$i\_$j',
+              'id': 'own_${i}_$j',
               'userId': currentUserId,
               'progress': goal,
               'goal': goal,
@@ -1631,10 +1631,10 @@ void main() {
           // Adicionar desafios de outros usuários (inválidos)
           final otherChallengeCount = random.nextInt(3) + 1; // 1-3 desafios
           for (int j = 0; j < otherChallengeCount; j++) {
-            final otherUserId = 'other_user_$i\_$j';
+            final otherUserId = 'other_user_${i}_$j';
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'other_$i\_$j',
+              'id': 'other_${i}_$j',
               'userId': otherUserId,
               'progress': goal,
               'goal': goal,
@@ -1825,7 +1825,7 @@ void main() {
                 : random.nextInt(200) + 1;
 
             challenges.add({
-              'id': 'challenge_$i\_$j',
+              'id': 'challenge_${i}_$j',
               'rewardType': rewardType,
               'rewardAmount': rewardAmount,
               'progress': 10,
@@ -1901,7 +1901,7 @@ void main() {
           for (int j = 0; j < challengeCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'challenge_$i\_$j',
+              'id': 'challenge_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -1981,7 +1981,7 @@ void main() {
           for (int j = 0; j < activeCount; j++) {
             final goal = random.nextInt(20) + 1;
             allChallenges.add({
-              'id': 'active_$i\_$j',
+              'id': 'active_${i}_$j',
               'progress': random.nextInt(goal),
               'goal': goal,
               'isClaimed': false,
@@ -1994,7 +1994,7 @@ void main() {
           for (int j = 0; j < completedCount; j++) {
             final goal = random.nextInt(20) + 1;
             allChallenges.add({
-              'id': 'completed_$i\_$j',
+              'id': 'completed_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -2006,7 +2006,7 @@ void main() {
           final claimedCount = random.nextInt(5) + 1; // 1-5 desafios coletados
           final claimedIds = <String>[];
           for (int j = 0; j < claimedCount; j++) {
-            final id = 'claimed_$i\_$j';
+            final id = 'claimed_${i}_$j';
             claimedIds.add(id);
             final goal = random.nextInt(20) + 1;
             allChallenges.add({
@@ -2079,7 +2079,7 @@ void main() {
           for (int j = 0; j < challengeCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'challenge_$i\_$j',
+              'id': 'challenge_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -2172,7 +2172,7 @@ void main() {
             final goal = random.nextInt(20) + 5; // 5-24
             final progress = random.nextInt(goal); // 0 a goal-1 (sempre menor)
             challenges.add({
-              'id': 'in_progress_$i\_$j',
+              'id': 'in_progress_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -2185,7 +2185,7 @@ void main() {
           for (int j = 0; j < completedCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'completed_$i\_$j',
+              'id': 'completed_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -2199,7 +2199,7 @@ void main() {
             final goal = random.nextInt(20) + 5;
             final progress = random.nextInt(goal);
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -2213,7 +2213,7 @@ void main() {
             final goal = random.nextInt(20) + 5;
             final progress = random.nextInt(goal);
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': true,
@@ -2301,7 +2301,7 @@ void main() {
           for (int j = 0; j < completedEqualCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'completed_equal_$i\_$j',
+              'id': 'completed_equal_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -2315,7 +2315,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = goal + random.nextInt(10) + 1; // goal + 1 a goal + 10
             challenges.add({
-              'id': 'completed_greater_$i\_$j',
+              'id': 'completed_greater_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -2329,7 +2329,7 @@ void main() {
             final goal = random.nextInt(20) + 5;
             final progress = random.nextInt(goal);
             challenges.add({
-              'id': 'in_progress_$i\_$j',
+              'id': 'in_progress_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -2342,7 +2342,7 @@ void main() {
           for (int j = 0; j < claimedCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': true,
@@ -2356,7 +2356,7 @@ void main() {
           for (int j = 0; j < expiredCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -2451,7 +2451,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = goal + random.nextInt(5); // goal a goal+4
             challenges.add({
-              'id': 'valid_$i\_$j',
+              'id': 'valid_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -2465,7 +2465,7 @@ void main() {
             final goal = random.nextInt(20) + 5;
             final progress = random.nextInt(goal);
             challenges.add({
-              'id': 'incomplete_$i\_$j',
+              'id': 'incomplete_${i}_$j',
               'progress': progress,
               'goal': goal,
               'isClaimed': false,
@@ -2478,7 +2478,7 @@ void main() {
           for (int j = 0; j < claimedCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': true,
@@ -2492,7 +2492,7 @@ void main() {
           for (int j = 0; j < expiredCount; j++) {
             final goal = random.nextInt(20) + 1;
             challenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'progress': goal,
               'goal': goal,
               'isClaimed': false,
@@ -3161,7 +3161,7 @@ void main() {
             final rewardAmount = random.nextInt(100) + 1;
 
             challenges.add({
-              'id': 'challenge_$i\_$j',
+              'id': 'challenge_${i}_$j',
               'title': 'Complete $goal lessons',
               'description': 'Finish $goal lessons today to earn gems',
               'goal': goal,
@@ -3223,7 +3223,7 @@ void main() {
                 reason: 'Progress should be non-negative for challenge $id');
 
             // Verificar que pode calcular porcentagem de progresso
-            final progressPercentage = (progress! / goal!).clamp(0.0, 1.0);
+            final progressPercentage = (progress / goal).clamp(0.0, 1.0);
             expect(progressPercentage, greaterThanOrEqualTo(0.0),
                 reason: 'Progress percentage should be >= 0 for challenge $id');
             expect(progressPercentage, lessThanOrEqualTo(1.0),
@@ -3293,7 +3293,7 @@ void main() {
             final goal = random.nextInt(20) + 1;
             final progress = random.nextInt(goal + 5);
             allChallenges.add({
-              'id': 'active_$i\_$j',
+              'id': 'active_${i}_$j',
               'title': 'Active Challenge $j',
               'description': 'Description for active challenge',
               'goal': goal,
@@ -3311,7 +3311,7 @@ void main() {
           for (int j = 0; j < expiredCount; j++) {
             final goal = random.nextInt(20) + 1;
             allChallenges.add({
-              'id': 'expired_$i\_$j',
+              'id': 'expired_${i}_$j',
               'title': 'Expired Challenge $j',
               'description': 'Description for expired challenge',
               'goal': goal,
@@ -3329,7 +3329,7 @@ void main() {
           for (int j = 0; j < claimedCount; j++) {
             final goal = random.nextInt(20) + 1;
             allChallenges.add({
-              'id': 'claimed_$i\_$j',
+              'id': 'claimed_${i}_$j',
               'title': 'Claimed Challenge $j',
               'description': 'Description for claimed challenge',
               'goal': goal,

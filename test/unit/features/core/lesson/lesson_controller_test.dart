@@ -9,7 +9,7 @@ import 'package:pippo/features/core/lesson/controllers/lesson_flow_controller.da
 import 'package:pippo/features/core/lesson/controllers/lesson_exercise_controller.dart';
 import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
 import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
-import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
+import 'package:pippo/features/inners/gamification/controllers/energy_controller.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
 
@@ -23,7 +23,7 @@ void main() {
   late LessonExerciseController exerciseController;
   late LessonProgressController progressController;
   late LessonRewardsController rewardsController;
-  late _MockGamificationController mockGamification;
+  late _TestEnergyController energyController;
   late MockFirebaseAuth mockAuth;
   late FakeFirebaseFirestore mockFirestore;
 
@@ -37,9 +37,10 @@ void main() {
     mockAuth = FirebaseTestHelper.createMockAuth();
     mockFirestore = FirebaseTestHelper.createMockFirestore();
 
-    // Configurar mock do GamificationController
-    mockGamification = _MockGamificationController();
-    Get.put<GamificationController>(mockGamification);
+    energyController = _TestEnergyController();
+    energyController.currentEnergy.value = 0;
+    energyController.unlimitedEnergy = false;
+    Get.put<EnergyController>(energyController);
 
     // Popular dados básicos
     await FirebaseTestHelper.populateGamificationData(
@@ -58,7 +59,7 @@ void main() {
     rewardsController = LessonRewardsController();
     Get.put<LessonRewardsController>(rewardsController);
     
-    flowController = LessonFlowController();
+    flowController = LessonFlowController(auth: mockAuth, firestore: mockFirestore);
     Get.put<LessonFlowController>(flowController);
   });
 
@@ -69,8 +70,8 @@ void main() {
   group('LessonFlowController - Caso de 0 Energia', () {
     test('mostra mensagem de erro quando energia é 0', () async {
       // Configuração: Sem energia disponível
-      mockGamification.hasEnergyValue = false;
-      mockGamification.hasUnlimitedValue = false;
+      energyController.currentEnergy.value = 0;
+      energyController.unlimitedEnergy = false;
 
       // Tentar iniciar lição
       await flowController.startLesson('course_1', '1');
@@ -91,8 +92,8 @@ void main() {
 
     test('não inicia lição quando energia é 0', () async {
       // Configuração: Sem energia disponível
-      mockGamification.hasEnergyValue = false;
-      mockGamification.hasUnlimitedValue = false;
+      energyController.currentEnergy.value = 0;
+      energyController.unlimitedEnergy = false;
 
       // Tentar iniciar lição
       await flowController.startLesson('course_1', '1');
@@ -119,16 +120,16 @@ void main() {
 
     test('não consome energia quando energia é 0', () async {
       // Configuração: Sem energia disponível
-      mockGamification.hasEnergyValue = false;
-      mockGamification.hasUnlimitedValue = false;
-      mockGamification.energyConsumed = false;
+      energyController.currentEnergy.value = 0;
+      energyController.unlimitedEnergy = false;
+      energyController.energyConsumed = false;
 
       // Tentar iniciar lição
       await flowController.startLesson('course_1', '1');
 
       // Verificar: Energia NÃO foi consumida
       expect(
-        mockGamification.energyConsumed,
+        energyController.energyConsumed,
         isFalse,
         reason: 'Não deve consumir energia quando não há disponível',
       );
@@ -136,8 +137,8 @@ void main() {
 
     test('não inicializa estado da lição quando energia é 0', () async {
       // Configuração: Sem energia disponível
-      mockGamification.hasEnergyValue = false;
-      mockGamification.hasUnlimitedValue = false;
+      energyController.currentEnergy.value = 0;
+      energyController.unlimitedEnergy = false;
 
       // Definir valores não-padrão para verificar que não mudam
       progressController.hearts.value = 999;
@@ -169,8 +170,8 @@ void main() {
 
     test('isLoading retorna false após falha ao iniciar', () async {
       // Configuração: Sem energia disponível
-      mockGamification.hasEnergyValue = false;
-      mockGamification.hasUnlimitedValue = false;
+      energyController.currentEnergy.value = 0;
+      energyController.unlimitedEnergy = false;
 
       // Tentar iniciar lição
       await flowController.startLesson('course_1', '1');
@@ -187,9 +188,9 @@ void main() {
         'permite iniciar lição quando energia ilimitada está ativa apesar de 0 energia',
         () async {
       // Configuração: 0 energia mas ilimitada ativa
-      mockGamification.hasEnergyValue = false; // 0 energia
-      mockGamification.hasUnlimitedValue = true; // Mas ilimitada ativa
-      mockGamification.energyConsumed = false;
+      energyController.currentEnergy.value = 0;
+      energyController.unlimitedEnergy = true;
+      energyController.energyConsumed = false;
 
       // Tentar iniciar lição (falhará no Firestore mas deve passar verificação de energia)
       await flowController.startLesson('course_1', '1');
@@ -204,7 +205,7 @@ void main() {
 
       // Verificar: Energia NÃO foi consumida (ilimitada ativa)
       expect(
-        mockGamification.energyConsumed,
+        energyController.energyConsumed,
         isFalse,
         reason: 'Não deve consumir energia quando ilimitada está ativa',
       );
@@ -212,39 +213,25 @@ void main() {
   });
 }
 
-// Mock do GamificationController
-class _MockGamificationController extends GetxController
-    implements GamificationController {
-  bool hasEnergyValue = true;
-  bool hasUnlimitedValue = false;
+class _TestEnergyController extends EnergyController {
+  bool unlimitedEnergy = false;
   bool energyConsumed = false;
 
-  final currentEnergy = 5.obs;
+  @override
+  bool get hasUnlimitedEnergy => unlimitedEnergy;
 
   @override
-  bool get hasUnlimitedEnergy => hasUnlimitedValue;
+  bool canStartLesson() {
+    if (unlimitedEnergy) return true;
+    return currentEnergy.value > 0;
+  }
 
   @override
-  bool canStartLesson() => hasEnergyValue || hasUnlimitedValue;
-
-  @override
-  Future<void> onLessonStart() async {
-    // Só consumir energia se não tiver energia ilimitada
-    if (!hasUnlimitedValue) {
+  Future<void> consumeEnergy(int amount) async {
+    if (unlimitedEnergy) return;
+    if (currentEnergy.value >= amount) {
       energyConsumed = true;
-      if (currentEnergy.value > 0) {
-        currentEnergy.value--;
-      }
+      currentEnergy.value -= amount;
     }
   }
-
-  @override
-  Future<void> onLessonComplete(int baseXp, int baseGems, bool isPerfect,
-      {String lessonId = ''}) async {
-    // Implementação mock
-  }
-
-  // Stub para outros métodos necessários
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

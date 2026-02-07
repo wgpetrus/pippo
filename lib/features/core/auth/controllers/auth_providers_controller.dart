@@ -1,12 +1,7 @@
-// Dart SDK
 import 'dart:async';
 import 'dart:math';
 
-// Flutter
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-
-// Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -14,31 +9,25 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Imports locais
 import '../../../inners/gamification/controllers/gems_controller.dart';
 import '../../../inners/gamification/controllers/xp_level_controller.dart';
 import '../../../inners/gamification/controllers/streak_controller.dart';
 import '../../../inners/gamification/controllers/energy_controller.dart';
+import '../../../../shared/utils/error_handler.dart';
 import '../views/forgot_password_view.dart';
 import '../views/new_password_view.dart';
 import '../views/verify_code_view.dart';
 
-/// Controller de provedores de autenticação (Google, Facebook, reset de senha)
 class AuthProvidersController extends GetxController {
-  // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados para recuperação de senha
   final resendTimer = 0.obs;
 
-  // Estado para mostrar botão de login (erro account-exists-with-different-credential)
   final showLoginButton = false.obs;
 
-  // Email temporário para reenvio de código
   String? _tempEmail;
 
-  // Firebase instances
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
   final _secureStorage = const FlutterSecureStorage();
@@ -46,10 +35,7 @@ class AuthProvidersController extends GetxController {
     scopes: ['email', 'profile'],
   );
 
-  // Timer para countdown de reenvio
   Timer? _resendCountdownTimer;
-
-  // Lifecycle
 
   @override
   void onClose() {
@@ -57,9 +43,6 @@ class AuthProvidersController extends GetxController {
     super.onClose();
   }
 
-  // Métodos públicos
-
-  /// Placeholder para login com Facebook
   void onFacebookTap() {
     Get.snackbar(
       'Em breve',
@@ -69,85 +52,49 @@ class AuthProvidersController extends GetxController {
     );
   }
 
-  /// Realiza login com Google
   Future<void> signInWithGoogle() async {
     isLoading.value = true;
     errorMessage.value = '';
-    showLoginButton.value = false; // Resetar estado
+    showLoginButton.value = false;
 
     try {
-      // Forçar seleção de conta (não usar conta em cache)
-      // Isso garante que o usuário sempre veja a tela de seleção de contas
       await _googleSignIn.signOut();
-      
-      if (kDebugMode) {
-        debugPrint('🔐 Iniciando login com Google');
-      }
-      
-      // Iniciar fluxo de autenticação do Google
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      // Se o usuário cancelou o login, retornar silenciosamente
       if (googleUser == null) {
-        if (kDebugMode) {
-          debugPrint('❌ Login com Google cancelado pelo usuário');
-        }
         isLoading.value = false;
         return;
       }
-      
-      if (kDebugMode) {
-        debugPrint('✅ Usuário Google selecionado: ${googleUser.email}');
-      }
 
-      // VERIFICAR ANTES DE AUTENTICAR: Se email já existe no Firestore com outro provider
-      if (kDebugMode) {
-        debugPrint('🔍 Verificando se email ${googleUser.email} já existe no Firestore');
-      }
-      
       final emailQuery = await _firestore
           .collection('users')
           .where('email', isEqualTo: googleUser.email)
           .limit(1)
           .get()
           .timeout(const Duration(seconds: 30));
-      
+
       if (emailQuery.docs.isNotEmpty) {
-        // Email já existe - verificar provider
         final existingUserData = emailQuery.docs.first.data();
         final existingProvider = existingUserData['authProvider'] as String?;
-        
-        if (kDebugMode) {
-          debugPrint('⚠️ Email já existe com provider: $existingProvider');
-        }
-        
+
         if (existingProvider == 'email') {
-          // Email já existe com login por email/senha - BLOQUEAR
           errorMessage.value = 'Já existe uma conta com este e-mail usando login por email/senha. Por favor, faça login com email e senha.';
           showLoginButton.value = true;
-          
-          if (kDebugMode) {
-            debugPrint('🚫 Login com Google bloqueado - email já tem conta email/senha');
-          }
-          
+
           return;
         }
-        // Se provider é 'google', pode continuar (é o mesmo usuário)
       }
 
-      // Obter credenciais de autenticação
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // Criar credencial do Firebase
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Autenticar com Firebase
       final userCredential = await _auth.signInWithCredential(credential);
 
-      // Verificar se documento do usuário existe no Firestore
       final userDoc = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
@@ -155,9 +102,7 @@ class AuthProvidersController extends GetxController {
           .timeout(const Duration(seconds: 30));
 
       if (!userDoc.exists) {
-        // Criar novo documento de usuário (email não existia antes)
         
-        // Criar novo documento de usuário
         await _firestore
             .collection('users')
             .doc(userCredential.user!.uid)
@@ -172,18 +117,14 @@ class AuthProvidersController extends GetxController {
           'updatedAt': FieldValue.serverTimestamp(),
         }).timeout(const Duration(seconds: 30));
 
-        // Navegar para onboarding com argumento skipWelcome
         Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
       } else {
-        // Usuário existente - verificar onboarding
         final userData = userDoc.data()!;
         final onboardingCompleted = userData['onboardingCompleted'] ?? false;
 
         if (!onboardingCompleted) {
-          // Navegar para onboarding com argumento skipWelcome
           Get.offAllNamed('/onboarding', arguments: {'skipWelcome': true});
         } else {
-          // Onboarding completo - atualizar lastActiveAt e navegar para home
           await _firestore
               .collection('users')
               .doc(userCredential.user!.uid)
@@ -207,33 +148,20 @@ class AuthProvidersController extends GetxController {
     }
   }
 
-  /// Cancela o processo de recuperação de senha
-  /// Limpa dados temporários e volta para tela de login
   void cancelPasswordReset() {
-    // Limpar dados temporários
     _tempEmail = null;
     
-    // Cancelar timer de reenvio
     _resendCountdownTimer?.cancel();
     resendTimer.value = 0;
     
-    // Limpar estados de erro
     errorMessage.value = '';
     
-    // Voltar para tela de login
     backToSignin();
   }
 
-  /// Envia código OTP para recuperação de senha
-  /// 
-  /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
-  /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
-  /// Para produção: implementar envio de email via Cloud Function ou serviço de email
   Future<void> sendPasswordResetEmail(String email) async {
-    // Sanitizar e validar email
     final sanitizedEmail = email.trim().toLowerCase();
     
-    // Validação básica de email
     if (sanitizedEmail.isEmpty) {
       errorMessage.value = 'E-mail é obrigatório.';
       return;
@@ -247,10 +175,8 @@ class AuthProvidersController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Gerar código OTP
       final code = _generateOTP();
 
-      // Armazenar código no Firestore com expiração
       await _firestore.collection('passwordResets').doc(sanitizedEmail).set({
         'code': code,
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
@@ -258,19 +184,10 @@ class AuthProvidersController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }).timeout(const Duration(seconds: 30));
 
-      // Armazenar email temporário para uso posterior
       _tempEmail = sanitizedEmail;
 
-      // TODO: [PRODUÇÃO] Implementar envio de email
-      // Opções:
-      // 1. Cloud Function que escuta a collection passwordResets e envia email
-      // 2. Serviço de email (SendGrid, AWS SES, etc)
-      // 3. Firebase Extensions (Trigger Email)
-
-      // Iniciar timer de reenvio (60 segundos)
       _startResendTimer();
 
-      // Navegar para tela de verificação
       goToVerifyCode();
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
@@ -283,16 +200,9 @@ class AuthProvidersController extends GetxController {
     }
   }
 
-  /// Envia link de recuperação de senha por email (método alternativo)
-  /// 
-  /// Este método usa o sistema nativo do Firebase Auth para enviar um link
-  /// de reset de senha por email. O usuário clica no link e é redirecionado
-  /// para uma página web do Firebase onde pode redefinir a senha.
   Future<void> sendPasswordResetLink(String email) async {
-    // Sanitizar e validar email
     final sanitizedEmail = email.trim().toLowerCase();
     
-    // Validação básica de email
     if (sanitizedEmail.isEmpty) {
       errorMessage.value = 'E-mail é obrigatório.';
       return;
@@ -306,10 +216,8 @@ class AuthProvidersController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Enviar link de reset via Firebase Auth
       await _auth.sendPasswordResetEmail(email: sanitizedEmail);
 
-      // Mostrar mensagem de sucesso
       Get.snackbar(
         'Link Enviado',
         'Um link para redefinir sua senha foi enviado para $sanitizedEmail',
@@ -317,7 +225,6 @@ class AuthProvidersController extends GetxController {
         duration: const Duration(seconds: 4),
       );
 
-      // Voltar para tela de login
       backToSignin();
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
@@ -328,7 +235,6 @@ class AuthProvidersController extends GetxController {
     }
   }
 
-  /// Reenvia código de recuperação de senha
   Future<void> resendPasswordResetCode() async {
     if (_tempEmail == null) {
       errorMessage.value = 'Sessão expirada. Inicie o processo novamente.';
@@ -339,10 +245,8 @@ class AuthProvidersController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Gerar novo código OTP
       final code = _generateOTP();
 
-      // Armazenar código no Firestore com expiração
       await _firestore.collection('passwordResets').doc(_tempEmail!).set({
         'code': code,
         'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 10))),
@@ -350,12 +254,8 @@ class AuthProvidersController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }).timeout(const Duration(seconds: 30));
 
-      // TODO: [PRODUÇÃO] Implementar envio de email (ver sendPasswordResetEmail)
-
-      // Reiniciar timer de reenvio (60 segundos)
       _startResendTimer();
 
-      // Feedback de sucesso
       Get.snackbar(
         'Código reenviado',
         'Um novo código foi enviado para seu e-mail.',
@@ -375,31 +275,14 @@ class AuthProvidersController extends GetxController {
     }
   }
 
-  /// Verifica código OTP
-  /// 
-  /// FLUXO ATUAL (DESENVOLVIMENTO):
-  /// 1. Busca código no Firestore
-  /// 2. Valida formato, expiração e correspondência
-  /// 3. Se válido, navega para tela de nova senha
-  /// 
-  /// COMO TESTAR AGORA:
-  /// 1. Executar sendPasswordResetEmail()
-  /// 2. Acessar Firebase Console > Firestore > passwordResets > [seu-email]
-  /// 3. Copiar o valor do campo "code"
-  /// 4. Colar na tela de verificação
-  /// 
-  /// ⚠️ Em produção, o usuário receberá o código por email (quando implementado)
   Future<void> verifyResetCode(String code) async {
-    // Sanitizar código (remover espaços)
     final sanitizedCode = code.trim();
 
-    // Validar que o código tem exatamente 5 dígitos
     if (sanitizedCode.length != 5) {
       errorMessage.value = 'O código deve ter 5 dígitos.';
       return;
     }
 
-    // Validar que o código contém apenas números
     final digitRegex = RegExp(r'^\d{5}$');
     if (!digitRegex.hasMatch(sanitizedCode)) {
       errorMessage.value = 'O código deve conter apenas números.';
@@ -415,7 +298,6 @@ class AuthProvidersController extends GetxController {
         return;
       }
 
-      // Recuperar código do Firestore
       final doc = await _firestore.collection('passwordResets').doc(_tempEmail!).get()
           .timeout(const Duration(seconds: 30));
 
@@ -428,19 +310,16 @@ class AuthProvidersController extends GetxController {
       final storedCode = data['code'] as String;
       final expiresAt = (data['expiresAt'] as Timestamp).toDate();
 
-      // Verificar se o código expirou (> 10 minutos)
       if (DateTime.now().isAfter(expiresAt)) {
         errorMessage.value = 'Código expirado. Solicite um novo código.';
         return;
       }
 
-      // Verificar se o código corresponde
       if (sanitizedCode != storedCode) {
         errorMessage.value = 'Código inválido. Verifique e tente novamente.';
         return;
       }
 
-      // Código válido - navegar para tela de nova senha
       goToNewPassword();
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
@@ -453,17 +332,7 @@ class AuthProvidersController extends GetxController {
     }
   }
 
-  /// Redefine senha do usuário após verificação do código OTP
-  /// 
-  /// ⚠️ LIMITAÇÃO ATUAL: Este método envia um link de reset por email
-  /// ao invés de redefinir a senha diretamente. Isso ocorre porque o Firebase Auth
-  /// não permite reset direto de senha sem reautenticação ou Admin SDK.
-  /// 
-  /// TODO: [MELHORIA] Implementar reset direto via Cloud Function com Admin SDK
-  /// Isso permitiria redefinir a senha diretamente após validação do OTP,
-  /// sem necessidade de enviar outro email.
   Future<void> resetPassword(String newPassword) async {
-    // Validar senha
     if (newPassword.isEmpty) {
       errorMessage.value = 'Senha é obrigatória.';
       return;
@@ -482,20 +351,13 @@ class AuthProvidersController extends GetxController {
         return;
       }
 
-      // TODO: [MELHORIA] Implementar reset direto via Cloud Function com Admin SDK
-      // Atualmente usa sendPasswordResetEmail (usuário precisa clicar no link)
-
-      // Enviar link de reset via Firebase Auth
       await _auth.sendPasswordResetEmail(email: _tempEmail!);
 
-      // Limpar documento do Firestore
       await _firestore.collection('passwordResets').doc(_tempEmail!).delete()
           .timeout(const Duration(seconds: 30));
 
-      // Limpar email temporário
       _tempEmail = null;
 
-      // Navegar para login com mensagem de sucesso
       Get.snackbar(
         'Link Enviado',
         'Um link para redefinir sua senha foi enviado para seu e-mail.',
@@ -517,21 +379,12 @@ class AuthProvidersController extends GetxController {
     }
   }
 
-  /// Realiza logout do usuário e reseta flag de primeiro acesso
   Future<void> logout() async {
     try {
-      if (kDebugMode) {
-        debugPrint('🚪 Iniciando logout...');
-      }
-      
-      // Limpar dados sensíveis do FlutterSecureStorage
       await _secureStorage.deleteAll();
 
-      // Logout do Firebase Auth
       await _auth.signOut();
 
-      // Deletar TODOS os controllers do GetX para limpar dados da memória
-      // Deletar controllers de gamificação
       if (Get.isRegistered<GemsController>()) {
         Get.delete<GemsController>(force: true);
       }
@@ -545,7 +398,6 @@ class AuthProvidersController extends GetxController {
         Get.delete<EnergyController>(force: true);
       }
       
-      // Deletar controllers de features
       final controllersToDelete = [
         'HomeNavigationController',
         'HomeStatsController',
@@ -569,49 +421,31 @@ class AuthProvidersController extends GetxController {
         try {
           Get.delete(tag: controllerName, force: true);
         } catch (e) {
-          // Controller pode não estar registrado, não é crítico
         }
       }
       
-      // Força limpeza de todos os controllers não-permanentes
       try {
         Get.deleteAll(force: true);
       } catch (e) {
-        // Ignorar erros de limpeza
       }
 
-      // Resetar isFirstAccess para true para que o usuário volte ao welcome
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isFirstAccess', true);
 
-      // Navegar para onboarding (welcome) e limpar stack
       Get.offAllNamed('/onboarding');
-      
-      if (kDebugMode) {
-        debugPrint('✅ Logout completo!');
-      }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Erro no logout: $e');
-      }
       errorMessage.value = 'Erro ao fazer logout. Tente novamente.';
     }
   }
 
   // Métodos privados
 
-  /// Gera código OTP de 5 dígitos
-  /// 
-  /// ⚠️ ATENÇÃO: Este código é gerado mas NÃO é enviado por email automaticamente
-  /// Para testar em desenvolvimento: acessar Firestore Console e copiar o código
-  /// Para produção: implementar envio de email (ver comentários em sendPasswordResetEmail)
   String _generateOTP() {
     final random = Random();
     final code = (10000 + random.nextInt(90000)).toString();
     return code;
   }
 
-  /// Inicia timer de reenvio de 60 segundos
   void _startResendTimer() {
     resendTimer.value = 60;
     _resendCountdownTimer?.cancel();
@@ -628,45 +462,14 @@ class AuthProvidersController extends GetxController {
     );
   }
 
-  /// Handler de erros de reset de senha do Firebase Auth
   String _handleFirebaseResetPasswordError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'Não encontramos uma conta com este e-mail.';
-      case 'invalid-email':
-        return 'Por favor, insira um e-mail válido.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      default:
-        return 'Não foi possível enviar o e-mail de recuperação. Tente novamente.';
-    }
+    return ErrorHandler.getResetPasswordErrorMessage(e);
   }
 
-  /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
-  /// Handler de erros do Google Sign-In
   String _handleGoogleSignInError(dynamic error) {
     if (error is PlatformException && error.code == 'sign_in_canceled') {
       return '';
@@ -677,7 +480,6 @@ class AuthProvidersController extends GetxController {
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'account-exists-with-different-credential':
-          // Mostrar botão de login para este erro específico
           showLoginButton.value = true;
           return 'Este e-mail já tem uma conta. Faça login com e-mail e senha.';
         case 'invalid-credential':
@@ -692,8 +494,6 @@ class AuthProvidersController extends GetxController {
     }
     return 'Ocorreu um erro inesperado. Tente novamente.';
   }
-
-  // Navegação
 
   void goToForgotPassword() => Get.to(() => const ForgotPasswordView());
   void goToVerifyCode() => Get.to(() => const VerifyCodeView());

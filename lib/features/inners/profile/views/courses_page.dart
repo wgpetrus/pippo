@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
-import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/language_helper.dart';
 import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
@@ -109,26 +109,7 @@ class _CoursesPageState extends State<CoursesPage> {
 
   /// Mapeia código de idioma para asset de bandeira
   String _getFlagAsset(String languageCode) {
-    switch (languageCode.toLowerCase()) {
-      case 'en':
-        return AppAssets.flagUsa;
-      case 'es':
-        return AppAssets.flagSpain;
-      case 'de':
-        return AppAssets.flagGermany;
-      case 'fr':
-        return AppAssets.flagFrance;
-      case 'ar':
-        return AppAssets.flagSaudi;
-      case 'ja':
-        return AppAssets.flagJapan;
-      case 'zh':
-        return AppAssets.flagChina;
-      case 'pt':
-        return AppAssets.flagBrazil;
-      default:
-        return AppAssets.flagUsa;
-    }
+    return LanguageHelper.getLanguageFlag(languageCode.toLowerCase());
   }
 
   /// Define curso como principal

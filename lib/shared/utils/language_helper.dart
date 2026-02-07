@@ -12,7 +12,6 @@ class LanguageHelper {
     'es': 'Espanhol',
     'fr': 'Francês',
     'de': 'Alemão',
-    'it': 'Italiano',
     'pt': 'Português',
     'zh': 'Chinês',
     'ja': 'Japonês',

@@ -81,8 +81,7 @@ void main() {
       await tester.pumpWidget(
         MediaQuery(
           data: const MediaQueryData(
-            size: Size(375, 667),
-            textScaleFactor: 2.5, // Muito alto
+            size: Size(375, 667), textScaler: TextScaler.linear(2.5), // Muito alto
           ),
           child: Builder(
             builder: (context) {
@@ -106,8 +105,7 @@ void main() {
       await tester.pumpWidget(
         MediaQuery(
           data: const MediaQueryData(
-            size: Size(375, 667),
-            textScaleFactor: 0.5, // Muito baixo
+            size: Size(375, 667), textScaler: TextScaler.linear(0.5), // Muito baixo
           ),
           child: Builder(
             builder: (context) {
@@ -131,8 +129,7 @@ void main() {
       await tester.pumpWidget(
         MediaQuery(
           data: const MediaQueryData(
-            size: Size(375, 667),
-            textScaleFactor: 1.15, // Dentro do range
+            size: Size(375, 667), textScaler: TextScaler.linear(1.15), // Dentro do range
           ),
           child: Builder(
             builder: (context) {

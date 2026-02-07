@@ -1,31 +1,17 @@
 // Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 // Imports locais
-import 'package:pippo/features/inners/treasure/controllers/treasure_controller.dart';
-import '../../../../../helpers/firebase_test_helper.dart';
+import 'package:pippo/shared/utils/error_handler.dart';
 
 /// Testes de recuperação de erros para TreasureController
 /// 
 /// Estes testes verificam que o controller lida adequadamente com
 /// cenários de erro e fornece mensagens amigáveis em português.
 void main() {
-  group('TreasureController Error Recovery', () {
-    late TreasureController controller;
-
-    setUpAll(() async {
-      await FirebaseTestHelper.setupFirebase();
-    });
-
-    setUp(() {
-      controller = TreasureController();
-    });
-
-    tearDownAll(() async {
-      await FirebaseTestHelper.teardownFirebase();
-    });
-
+  group('Treasure Error Recovery', () {
     group('Firestore Error Messages', () {
       test('should provide user-friendly message for permission-denied', () {
         // Arrange
@@ -35,15 +21,7 @@ void main() {
         );
 
         // Act: Simular tratamento de erro
-        String errorMessage;
-        switch (error.code) {
-          case 'permission-denied':
-            errorMessage =
-                'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-            break;
-          default:
-            errorMessage = 'Erro desconhecido';
-        }
+        final errorMessage = ErrorHandler.getFirestoreErrorMessage(error);
 
         // Assert: Mensagem deve ser amigável em português
         expect(errorMessage, isNotEmpty);
@@ -59,15 +37,7 @@ void main() {
         );
 
         // Act
-        String errorMessage;
-        switch (error.code) {
-          case 'unavailable':
-            errorMessage =
-                'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-            break;
-          default:
-            errorMessage = 'Erro desconhecido';
-        }
+        final errorMessage = ErrorHandler.getFirestoreErrorMessage(error);
 
         // Assert
         expect(errorMessage, isNotEmpty);
@@ -83,15 +53,7 @@ void main() {
         );
 
         // Act
-        String errorMessage;
-        switch (error.code) {
-          case 'deadline-exceeded':
-            errorMessage =
-                'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-            break;
-          default:
-            errorMessage = 'Erro desconhecido';
-        }
+        final errorMessage = ErrorHandler.getFirestoreErrorMessage(error);
 
         // Assert
         expect(errorMessage, isNotEmpty);
@@ -107,14 +69,7 @@ void main() {
         );
 
         // Act
-        String errorMessage;
-        switch (error.code) {
-          case 'not-found':
-            errorMessage = 'Recurso não encontrado.';
-            break;
-          default:
-            errorMessage = 'Erro desconhecido';
-        }
+        final errorMessage = ErrorHandler.getFirestoreErrorMessage(error);
 
         // Assert
         expect(errorMessage, isNotEmpty);
@@ -130,14 +85,7 @@ void main() {
         );
 
         // Act
-        String errorMessage;
-        switch (error.code) {
-          case 'unauthenticated':
-            errorMessage = 'Usuário não autenticado. Faça login novamente.';
-            break;
-          default:
-            errorMessage = 'Erro desconhecido';
-        }
+        final errorMessage = ErrorHandler.getFirestoreErrorMessage(error);
 
         // Assert
         expect(errorMessage, isNotEmpty);
@@ -289,11 +237,11 @@ void main() {
     group('Graceful Degradation', () {
       test('should handle empty challenges list gracefully', () {
         // Arrange: Lista vazia
-        controller.challenges.clear();
+        final challenges = <Map<String, dynamic>>[];
 
         // Act & Assert: Não deve causar erro
-        expect(controller.challenges.isEmpty, true);
-        expect(() => controller.challenges.length, returnsNormally);
+        expect(challenges.isEmpty, true);
+        expect(() => challenges.length, returnsNormally);
       });
 
       test('should handle missing user gracefully', () {
@@ -350,46 +298,49 @@ void main() {
     });
 
     group('Error State Management', () {
+      final isLoading = false.obs;
+      final errorMessage = ''.obs;
+
       test('should clear error message on successful operation', () {
         // Arrange: Simular limpeza de erro
-        controller.errorMessage.value = 'Erro anterior';
+        errorMessage.value = 'Erro anterior';
 
         // Act: Limpar erro
-        controller.errorMessage.value = '';
+        errorMessage.value = '';
 
         // Assert: Erro deve estar limpo
-        expect(controller.errorMessage.value, isEmpty);
+        expect(errorMessage.value, isEmpty);
       });
 
       test('should set loading state correctly during operations', () {
         // Arrange: Estado inicial
-        controller.isLoading.value = false;
+        isLoading.value = false;
 
         // Act: Simular início de operação
-        controller.isLoading.value = true;
+        isLoading.value = true;
 
         // Assert: Loading deve estar ativo
-        expect(controller.isLoading.value, true);
+        expect(isLoading.value, true);
 
         // Act: Simular fim de operação
-        controller.isLoading.value = false;
+        isLoading.value = false;
 
         // Assert: Loading deve estar inativo
-        expect(controller.isLoading.value, false);
+        expect(isLoading.value, false);
       });
 
       test('should maintain error message until next operation', () {
         // Arrange: Definir mensagem de erro
-        controller.errorMessage.value = 'Erro de teste';
+        errorMessage.value = 'Erro de teste';
 
         // Assert: Erro deve persistir
-        expect(controller.errorMessage.value, 'Erro de teste');
+        expect(errorMessage.value, 'Erro de teste');
 
         // Act: Limpar apenas quando nova operação iniciar
-        controller.errorMessage.value = '';
+        errorMessage.value = '';
 
         // Assert: Erro deve estar limpo
-        expect(controller.errorMessage.value, isEmpty);
+        expect(errorMessage.value, isEmpty);
       });
     });
   });

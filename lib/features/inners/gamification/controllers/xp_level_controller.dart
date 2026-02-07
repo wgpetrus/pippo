@@ -6,47 +6,33 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/utils/error_handler.dart';
 import 'gems_controller.dart';
 
-/// Controller de XP e níveis
-///
-/// Gerencia:
-/// - XP total, semanal e diário
-/// - Níveis e progressão
-/// - XP booster temporário
 class XpLevelController extends GetxController {
-  // Firebase instances
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados reativos - XP e Levels
   final totalXp = 0.obs;
   final weeklyXP = 0.obs;
   final todayXp = 0.obs;
   final level = 1.obs;
   final xpToNextLevel = 100.obs;
 
-  // Estados internos (não reativos)
   DateTime? _xpBoosterUntil;
   String _lastWeeklyResetDate = '';
   String _lastDailyResetDate = '';
 
-  // Dependency
-  late final GemsController _gemsController;
+  GemsController? _gemsController;
 
-  // Computed properties
-  /// Verifica se XP booster está ativo
   bool get hasXpBooster =>
       _xpBoosterUntil != null && DateTime.now().isBefore(_xpBoosterUntil!);
 
-  /// Retorna o tempo de expiração do XP booster (null se não ativo)
   DateTime? get xpBoosterUntil => _xpBoosterUntil;
 
-  /// Retorna tempo restante do XP booster formatado
   String getXpBoosterTimeRemaining() {
     if (_xpBoosterUntil == null) return '';
 
@@ -62,19 +48,19 @@ class XpLevelController extends GetxController {
     }
   }
 
-  // Lifecycle
   @override
   void onInit() {
     super.onInit();
     try {
       _gemsController = Get.find<GemsController>();
     } catch (e) {
-      debugPrint('GemsController não encontrado: $e');
+      _gemsController = null;
     }
+    
+    // Carregar dados ao inicializar
+    loadXpAndLevel();
   }
 
-  // Métodos públicos
-  /// Carrega XP e level do Firestore (do curso ativo)
   Future<void> loadXpAndLevel() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -86,26 +72,62 @@ class XpLevelController extends GetxController {
         return;
       }
 
-      // 1. Buscar curso ativo
-      final coursesSnapshot = await _retryOperation(
-        () => _firestore
-            .collection('users')
-            .doc(userId)
-            .collection('courses')
-            .where('isActive', isEqualTo: true)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 30)),
-      );
+      String? courseId;
 
-      if (coursesSnapshot.docs.isEmpty) {
-        errorMessage.value = 'Nenhum curso ativo encontrado.';
-        return;
+      // Tentar 3 vezes com delay para dar tempo do Firestore indexar
+      for (int attempt = 1; attempt <= 3; attempt++) {
+        final coursesSnapshot = await _retryOperation(
+          () => _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .where('isActive', isEqualTo: true)
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 30)),
+        );
+
+        if (coursesSnapshot.docs.isNotEmpty) {
+          courseId = coursesSnapshot.docs.first.id;
+          break;
+        }
+
+        // Se não encontrou e não é a última tentativa, aguardar
+        if (attempt < 3) {
+          await Future.delayed(Duration(milliseconds: 500 * attempt));
+        }
       }
 
-      final courseId = coursesSnapshot.docs.first.id;
+      // Se ainda não encontrou curso ativo, buscar qualquer curso
+      if (courseId == null) {
+        final allCoursesSnapshot = await _retryOperation(
+          () => _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 30)),
+        );
 
-      // 2. Buscar stats do curso ativo
+        if (allCoursesSnapshot.docs.isNotEmpty) {
+          courseId = allCoursesSnapshot.docs.first.id;
+          
+          // Marcar este curso como ativo
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .doc(courseId)
+              .update({'isActive': true});
+        } else {
+          if (kDebugMode) {
+            debugPrint('⚠️ Nenhum curso encontrado para o usuário');
+          }
+          return;
+        }
+      }
+
       final doc = await _retryOperation(
         () => _firestore
             .collection('users')
@@ -119,7 +141,6 @@ class XpLevelController extends GetxController {
       );
 
       if (!doc.exists) {
-        // Criar documento inicial
         await _createInitialXp(userId, courseId);
         return;
       }
@@ -147,49 +168,40 @@ class XpLevelController extends GetxController {
     }
   }
 
-  /// Adiciona XP e atualiza totalXp, weeklyXP e todayXp atomicamente
-  Future<void> addXp(int baseXp) async {
-    // Validar XP não negativo
-    if (baseXp < 0) {
+  Future<void> addXp(int amount) async {
+    if (amount <= 0) return;
+    if (amount < 0) {
       throw Exception('Cannot add negative XP');
     }
 
-    // Verificar e aplicar resets antes de adicionar
     _checkXpResets();
 
-    // Aplicar booster se ativo (2×)
-    final xpToAdd = hasXpBooster ? baseXp * 2 : baseXp;
+    final multiplier = hasXpBooster ? 2 : 1;
+    final xpGained = amount * multiplier;
 
-    // Atualizar todos os três contadores atomicamente
-    totalXp.value += xpToAdd;
-    weeklyXP.value += xpToAdd;
-    todayXp.value += xpToAdd;
+    totalXp.value += xpGained;
+    weeklyXP.value += xpGained;
+    todayXp.value += xpGained;
 
-    // Salvar XP no histórico diário para o gráfico de progresso
-    await _saveXpToHistory(xpToAdd);
+    await _saveXpToHistory(xpGained);
 
-    // Verificar level up
     await _checkLevelUp();
 
-    // Salvar no Firestore
     final userId = _auth.currentUser?.uid;
-    if (userId != null) {
+    if (userId != null && userId.isNotEmpty) {
       await _saveXp(userId);
     }
   }
 
-  /// Ativa XP booster por X minutos
   Future<void> activateXpBooster(int minutes) async {
     _xpBoosterUntil = DateTime.now().add(Duration(minutes: minutes));
 
-    // Salvar no Firestore
     final userId = _auth.currentUser?.uid;
     if (userId != null) {
       await _saveXp(userId);
     }
   }
 
-  /// Reseta XP semanal (chamado toda segunda-feira)
   Future<void> resetWeeklyXp() async {
     weeklyXP.value = 0;
     _lastWeeklyResetDate = _formatDateForStreak(DateTime.now());
@@ -200,7 +212,6 @@ class XpLevelController extends GetxController {
     }
   }
 
-  /// Reseta XP diário (chamado toda meia-noite)
   Future<void> resetDailyXp() async {
     todayXp.value = 0;
     _lastDailyResetDate = _formatDateForStreak(DateTime.now());
@@ -211,9 +222,45 @@ class XpLevelController extends GetxController {
     }
   }
 
-  // Métodos privados
-  /// Cria XP inicial para novo curso
   Future<void> _createInitialXp(String userId, String courseId) async {
+    // CORREÇÃO: Verificar se documento já existe antes de criar
+    // Isso evita sobrescrever dados existentes ao reiniciar o app
+    final doc = await _retryOperation(
+      () => _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('stats')
+          .doc('gamification')
+          .get()
+          .timeout(const Duration(seconds: 30)),
+    );
+    
+    // Se já existe, apenas carregar (não sobrescrever)
+    if (doc.exists) {
+      final data = doc.data()!;
+      final xpData = data['xp'] as Map<String, dynamic>? ?? {};
+      
+      // Se tem dados de XP, carregar
+      if (xpData.isNotEmpty) {
+        totalXp.value = xpData['totalXp'] ?? 0;
+        weeklyXP.value = xpData['weeklyXP'] ?? 0;
+        todayXp.value = xpData['todayXp'] ?? 0;
+        level.value = xpData['level'] ?? 1;
+        xpToNextLevel.value = xpData['xpToNextLevel'] ?? 100;
+        _xpBoosterUntil = _timestampToDateTime(xpData['xpBoosterUntil']);
+        _lastWeeklyResetDate = xpData['lastWeeklyResetDate'] ?? '';
+        _lastDailyResetDate = xpData['lastDailyResetDate'] ?? '';
+        
+        if (kDebugMode) {
+          debugPrint('✅ XP carregado do Firestore: ${totalXp.value} XP, Level ${level.value}');
+        }
+        return;
+      }
+    }
+    
+    // Se não existe ou está vazio, criar valores iniciais
     await _retryOperation(
       () => _firestore
           .collection('users')
@@ -238,12 +285,14 @@ class XpLevelController extends GetxController {
           .timeout(const Duration(seconds: 30)),
     );
 
+    if (kDebugMode) {
+      debugPrint('🆕 XP inicial criado no Firestore');
+    }
+    
     await loadXpAndLevel();
   }
 
-  /// Salva XP no Firestore (no curso ativo)
   Future<void> _saveXp(String userId) async {
-    // 1. Buscar curso ativo
     final coursesSnapshot = await _firestore
         .collection('users')
         .doc(userId)
@@ -259,7 +308,6 @@ class XpLevelController extends GetxController {
 
     final courseId = coursesSnapshot.docs.first.id;
 
-    // 2. Salvar XP no curso ativo
     await _retryOperation(
       () => _firestore
           .collection('users')
@@ -287,136 +335,112 @@ class XpLevelController extends GetxController {
     );
   }
 
-  /// Salva XP ganho no histórico diário para o gráfico de progresso semanal
   Future<void> _saveXpToHistory(int xpGained) async {
-    try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        debugPrint('⚠️ _saveXpToHistory: userId é null ou vazio');
-        return;
-      }
+    final userId = _auth.currentUser?.uid;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
 
-      // 1. Buscar curso ativo
-      final coursesSnapshot = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('courses')
-          .where('isActive', isEqualTo: true)
-          .limit(1)
-          .get()
-          .timeout(const Duration(seconds: 30));
+    final coursesSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get()
+        .timeout(const Duration(seconds: 30));
 
-      if (coursesSnapshot.docs.isEmpty) {
-        debugPrint('⚠️ _saveXpToHistory: Nenhum curso ativo encontrado');
-        return;
-      }
+    if (coursesSnapshot.docs.isEmpty) {
+      return;
+    }
 
-      final courseId = coursesSnapshot.docs.first.id;
-      final now = DateTime.now();
-      final dateStr =
-          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final courseId = coursesSnapshot.docs.first.id;
+    final now = DateTime.now();
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-      // 2. Garantir que o documento dailyHistory existe
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('courses')
-          .doc(courseId)
-          .collection('stats')
-          .doc('dailyHistory')
-          .set({
-            'lastUpdated': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .doc(courseId)
+        .collection('stats')
+        .doc('dailyHistory')
+        .set({
+          'lastUpdated': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
-      // 3. Salvar no documento do dia (subcoleção)
-      final dayRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('courses')
-          .doc(courseId)
-          .collection('stats')
-          .doc('dailyHistory')
-          .collection('days')
-          .doc(dateStr);
+    final dayRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('courses')
+        .doc(courseId)
+        .collection('stats')
+        .doc('dailyHistory')
+        .collection('days')
+        .doc(dateStr);
 
-      final dayDoc = await dayRef.get();
+    final dayDoc = await dayRef.get();
 
-      if (dayDoc.exists) {
-        await dayRef.update({
-          'xp': FieldValue.increment(xpGained),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        await dayRef.set({
-          'xp': xpGained,
-          'date': dateStr,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    } catch (e, stackTrace) {
-      debugPrint('❌ Erro ao salvar XP no histórico: $e');
-      debugPrint('Stack trace: $stackTrace');
+    if (dayDoc.exists) {
+      await dayRef.update({
+        'xp': FieldValue.increment(xpGained),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await dayRef.set({
+        'xp': xpGained,
+        'date': dateStr,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 
-  /// Verifica e aplica resets de XP (semanal e diário)
   void _checkXpResets() {
     final now = DateTime.now();
     final today = _formatDateForStreak(now);
 
-    // Reset semanal (segunda-feira 00:00)
     if (_isMonday(now) && _lastWeeklyResetDate != today) {
       weeklyXP.value = 0;
       _lastWeeklyResetDate = today;
     }
 
-    // Reset diário (meia-noite)
     if (_lastDailyResetDate != today) {
       todayXp.value = 0;
       _lastDailyResetDate = today;
     }
   }
 
-  /// Verifica se é segunda-feira
   bool _isMonday(DateTime date) {
     return date.weekday == DateTime.monday;
   }
 
-  /// Verifica level up e processa múltiplos níveis sequencialmente
   Future<void> _checkLevelUp() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
-    // Processar todos os level ups que resultam do XP atual
-    while (totalXp.value >= xpToNextLevel.value) {
+    while (totalXp.value >= _calculateXpToNextLevel(level.value)) {
       level.value++;
       xpToNextLevel.value = _calculateXpToNextLevel(level.value);
 
-      // Premiar 10 gems por level up via GemsController
-      try {
-        _gemsController.addGems(10);
-      } catch (e) {
-        debugPrint('Erro ao adicionar gems de level up: $e');
+      if (_gemsController != null) {
+        _gemsController!.addGems(10);
       }
 
-      // Registrar no histórico
       await _recordLevelUp(userId: userId, newLevel: level.value);
     }
   }
 
-  /// Calcula XP necessário para próximo nível
   int _calculateXpToNextLevel(int currentLevel) {
     return currentLevel * 100;
   }
 
-  /// Registra level up no histórico (do curso ativo)
   Future<void> _recordLevelUp({
     required String userId,
     required int newLevel,
   }) async {
     try {
-      // 1. Buscar curso ativo
       final coursesSnapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -427,14 +451,12 @@ class XpLevelController extends GetxController {
           .timeout(const Duration(seconds: 30));
 
       if (coursesSnapshot.docs.isEmpty) {
-        debugPrint('⚠️ Nenhum curso ativo para registrar level up');
         return;
       }
 
       final courseId = coursesSnapshot.docs.first.id;
       final today = _formatDateForStreak(DateTime.now());
 
-      // 2. Salvar level up no curso ativo
       await _firestore
           .collection('users')
           .doc(userId)
@@ -451,16 +473,13 @@ class XpLevelController extends GetxController {
           })
           .timeout(const Duration(seconds: 30));
     } catch (e) {
-      debugPrint('Erro ao registrar level up: $e');
     }
   }
 
-  /// Formata data para streak (YYYY-MM-DD)
   String _formatDateForStreak(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  /// Converte Timestamp do Firestore para DateTime
   DateTime? _timestampToDateTime(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
@@ -468,34 +487,14 @@ class XpLevelController extends GetxController {
     return null;
   }
 
-  /// Converte DateTime para Timestamp do Firestore
   Timestamp _dateTimeToTimestamp(DateTime date) {
     return Timestamp.fromDate(date);
   }
 
-  /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Dados não encontrados.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
-  /// Retry logic com exponential backoff
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {
     int attempts = 0;
     const maxAttempts = 3;
@@ -514,39 +513,47 @@ class XpLevelController extends GetxController {
     throw Exception('Operation failed after $maxAttempts attempts');
   }
 
-  // Test Helpers
+  @visibleForTesting
   void addXpPublic(int baseXp) {
     addXp(baseXp);
   }
 
+  @visibleForTesting
   void checkXpResetsPublic() {
     _checkXpResets();
   }
 
+  @visibleForTesting
   void checkLevelUpPublic() {
     _checkLevelUp();
   }
 
+  @visibleForTesting
   void setXpBoosterUntil(DateTime? date) {
     _xpBoosterUntil = date;
   }
 
+  @visibleForTesting
   DateTime? getXpBoosterUntil() {
     return _xpBoosterUntil;
   }
 
+  @visibleForTesting
   void setLastWeeklyResetDate(String date) {
     _lastWeeklyResetDate = date;
   }
 
+  @visibleForTesting
   String getLastWeeklyResetDate() {
     return _lastWeeklyResetDate;
   }
 
+  @visibleForTesting
   void setLastDailyResetDate(String date) {
     _lastDailyResetDate = date;
   }
 
+  @visibleForTesting
   String getLastDailyResetDate() {
     return _lastDailyResetDate;
   }

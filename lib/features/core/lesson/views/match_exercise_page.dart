@@ -13,10 +13,6 @@ import '../widgets/audio_card.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/lesson_option_card.dart';
-import 'complete_page.dart';
-import 'image_exercise_page.dart';
-import 'translation_exercise_page.dart';
-import 'word_exercise_page.dart';
 
 /// Página de exercício de matching (combinar pares)
 class MatchExercisePage extends StatefulWidget {
@@ -30,7 +26,6 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
   // Controllers
   late final LessonFlowController _flowController;
   late final LessonExerciseController _exerciseController;
-  late final LessonProgressController _progressController;
   
   // Estados
   int? _selectedAudioIndex;
@@ -44,7 +39,6 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     super.initState();
     _flowController = Get.find<LessonFlowController>();
     _exerciseController = Get.find<LessonExerciseController>();
-    _progressController = Get.find<LessonProgressController>();
   }
 
   // Build
@@ -243,6 +237,15 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
     // Submete resposta ao controller
     await _exerciseController.submitAnswer(userPairs, 'match');
+
+    // CORREÇÃO: Registrar resposta no progresso
+    final _progressController = Get.find<LessonProgressController>();
+    if (_exerciseController.isCorrectAnswer.value) {
+      _progressController.addCorrectAnswer();
+    } else {
+      _progressController.addWrongAnswer();
+      _progressController.loseHeart();
+    }
 
     // Mostra feedback
     if (!mounted) return;

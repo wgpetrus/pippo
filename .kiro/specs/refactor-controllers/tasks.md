@@ -475,30 +475,30 @@ Controllers will be refactored in order from largest to smallest:
     - Verify no references remain
     - _Requirements: 1.1, 1.2, 13.3_
   
-  - [-] 7.7 Commit AuthController refactoring
+  - [x] 7.7 Commit AuthController refactoring
     - Verify all new controllers ≤ 500 lines
     - Commit with message: "refactor: divide AuthController em 2 controllers menores"
     - Update lista-controllers.md to mark AuthController as complete
     - _Requirements: 13.1, 13.2, 14.3, 14.4, 15.1_
 
-- [ ] 8. Final validation and documentation
-  - [ ] 8.1 Verify all controllers refactored
+- [x] 8. Final validation and documentation
+  - [x] 8.1 Verify all controllers refactored
     - Confirm 7 old controllers deleted
     - Confirm 31 new controllers created
     - Confirm all new controllers ≤ 500 lines
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
   
-  - [ ] 8.2 Verify all tests passing
+  - [x] 8.2 Verify all tests passing
     - Run complete test suite
     - Verify no regressions
     - _Requirements: 10.1, 10.2, 10.3_
   
-  - [ ] 8.3 Update documentation
+  - [x] 8.3 Update documentation
     - Verify lista-controllers.md is fully updated
     - Update any architecture docs that reference old controllers
     - _Requirements: 12.1, 12.2, 12.3_
   
-  - [ ] 8.4 Final commit
+  - [x] 8.4 Final commit
     - Create summary commit if needed
     - Tag release if appropriate
     - _Requirements: 14.3, 14.4_

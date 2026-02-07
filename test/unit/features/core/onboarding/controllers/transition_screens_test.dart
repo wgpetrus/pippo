@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
 
 /// Unit tests for transition screen behavior
 /// 
@@ -12,19 +11,6 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Transition Screens', () {
-    test('Skip welcome logic - flag can be set and reset', () {
-      // Initially false
-      expect(OnboardingController.shouldSkipWelcome, isFalse);
-
-      // Set to true
-      OnboardingController.shouldSkipWelcome = true;
-      expect(OnboardingController.shouldSkipWelcome, isTrue);
-
-      // Reset to false
-      OnboardingController.shouldSkipWelcome = false;
-      expect(OnboardingController.shouldSkipWelcome, isFalse);
-    });
-
     test('Transition screens excluded from progress - full onboarding', () {
       // Função extraída do OnboardingController para evitar dependência do Firebase
       Map<String, int> calculateProgress(String currentScreen, bool isAddingCourse) {

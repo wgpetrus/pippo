@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/utils/error_handler.dart';
 import '../../../../shared/theme/theme.dart';
 import '../../gamification/controllers/energy_controller.dart';
 import '../../gamification/controllers/gems_controller.dart';
@@ -13,27 +14,21 @@ import '../widgets/purchase_confirmation_dialog.dart';
 
 /// Controller da loja
 class ShopController extends GetxController {
-  // Firebase instances
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados reativos - Pacotes adquiridos
   final ownedPacks = <String, int>{}.obs; // {packId: quantity}
   
-  // Estados reativos - Recompensas reivindicadas
   final claimedRewards = <String>[].obs; // Lista de IDs de recompensas já reivindicadas
 
-  // Dependências
   late final EnergyController _energyController;
   late final XpLevelController _xpLevelController;
   late final GemsController _gemsController;
   late final StreakController _streakController;
 
-  // Lifecycle
   @override
   void onInit() {
     super.onInit();
@@ -45,12 +40,9 @@ class ShopController extends GetxController {
     loadClaimedRewards();
   }
 
-  // Getters para acesso aos dados de gamificação
   int get gems => _gemsController.gems.value;
   bool get isGamificationLoading => _gemsController.isLoading.value;
 
-  // Métodos públicos - Pacotes
-  /// Carrega pacotes adquiridos do Firestore
   Future<void> loadOwnedPacks() async {
     try {
       final userId = _auth.currentUser?.uid;
@@ -68,12 +60,10 @@ class ShopController extends GetxController {
         ownedPacks.value = Map<String, int>.from(data);
       }
     } on FirebaseException catch (e) {
-      // Não propagar erro - pacotes são opcionais
       errorMessage.value = _handleFirestoreError(e);
     }
   }
 
-  /// Carrega recompensas reivindicadas do Firestore
   Future<void> loadClaimedRewards() async {
     try {
       final userId = _auth.currentUser?.uid;
@@ -90,86 +80,39 @@ class ShopController extends GetxController {
         claimedRewards.value = List<String>.from(doc.data()?['rewards'] ?? []);
       }
     } on FirebaseException catch (e) {
-      // Não propagar erro - recompensas são opcionais
       errorMessage.value = _handleFirestoreError(e);
     }
   }
 
-  // Métodos privados - Pacotes
-  /// Salva pacotes adquiridos no Firestore
-  Future<void> _saveOwnedPacks() async {
-    try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) return;
-
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('shop')
-          .doc('packs')
-          .set(ownedPacks);
-    } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
-      rethrow;
-    }
-  }
-
-  /// Adiciona pacote ao inventário
-  Future<void> _addPack(String packId, int quantity) async {
-    final current = ownedPacks[packId] ?? 0;
-    ownedPacks[packId] = current + quantity;
-    await _saveOwnedPacks();
-  }
-
-  /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
-  /// Obtém quantidade de um pacote
   int getPackQuantity(String packId) {
     return ownedPacks[packId] ?? 0;
   }
 
-  /// Verifica se recompensa já foi reivindicada (reativo)
   bool isRewardClaimedReactive(String rewardId) {
     return claimedRewards.contains(rewardId);
   }
 
-  // Métodos públicos - Compras
-  /// Compra recarga de energia (100 gems)
   Future<void> purchaseEnergyRefill() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // Verificar se tem gems suficientes
       if (_gemsController.gems.value < 100) {
         errorMessage.value = 'Você não tem gemas suficientes.';
         _showErrorSnackbar(errorMessage.value);
         return;
       }
 
-      // Gastar gems
       await _gemsController.spendGems(100);
 
-      // Recarregar energia
       await _energyController.refillEnergy();
+      
+      // CORREÇÃO: Recarregar energia para atualizar UI
+      await _energyController.loadEnergy();
 
       if (_energyController.errorMessage.value.isNotEmpty) {
         errorMessage.value = _energyController.errorMessage.value;
@@ -187,23 +130,19 @@ class ShopController extends GetxController {
     }
   }
 
-  /// Compra XP booster (150 gems, 1 hora)
   Future<void> purchaseXpBooster() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // Verificar se tem gems suficientes
       if (_gemsController.gems.value < 150) {
         errorMessage.value = 'Você não tem gemas suficientes.';
         _showErrorSnackbar(errorMessage.value);
         return;
       }
 
-      // Gastar gems
       await _gemsController.spendGems(150);
 
-      // Ativar XP booster
       await _xpLevelController.activateXpBooster(60);
 
       if (_xpLevelController.errorMessage.value.isNotEmpty) {
@@ -220,9 +159,7 @@ class ShopController extends GetxController {
     }
   }
 
-  /// Compra gem multiplier (200 gems, 1 hora)
   Future<void> purchaseGemMultiplier(BuildContext context) async {
-    // Mostrar diálogo de confirmação
     PurchaseConfirmationDialog.show(
       context,
       itemName: 'Multiplicador de Gemas',
@@ -233,17 +170,14 @@ class ShopController extends GetxController {
         errorMessage.value = '';
 
         try {
-          // Verificar se tem gems suficientes
           if (_gemsController.gems.value < 200) {
             errorMessage.value = 'Você não tem gemas suficientes.';
             _showErrorSnackbar(errorMessage.value);
             return;
           }
 
-          // Gastar gems
           await _gemsController.spendGems(200);
 
-          // Ativar gem multiplier
           await _gemsController.activateGemMultiplier(60);
 
           if (_gemsController.errorMessage.value.isNotEmpty) {
@@ -264,9 +198,7 @@ class ShopController extends GetxController {
     );
   }
 
-  /// Compra streak freeze (200 gems)
   Future<void> purchaseStreakFreeze(BuildContext context) async {
-    // Mostrar diálogo de confirmação
     PurchaseConfirmationDialog.show(
       context,
       itemName: 'Proteção de Streak',
@@ -277,17 +209,14 @@ class ShopController extends GetxController {
         errorMessage.value = '';
 
         try {
-          // Verificar se tem gems suficientes
           if (_gemsController.gems.value < 200) {
             errorMessage.value = 'Você não tem gemas suficientes.';
             _showErrorSnackbar(errorMessage.value);
             return;
           }
 
-          // Gastar gems
           await _gemsController.spendGems(200);
 
-          // Ativar streak freeze
           await _streakController.useStreakFreeze();
 
           if (_streakController.errorMessage.value.isNotEmpty) {
@@ -308,8 +237,6 @@ class ShopController extends GetxController {
     );
   }
 
-  // Métodos públicos - Ofertas Especiais
-  /// Reivindica recompensa gratuita
   Future<void> claimFreeReward(BuildContext context, String rewardId, int gemsAmount) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -321,26 +248,41 @@ class ShopController extends GetxController {
         return;
       }
 
-      // Verificar se já reivindicou
       if (claimedRewards.contains(rewardId)) {
         errorMessage.value = 'Você já reivindicou esta recompensa.';
         _showErrorSnackbar(errorMessage.value);
         return;
       }
 
-      // Salvar valores originais para reversão
+      // Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (coursesSnapshot.docs.isEmpty) {
+        errorMessage.value = 'Nenhum curso ativo encontrado.';
+        _showErrorSnackbar(errorMessage.value);
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
+
       final originalGems = _gemsController.gems.value;
       final originalTotalGems = _gemsController.totalGemsEarned.value;
 
-      // Atualizar UI imediatamente (otimista)
       _gemsController.gems.value += gemsAmount;
       _gemsController.totalGemsEarned.value += gemsAmount;
 
       try {
-        // Adicionar gems no Firestore
         await _firestore
             .collection('users')
             .doc(userId)
+            .collection('courses')
+            .doc(courseId)
             .collection('stats')
             .doc('gamification')
             .update({
@@ -348,7 +290,6 @@ class ShopController extends GetxController {
           'gems.totalGemsEarned': FieldValue.increment(gemsAmount),
         });
 
-        // Marcar como reivindicado
         claimedRewards.add(rewardId);
         await _firestore
             .collection('users')
@@ -359,7 +300,6 @@ class ShopController extends GetxController {
 
         _showSuccessSnackbar('Você ganhou $gemsAmount gemas!');
       } catch (e) {
-        // Reverter mudanças locais
         _gemsController.gems.value = originalGems;
         _gemsController.totalGemsEarned.value = originalTotalGems;
         claimedRewards.remove(rewardId);
@@ -375,10 +315,7 @@ class ShopController extends GetxController {
     }
   }
 
-  // Métodos públicos - Compras com Dinheiro Real
-  /// Mostra aviso de IAP e compra pacote de gems
   Future<void> purchaseGemPack(BuildContext context, String packId, int gemsAmount, String price) async {
-    // Mostrar aviso de IAP
     IapNoticeDialog.show(
       context,
       onContinue: () {
@@ -388,9 +325,7 @@ class ShopController extends GetxController {
     );
   }
 
-  /// Mostra aviso de IAP e compra colecionável
   Future<void> purchaseCollectible(BuildContext context, String itemId, String price) async {
-    // Mostrar aviso de IAP
     IapNoticeDialog.show(
       context,
       onContinue: () {
@@ -400,7 +335,6 @@ class ShopController extends GetxController {
     );
   }
 
-  // Métodos privados - Feedback
   void _showSuccessSnackbar(String message) {
     Get.snackbar(
       'Sucesso!',

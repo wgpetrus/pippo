@@ -14,10 +14,6 @@ import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/image_with_label.dart';
 import '../widgets/lesson_option_card.dart';
-import 'complete_page.dart';
-import 'word_exercise_page.dart';
-import 'match_exercise_page.dart';
-import 'image_exercise_page.dart';
 
 /// Página de exercício de seleção de tradução
 class TranslationExercisePage extends StatefulWidget {
@@ -30,7 +26,6 @@ class TranslationExercisePage extends StatefulWidget {
 class _TranslationExercisePageState extends State<TranslationExercisePage> {
   late final LessonFlowController _flowController;
   late final LessonExerciseController _exerciseController;
-  late final LessonProgressController _progressController;
   int? _selectedIndex;
   bool _hasChecked = false;
 
@@ -39,7 +34,6 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
     super.initState();
     _flowController = Get.find<LessonFlowController>();
     _exerciseController = Get.find<LessonExerciseController>();
-    _progressController = Get.find<LessonProgressController>();
   }
 
   @override
@@ -172,6 +166,15 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
     
     // Submete a resposta ao controller
     await _exerciseController.submitAnswer(selectedTranslation, 'translation');
+    
+    // CORREÇÃO: Registrar resposta no progresso
+    final _progressController = Get.find<LessonProgressController>();
+    if (_exerciseController.isCorrectAnswer.value) {
+      _progressController.addCorrectAnswer();
+    } else {
+      _progressController.addWrongAnswer();
+      _progressController.loseHeart();
+    }
     
     // Mostra feedback após processamento
     _showFeedback(options);

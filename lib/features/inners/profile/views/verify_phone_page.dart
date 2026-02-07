@@ -8,7 +8,6 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_pinput.dart';
 import '../../../../shared/widgets/app_resend_code.dart';
 import '../controllers/profile_auth_controller.dart';
-import 'phone_linked_page.dart';
 
 /// Tela de verificação de código do telefone
 class VerifyPhonePage extends StatefulWidget {

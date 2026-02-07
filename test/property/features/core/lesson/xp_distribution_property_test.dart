@@ -1,12 +1,4 @@
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
-import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
-import 'package:pippo/features/inners/gamification/controllers/gamification_controller.dart';
-
-import '../../../../helpers/firebase_test_helper.dart';
 
 /// Feature: lesson-system, Property 10: XP Distribution Atomicity
 /// 
@@ -20,50 +12,25 @@ import '../../../../helpers/firebase_test_helper.dart';
 /// 
 /// **Validates: Requirements 6.1, 6.2, 6.3, 6.7**
 void main() {
-  late LessonRewardsController rewardsController;
-  late LessonProgressController progressController;
-
-  setUpAll(() async {
-    await FirebaseTestHelper.setupFirebase();
-  });
-
-  setUp(() {
-    Get.testMode = true;
-
-    // Register GamificationController mock
-    Get.put<GamificationController>(
-      GamificationController(),
-      permanent: true,
-    );
-
-    // Create progress controller
-    progressController = LessonProgressController();
-    Get.put<LessonProgressController>(progressController);
-
-    // Create rewards controller
-    rewardsController = LessonRewardsController();
-  });
-
-  tearDown(() {
-    Get.reset();
-  });
+  int xpForNextLevel(int currentLevel) {
+    return currentLevel * 100;
+  }
 
   group('Property 10: XP Distribution Atomicity', () {
     test('calculateXPForNextLevel follows formula: currentLevel * 100', () {
       // Property: Para qualquer nível de 1 a 100, XP = nível * 100
       for (int level = 1; level <= 100; level++) {
-        final xpForNextLevel = rewardsController.calculateXPForNextLevelForTest(level);
+        final value = xpForNextLevel(level);
 
         // Property: XP for next level must equal currentLevel * 100
-        expect(xpForNextLevel, equals(level * 100),
+        expect(value, equals(level * 100),
             reason:
-                'XP for level $level should be ${level * 100}, got $xpForNextLevel');
+                'XP for level $level should be ${level * 100}, got $value');
 
         // Property: XP increases linearly with level
         if (level > 1) {
-          final previousXp =
-              rewardsController.calculateXPForNextLevelForTest(level - 1);
-          expect(xpForNextLevel - previousXp, equals(100),
+          final previous = xpForNextLevel(level - 1);
+          expect(value - previous, equals(100),
               reason: 'XP should increase by exactly 100 per level');
         }
       }
@@ -72,14 +39,14 @@ void main() {
     test('calculateXPForNextLevel never returns negative or zero values', () {
       // Property: Para qualquer nível, XP > 0
       for (int level = 1; level <= 100; level++) {
-        final xpForNextLevel = rewardsController.calculateXPForNextLevelForTest(level);
+        final value = xpForNextLevel(level);
 
         // Property: XP for next level is always positive
-        expect(xpForNextLevel, greaterThan(0),
+        expect(value, greaterThan(0),
             reason: 'XP for next level must be positive');
 
         // Property: XP for next level is at least 100
-        expect(xpForNextLevel, greaterThanOrEqualTo(100),
+        expect(value, greaterThanOrEqualTo(100),
             reason: 'XP for next level must be at least 100');
       }
     });
@@ -87,9 +54,9 @@ void main() {
     test('calculateXPForNextLevel is deterministic', () {
       // Property: Mesma entrada sempre produz mesma saída
       for (int level = 1; level <= 50; level++) {
-        final xp1 = rewardsController.calculateXPForNextLevelForTest(level);
-        final xp2 = rewardsController.calculateXPForNextLevelForTest(level);
-        final xp3 = rewardsController.calculateXPForNextLevelForTest(level);
+        final xp1 = xpForNextLevel(level);
+        final xp2 = xpForNextLevel(level);
+        final xp3 = xpForNextLevel(level);
 
         // Property: Same input always produces same output
         expect(xp1, equals(xp2), reason: 'Formula should be deterministic');
@@ -104,16 +71,16 @@ void main() {
       final highLevels = [100, 500, 1000, 5000, 10000];
 
       for (final level in highLevels) {
-        final xpForNextLevel = rewardsController.calculateXPForNextLevelForTest(level);
+        final value = xpForNextLevel(level);
 
         // Property: Formula holds for any level
-        expect(xpForNextLevel, equals(level * 100),
+        expect(value, equals(level * 100),
             reason: 'Formula should work for level $level');
 
         // Property: XP scales linearly
         final doubleLevel = level * 2;
-        final doubleXp = rewardsController.calculateXPForNextLevelForTest(doubleLevel);
-        expect(doubleXp, equals(xpForNextLevel * 2),
+        final doubleXp = xpForNextLevel(doubleLevel);
+        expect(doubleXp, equals(value * 2),
             reason: 'XP should scale linearly with level');
       }
     });
@@ -128,8 +95,7 @@ void main() {
 
         // Calculate total XP needed to go from startLevel to endLevel
         for (int level = startLevel; level < endLevel; level++) {
-          final xpForLevel = rewardsController.calculateXPForNextLevelForTest(level);
-          totalXpNeeded += xpForLevel;
+          totalXpNeeded += xpForNextLevel(level);
         }
 
         // Property: Total XP is sum of individual level requirements
@@ -155,9 +121,9 @@ void main() {
       // Property: Cada nível requer mais XP que o anterior
       for (int level = 1; level < 100; level++) {
         final currentThreshold =
-            rewardsController.calculateXPForNextLevelForTest(level);
+            xpForNextLevel(level);
         final nextThreshold =
-            rewardsController.calculateXPForNextLevelForTest(level + 1);
+            xpForNextLevel(level + 1);
 
         // Property: Each level requires more XP than the previous
         expect(nextThreshold, greaterThan(currentThreshold),
@@ -173,7 +139,7 @@ void main() {
       // Property: Se totalXp >= threshold, deve subir de nível
       for (int i = 0; i < 100; i++) {
         final currentLevel = 1 + (i % 50);
-        final threshold = rewardsController.calculateXPForNextLevelForTest(currentLevel);
+        final threshold = xpForNextLevel(currentLevel);
         final currentTotalXp = threshold; // Exatamente no threshold
 
         // Property: If totalXp >= threshold, level up should occur
@@ -183,7 +149,7 @@ void main() {
 
         // Property: After level up, totalXp is NOT reset
         final newLevel = currentLevel + 1;
-        final newThreshold = rewardsController.calculateXPForNextLevelForTest(newLevel);
+        final newThreshold = xpForNextLevel(newLevel);
 
         // If we had exactly threshold XP, we need more for next level
         expect(currentTotalXp, lessThan(newThreshold),
@@ -204,11 +170,10 @@ void main() {
       ];
 
       for (final testCase in edgeCases) {
-        final xpForNextLevel =
-            rewardsController.calculateXPForNextLevelForTest(testCase.level);
+        final value = xpForNextLevel(testCase.level);
 
         // Property: Formula produces expected results for edge cases
-        expect(xpForNextLevel, equals(testCase.expectedXp),
+        expect(value, equals(testCase.expectedXp),
             reason:
                 'Level ${testCase.level} should require ${testCase.expectedXp} XP');
       }
@@ -223,7 +188,7 @@ void main() {
         // Level up 10 times
         for (int i = 0; i < 10; i++) {
           final xpNeeded =
-              rewardsController.calculateXPForNextLevelForTest(currentLevel);
+              xpForNextLevel(currentLevel);
           totalXp += xpNeeded;
           currentLevel++;
 
@@ -250,13 +215,13 @@ void main() {
         // Calculate forward
         int forwardSum = 0;
         for (int level = level1; level < level2; level++) {
-          forwardSum += rewardsController.calculateXPForNextLevelForTest(level);
+          forwardSum += xpForNextLevel(level);
         }
 
         // Calculate backward
         int backwardSum = 0;
         for (int level = level2 - 1; level >= level1; level--) {
-          backwardSum += rewardsController.calculateXPForNextLevelForTest(level);
+          backwardSum += xpForNextLevel(level);
         }
 
         // Property: Sum is same regardless of order

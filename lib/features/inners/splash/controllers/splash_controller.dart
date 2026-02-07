@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Controllers
 import '../../../core/onboarding/controllers/onboarding_flow_controller.dart';
+import '../../../../shared/utils/error_handler.dart';
 
 /// Controller da splash screen
 class SplashController extends GetxController {
@@ -178,19 +179,6 @@ class SplashController extends GetxController {
   
   /// Handler de erros do Firestore (padronizado)
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      default:
-        return 'Erro ao buscar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

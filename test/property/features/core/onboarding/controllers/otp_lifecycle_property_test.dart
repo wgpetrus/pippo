@@ -88,8 +88,8 @@ void main() {
       ];
       
       for (final testCase in testCases) {
-        final minutesOffset = testCase.$1 as int;
-        final shouldBeExpired = testCase.$2 as bool;
+        final minutesOffset = testCase.$1;
+        final shouldBeExpired = testCase.$2;
         
         final expiresAt = now.add(Duration(minutes: minutesOffset));
         final isExpired = now.isAfter(expiresAt);

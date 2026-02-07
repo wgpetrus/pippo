@@ -1,4 +1,3 @@
-import 'package:flutter_test/flutter_test.dart' hide expect, test, group;
 import 'package:glados/glados.dart';
 
 /// Classe auxiliar para testar lógica de ranking isoladamente

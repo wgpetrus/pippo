@@ -93,7 +93,7 @@ void main() {
           return 'O código deve ter 5 dígitos.';
         }
         
-        final digitRegex = RegExp(r'^\d{5}$$');
+        final digitRegex = RegExp(r'^\d{5}$');
         if (!digitRegex.hasMatch(sanitizedCode)) {
           return 'O código deve conter apenas números.';
         }

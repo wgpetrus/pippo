@@ -285,7 +285,7 @@ class _SectionsPageState extends State<SectionsPage> {
           }
 
           return SectionCard(
-            key: ValueKey('section_${section['id']}_${currentProgress}_${status}'), // Key única por seção
+            key: ValueKey('section_${section['id']}_${currentProgress}_$status'), // Key única por seção
             title: section['title'] as String,
             status: sectionStatus,
             currentProgress: currentProgress,

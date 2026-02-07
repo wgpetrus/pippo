@@ -27,14 +27,11 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
   late final ProfileSocialController _controller;
 
-  // Ciclo de vida
-
   @override
   void initState() {
     super.initState();
     _controller = Get.find<ProfileSocialController>();
-    
-    // Limpar dados anteriores e carregar perfil do usuário
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.viewedUserData.clear();
       _controller.errorMessage.value = '';
@@ -44,8 +41,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
     });
   }
 
-  // Construção
-
   @override
   Widget build(BuildContext context) {
     final r = ResponsiveUtils(context);
@@ -54,14 +49,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
       backgroundColor: AppTheme.white,
       appBar: const AppAppbar(title: 'Perfil'),
       body: Obx(() {
-        // Mostrar loading
         if (_controller.isLoading.value) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
 
-        // Mostrar erro
         if (_controller.errorMessage.value.isNotEmpty) {
           return Center(
             child: Padding(
@@ -88,7 +81,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
           );
         }
 
-        // Verificar se há dados do usuário
         if (_controller.viewedUserData.isEmpty) {
           return const Center(
             child: Text('Usuário não encontrado'),
@@ -97,7 +89,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
         final userData = _controller.viewedUserData;
 
-        // Conteúdo do perfil
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
@@ -105,7 +96,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
             children: [
               SizedBox(height: r.spacing8),
 
-              // Card azul do perfil
               ProfileCard(
                 avatarAsset: _getAvatarAsset(userData['avatarId'] ?? 'avatar_01'),
                 name: userData['name'] ?? '',

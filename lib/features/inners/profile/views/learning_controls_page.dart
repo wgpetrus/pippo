@@ -56,7 +56,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
               trailing: Switch(
                 value: _controller.soundEffects.value,
                 onChanged: (value) => _controller.updateSetting('soundEffects', value),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
@@ -70,7 +70,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
               trailing: Switch(
                 value: _controller.listeningExercises.value,
                 onChanged: (value) => _controller.updateSetting('listeningExercises', value),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
@@ -84,7 +84,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
               trailing: Switch(
                 value: _controller.speakingExercises.value,
                 onChanged: (value) => _controller.updateSetting('speakingExercises', value),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
@@ -129,7 +129,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
               trailing: Switch(
                 value: _displayModeIndex == 0,
                 onChanged: (value) => setState(() => _displayModeIndex = value ? 0 : 1),
-                activeColor: AppTheme.primary,
+                activeThumbColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary30,
                 inactiveThumbColor: AppTheme.white,
                 inactiveTrackColor: AppTheme.gray500,
@@ -195,7 +195,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
                     Navigator.pop(context);
                   },
                 ));
-              }).toList(),
+              }),
             ],
           ),
         );

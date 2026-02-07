@@ -167,8 +167,6 @@ class HomeAppbar extends StatelessWidget {
         return (controller as GemsController).gems.value;
       case StatType.ray:
         return (controller as EnergyController).currentEnergy.value;
-      default:
-        return 0;
     }
   }
   

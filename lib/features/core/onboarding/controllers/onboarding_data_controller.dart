@@ -2,9 +2,6 @@
 import 'dart:async';
 import 'dart:math';
 
-// Flutter
-import 'package:flutter/foundation.dart';
-
 // Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Imports locais
 import '../../../../shared/utils/language_helper.dart';
+import '../../../../shared/utils/error_handler.dart';
 import '../../../../shared/utils/validation_helper.dart';
 
 /// Controller de dados do onboarding
@@ -42,14 +40,11 @@ class OnboardingDataController extends GetxController {
   final userEmail = ''.obs;
 
   // Estado privado
-  String? _tempEmail;
+  String? tempEmail;
   String? _tempPassword;
   bool _retryCancelled = false;
 
-  // Getters/Setters
   String? get tempPassword => _tempPassword;
-  String? get tempEmail => _tempEmail;
-  set tempEmail(String? value) => _tempEmail = value;
 
   // Setters
   void setLanguage(String language) => selectedLanguage.value = language;
@@ -62,7 +57,7 @@ class OnboardingDataController extends GetxController {
   void setUserPassword(String password) => _tempPassword = password;
 
   void clearAllData() {
-    _tempEmail = null;
+    tempEmail = null;
     _tempPassword = null;
     errorMessage.value = '';
     showLoginOption.value = false;
@@ -153,13 +148,11 @@ class OnboardingDataController extends GetxController {
         final alreadyCompleted = existingData['onboardingCompleted'] ?? false;
 
         if (alreadyCompleted) {
-          debugPrint('⚠️ Onboarding já foi completado. Pulando criação.');
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isFirstAccess', false);
           isLoading.value = false;
           return;
         }
-        debugPrint('📝 Documento existe mas onboarding incompleto. Atualizando...');
       }
 
       final username = await _generateUniqueUsername(userName.value);
@@ -201,6 +194,7 @@ class OnboardingDataController extends GetxController {
           'reason': learningReason.value,
           'studyTime': studyTimeValue,
           'isActive': true,
+          'isPrimary': true,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -259,7 +253,6 @@ class OnboardingDataController extends GetxController {
 
   /// Adiciona novo curso para usuário existente (modo add course)
   Future<void> addNewCourse() async {
-    debugPrint('📚 addNewCourse: INICIANDO...');
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -267,37 +260,25 @@ class OnboardingDataController extends GetxController {
       final user = _auth.currentUser;
       if (user == null) {
         errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
-        debugPrint('  ❌ Usuário não autenticado');
         return;
       }
 
       final userId = user.uid;
-      debugPrint('  👤 UserId: $userId');
 
       final studyTimeMatch = RegExp(r'(\d+)').firstMatch(studyTime.value);
       final studyTimeValue =
           studyTimeMatch != null ? int.tryParse(studyTimeMatch.group(1)!) : null;
       if (studyTimeValue == null || studyTimeValue <= 0) {
         errorMessage.value = 'Tempo de estudo inválido.';
-        debugPrint('  ❌ Tempo de estudo inválido: ${studyTime.value}');
         return;
       }
-
-      debugPrint('  📊 Dados do novo curso:');
-      debugPrint('    - Idioma: ${selectedLanguage.value}');
-      debugPrint('    - Nome: ${_getLanguageName(selectedLanguage.value)}');
-      debugPrint('    - Nível: ${languageLevel.value}');
-      debugPrint('    - Motivo: ${learningReason.value}');
-      debugPrint('    - Tempo: $studyTimeValue min/dia');
 
       final courseRef =
           _firestore.collection('users').doc(userId).collection('courses').doc();
       final courseId = courseRef.id;
-      debugPrint('  🆔 Novo courseId: $courseId');
 
       final batch = _firestore.batch();
 
-      debugPrint('  🔄 Desativando curso atual...');
       final currentCoursesSnapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -308,9 +289,18 @@ class OnboardingDataController extends GetxController {
       if (currentCoursesSnapshot.docs.isNotEmpty) {
         for (var doc in currentCoursesSnapshot.docs) {
           batch.update(doc.reference, {'isActive': false});
-          debugPrint('    📝 Marcando curso ${doc.id} para desativar');
         }
       }
+
+      final existingPrimarySnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isPrimary', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      final shouldSetAsPrimary = existingPrimarySnapshot.docs.isEmpty;
 
       final courseData = {
         'id': courseId,
@@ -320,16 +310,13 @@ class OnboardingDataController extends GetxController {
         'reason': learningReason.value,
         'studyTime': studyTimeValue,
         'isActive': true,
+        'isPrimary': shouldSetAsPrimary,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      debugPrint('  💾 Criando curso no Firestore...');
-      debugPrint('    Path: users/$userId/courses/$courseId');
       batch.set(courseRef, courseData);
 
       final statsRef = courseRef.collection('stats').doc('gamification');
-      debugPrint('  💾 Criando stats do novo curso...');
-      debugPrint('    Path: users/$userId/courses/$courseId/stats/gamification');
 
       batch.set(statsRef, {
         'streak': {
@@ -366,73 +353,22 @@ class OnboardingDataController extends GetxController {
         'lastUpdated': FieldValue.serverTimestamp(),
       });
 
-      debugPrint('  🔄 Executando batch commit...');
       await batch.commit().timeout(const Duration(seconds: 30));
-      debugPrint('  ✅ Curso e stats salvos com sucesso!');
     } on TimeoutException {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      debugPrint('  ❌ Timeout ao salvar curso');
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
-      debugPrint('  ❌ FirebaseException: ${e.code} - ${e.message}');
     } catch (e) {
       errorMessage.value = 'Erro ao adicionar curso. Tente novamente.';
-      debugPrint('  ❌ Erro ao adicionar curso: $e');
     } finally {
       isLoading.value = false;
-      debugPrint(
-          '✅ addNewCourse: CONCLUÍDO (erro: ${errorMessage.value.isEmpty ? "nenhum" : errorMessage.value})');
     }
   }
 
   void cancelRetry() {
     _retryCancelled = true;
     retryMessage.value = 'Operação cancelada.';
-    if (kDebugMode) {
-      debugPrint('🚫 Retry cancelado pelo usuário');
-    }
-  }
-
-  // Métodos privados
-
-  Future<String> _generateUniqueUsername(String name) async {
-    try {
-      String baseUsername = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-      if (baseUsername.isEmpty) {
-        baseUsername = 'user';
-      }
-
-      String username = baseUsername;
-      int attempts = 0;
-      const maxAttempts = 100;
-
-      while (attempts < maxAttempts) {
-        final querySnapshot = await _firestore
-            .collection('users')
-            .where('username', isEqualTo: username)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 30));
-
-        if (querySnapshot.docs.isEmpty) {
-          return username;
-        }
-
-        final random = Random().nextInt(9999) + 1;
-        username = '$baseUsername$random';
-        attempts++;
-      }
-
-      throw Exception('Não foi possível gerar um nome de usuário único.');
-    } on TimeoutException {
-      throw Exception(
-          'Tempo de espera esgotado. Verifique sua conexão e tente novamente.');
-    } on FirebaseException catch (e) {
-      throw Exception(_handleFirestoreError(e));
-    } catch (e) {
-      throw Exception('Erro ao verificar nome de usuário. Tente novamente.');
-    }
   }
 
   Future<T> retryWithBackoff<T>(
@@ -445,9 +381,6 @@ class OnboardingDataController extends GetxController {
 
     while (attempt < maxAttempts) {
       if (_retryCancelled) {
-        if (kDebugMode) {
-          debugPrint('🚫 Retry cancelado na tentativa $attempt');
-        }
         retryAttempt.value = 0;
         retryMessage.value = '';
         throw Exception('Operação cancelada pelo usuário.');
@@ -460,26 +393,14 @@ class OnboardingDataController extends GetxController {
           retryMessage.value = 'Tentativa $attempt de $maxAttempts...';
         }
 
-        if (kDebugMode) {
-          debugPrint('🔄 Tentativa $attempt de $maxAttempts');
-        }
-
         final result = await operation();
         retryAttempt.value = 0;
         retryMessage.value = '';
         _retryCancelled = false;
 
-        if (kDebugMode && attempt > 1) {
-          debugPrint('✅ Operação bem-sucedida na tentativa $attempt');
-        }
-
         return result;
       } catch (e) {
         lastException = e is Exception ? e : Exception(e.toString());
-
-        if (kDebugMode) {
-          debugPrint('❌ Tentativa $attempt falhou: ${e.toString()}');
-        }
 
         if (attempt < maxAttempts) {
           final delaySeconds = attempt == 1 ? 0 : pow(2, attempt - 1).toInt();
@@ -488,15 +409,8 @@ class OnboardingDataController extends GetxController {
             retryMessage.value =
                 'Aguardando ${delaySeconds}s antes da próxima tentativa...';
 
-            if (kDebugMode) {
-              debugPrint('⏳ Aguardando ${delaySeconds}s antes da próxima tentativa...');
-            }
-
             for (int i = 0; i < delaySeconds * 10; i++) {
               if (_retryCancelled) {
-                if (kDebugMode) {
-                  debugPrint('🚫 Retry cancelado durante aguardo');
-                }
                 retryAttempt.value = 0;
                 retryMessage.value = '';
                 throw Exception('Operação cancelada pelo usuário.');
@@ -512,17 +426,44 @@ class OnboardingDataController extends GetxController {
     retryMessage.value = '';
     _retryCancelled = false;
 
-    if (kDebugMode) {
-      debugPrint('💥 Todas as $maxAttempts tentativas falharam');
+    throw lastException ?? Exception('Erro desconhecido');
+  }
+
+  Future<String> _generateUniqueUsername(String name) async {
+    final base = name
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '')
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '');
+
+    final normalizedBase = base.isEmpty ? 'user' : base;
+
+    Future<bool> isTaken(String username) async {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 30));
+      return snapshot.docs.isNotEmpty;
     }
 
-    throw lastException!;
+    var candidate = normalizedBase;
+    if (!await isTaken(candidate)) return candidate;
+
+    for (var i = 0; i < 50; i++) {
+      final suffix = (100 + Random().nextInt(900)).toString();
+      candidate = '$normalizedBase$suffix';
+      if (!await isTaken(candidate)) return candidate;
+    }
+
+    final fallbackSuffix = DateTime.now().millisecondsSinceEpoch.toString();
+    return '$normalizedBase$fallbackSuffix';
   }
 
   String _getLanguageName(String code) {
     return LanguageHelper.getLanguageName(code);
   }
-
   String? _validateName(String? value) {
     return ValidationHelper.validateName(value);
   }
@@ -532,39 +473,6 @@ class OnboardingDataController extends GetxController {
   }
 
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Valor fora do intervalo permitido.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Argumento inválido.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

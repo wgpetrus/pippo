@@ -1,14 +1,10 @@
 // Dart SDK
 import 'dart:async';
 
-// Flutter
-import 'package:flutter/foundation.dart';
-
 // Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Imports locais
 import '../../../inners/home/controllers/home_stats_controller.dart';
@@ -27,6 +23,7 @@ class OnboardingFlowController extends GetxController {
 
   // Estados específicos
   final currentStep = ''.obs;
+  final skipWelcome = false.obs;
 
   // Navegação
   final nav = OnboardingNavigation();
@@ -81,12 +78,6 @@ class OnboardingFlowController extends GetxController {
         if (data['name'] != null) _dataController.userName.value = data['name'];
         if (data['age'] != null) _dataController.userAge.value = data['age'];
 
-        if (kDebugMode) {
-          debugPrint('✅ Dados parciais carregados do Firestore');
-          debugPrint('   - name: ${_dataController.userName.value}');
-          debugPrint('   - age: ${_dataController.userAge.value}');
-        }
-
         // Verificar se há curso parcial (usuário pode ter saído no meio)
         final coursesSnapshot = await _firestore
             .collection('users')
@@ -113,24 +104,10 @@ class OnboardingFlowController extends GetxController {
             final studyTimeValue = courseData['studyTime'] as int;
             _dataController.studyTime.value = '$studyTimeValue min / dia';
           }
-
-          if (kDebugMode) {
-            debugPrint('✅ Dados do curso carregados');
-            debugPrint('   - language: ${_dataController.selectedLanguage.value}');
-            debugPrint('   - level: ${_dataController.languageLevel.value}');
-            debugPrint('   - reason: ${_dataController.learningReason.value}');
-            debugPrint('   - studyTime: ${_dataController.studyTime.value}');
-          }
         }
       }
     } on TimeoutException {
-      if (kDebugMode) {
-        debugPrint('⚠️ Timeout ao carregar dados do Firestore');
-      }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('⚠️ Erro ao carregar dados do Firestore: $e');
-      }
     }
   }
 
@@ -138,20 +115,11 @@ class OnboardingFlowController extends GetxController {
   /// Deleta usuário do Firebase Auth e volta para tela de boas-vindas
   Future<void> exitOnboarding() async {
     try {
-      // Obter usuário atual
       final user = _auth.currentUser;
 
       if (user != null) {
-        if (kDebugMode) {
-          debugPrint('🚪 Saindo do onboarding - deletando usuário: ${user.uid}');
-        }
-
         // Deletar usuário do Firebase Auth
         await user.delete();
-
-        if (kDebugMode) {
-          debugPrint('✅ Usuário deletado com sucesso');
-        }
       }
 
       // Limpar dados temporários via DataController
@@ -162,21 +130,13 @@ class OnboardingFlowController extends GetxController {
 
       // Voltar para tela de boas-vindas (limpa stack de navegação)
       Get.offAllNamed('/onboarding');
-    } on FirebaseAuthException catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Erro Firebase ao sair do onboarding: ${e.code}');
-      }
-
+    } on FirebaseAuthException catch (_) {
       // Limpar dados mesmo com erro
       _dataController.clearAllData();
 
       // Mesmo com erro, voltar para welcome
       Get.offAllNamed('/onboarding');
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Erro ao sair do onboarding: $e');
-      }
-
+    } catch (_) {
       // Limpar dados mesmo com erro
       _dataController.clearAllData();
 
@@ -187,39 +147,28 @@ class OnboardingFlowController extends GetxController {
 
   /// Completa o onboarding
   Future<void> finishOnboarding() async {
-    debugPrint('🚀 finishOnboarding: Iniciando...');
-
     // Verificar modo (add course ou novo usuário)
     if (_dataController.isAddingCourse.value) {
-      debugPrint('📚 finishOnboarding: Modo add course');
       // Modo add course: apenas criar novo curso
       await _dataController.addNewCourse();
 
       // Recarregar dados do HomeStatsController após adicionar curso
       if (errorMessage.value.isEmpty) {
-        debugPrint('🔄 finishOnboarding: Recarregando HomeStatsController...');
         try {
           final homeStatsController = Get.find<HomeStatsController>();
           await homeStatsController.reloadAfterAddCourse();
-          debugPrint('✅ finishOnboarding: HomeStatsController recarregado');
         } catch (e) {
-          debugPrint('⚠️ finishOnboarding: Erro ao recarregar HomeStatsController: $e');
         }
       }
     } else {
-      debugPrint('👤 finishOnboarding: Modo novo usuário');
       // Modo novo usuário: criar documento do usuário, primeiro curso e stats
       await _dataController.finalizeAccount();
     }
 
-    debugPrint('✅ finishOnboarding: Finalizou. ErrorMessage: "${errorMessage.value}"');
-
     // Navegar para /home usando Get.offAllNamed apenas se não houver erro
     if (errorMessage.value.isEmpty) {
-      debugPrint('🏠 finishOnboarding: Navegando para home...');
       nav.finishOnboarding();
     } else {
-      debugPrint('❌ finishOnboarding: Não navegou devido a erro: ${errorMessage.value}');
     }
   }
 

@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import local
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
 import 'package:pippo/shared/utils/validation_helper.dart';
 
 void main() {
@@ -682,8 +681,8 @@ void main() {
       ];
       
       for (final testCase in testCases) {
-        final code = testCase.$1 as String;
-        final shouldBeValid = testCase.$2 as bool;
+        final code = testCase.$1;
+        final shouldBeValid = testCase.$2;
         
         final isValid = code.length == 5 && RegExp(r'^\d{5}$').hasMatch(code);
         
@@ -1409,7 +1408,7 @@ void main() {
 
     test('Course language codes are valid', () {
       // Arrange
-      final validLanguageCodes = ['en', 'es', 'fr', 'de', 'it', 'pt', 'zh', 'ja', 'ar'];
+      final validLanguageCodes = ['en', 'es', 'fr', 'de', 'pt', 'zh', 'ja', 'ar'];
 
       // Act & Assert
       for (final langCode in validLanguageCodes) {

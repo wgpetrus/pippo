@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
-import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../inners/gamification/controllers/energy_controller.dart';
@@ -14,10 +13,6 @@ import '../widgets/audio_word_button.dart';
 import '../widgets/exercise_header.dart';
 import '../widgets/feedback_bottom_sheet.dart';
 import '../widgets/lesson_option_card.dart';
-import 'complete_page.dart';
-import 'translation_exercise_page.dart';
-import 'word_exercise_page.dart';
-import 'match_exercise_page.dart';
 
 /// Página de exercício de seleção de imagem
 class ImageExercisePage extends StatefulWidget {

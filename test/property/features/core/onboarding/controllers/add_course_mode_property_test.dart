@@ -176,11 +176,11 @@ void main() {
       for (int i = 0; i < 100; i++) {
         final courseDoc = {
           'id': 'course$i',
-          'language': 'it',
-          'languageName': 'Italian',
+          'language': 'de',
+          'languageName': 'German',
           'level': 'beginner', // This is course level, not stats level
           'reason': 'brain',
-          'studyTime': 5,
+          'studyTime': 30,
           'isActive': true,
           'createdAt': FieldValue.serverTimestamp(),
         };
@@ -196,10 +196,11 @@ void main() {
     test('Property 10.5: Course language codes are valid', () {
       // Property: Language codes in course documents MUST be valid ISO 639-1 codes
       
-      final validLanguageCodes = ['en', 'es', 'fr', 'de', 'it', 'pt', 'zh', 'ja', 'ar'];
+      final validLanguageCodes = ['en', 'es', 'fr', 'de', 'pt', 'zh', 'ja', 'ar'];
       
       for (int i = 0; i < 100; i++) {
         for (final langCode in validLanguageCodes) {
+          // Simula documento de curso
           final courseDoc = {
             'id': 'course_${langCode}_$i',
             'language': langCode,

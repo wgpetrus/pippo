@@ -196,7 +196,7 @@ class HomeView extends StatelessWidget {
     return Obx(() {
       // Acessar diretamente as variáveis observáveis para o GetX rastrear
       final _ = statsController.currentUnitIndex.value;
-      final __ = statsController.completedLessons.length;
+      final completedLessonsLen = statsController.completedLessons.length;
       final lessonButtons = statsController.currentLessonButtons;
       
       return Stack(

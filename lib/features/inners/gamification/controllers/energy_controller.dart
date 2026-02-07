@@ -6,42 +6,31 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-/// Controller de energia
-///
-/// Gerencia:
-/// - Energia atual (máximo 5)
-/// - Regeneração automática (1 a cada 30 min)
-/// - Energia ilimitada temporária
+import '../../../../shared/utils/error_handler.dart';
+
 class EnergyController extends GetxController {
-  // Firebase instances
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados reativos - Energy
+  @override
+  void onInit() {
+    super.onInit();
+    // Carregar dados ao inicializar
+    loadEnergy();
+  }
+
   final currentEnergy = 5.obs;
 
-  // Estados internos (não reativos)
   DateTime _lastEnergyRegenAt = DateTime.now();
   DateTime? _unlimitedEnergyUntil;
 
-  // Computed properties
-  /// Verifica se energia ilimitada está ativa
   bool get hasUnlimitedEnergy =>
       _unlimitedEnergyUntil != null &&
       DateTime.now().isBefore(_unlimitedEnergyUntil!);
 
-  // Lifecycle
-  @override
-  void onInit() {
-    super.onInit();
-  }
-
-  // Métodos públicos
-  /// Carrega energia do Firestore (do curso ativo)
   Future<void> loadEnergy() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -53,26 +42,62 @@ class EnergyController extends GetxController {
         return;
       }
 
-      // 1. Buscar curso ativo
-      final coursesSnapshot = await _retryOperation(
-        () => _firestore
-            .collection('users')
-            .doc(userId)
-            .collection('courses')
-            .where('isActive', isEqualTo: true)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 30)),
-      );
+      String? courseId;
 
-      if (coursesSnapshot.docs.isEmpty) {
-        errorMessage.value = 'Nenhum curso ativo encontrado.';
-        return;
+      // Tentar 3 vezes com delay para dar tempo do Firestore indexar
+      for (int attempt = 1; attempt <= 3; attempt++) {
+        final coursesSnapshot = await _retryOperation(
+          () => _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .where('isActive', isEqualTo: true)
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 30)),
+        );
+
+        if (coursesSnapshot.docs.isNotEmpty) {
+          courseId = coursesSnapshot.docs.first.id;
+          break;
+        }
+
+        // Se não encontrou e não é a última tentativa, aguardar
+        if (attempt < 3) {
+          await Future.delayed(Duration(milliseconds: 500 * attempt));
+        }
       }
 
-      final courseId = coursesSnapshot.docs.first.id;
+      // Se ainda não encontrou curso ativo, buscar qualquer curso
+      if (courseId == null) {
+        final allCoursesSnapshot = await _retryOperation(
+          () => _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 30)),
+        );
 
-      // 2. Buscar stats do curso ativo
+        if (allCoursesSnapshot.docs.isNotEmpty) {
+          courseId = allCoursesSnapshot.docs.first.id;
+          
+          // Marcar este curso como ativo
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .doc(courseId)
+              .update({'isActive': true});
+        } else {
+          if (kDebugMode) {
+            debugPrint('⚠️ Nenhum curso encontrado para o usuário');
+          }
+          return;
+        }
+      }
+
       final doc = await _retryOperation(
         () => _firestore
             .collection('users')
@@ -86,7 +111,6 @@ class EnergyController extends GetxController {
       );
 
       if (!doc.exists) {
-        // Criar documento inicial
         await _createInitialEnergy(userId, courseId);
         return;
       }
@@ -102,7 +126,6 @@ class EnergyController extends GetxController {
         energyData['unlimitedEnergyUntil'],
       );
 
-      // Calcular regeneração após carregar
       _calculateEnergyRegeneration();
     } on TimeoutException {
       errorMessage.value =
@@ -116,7 +139,6 @@ class EnergyController extends GetxController {
     }
   }
 
-  /// Consome energia (chamado ao iniciar lição)
   Future<void> consumeEnergy(int amount) async {
     if (hasUnlimitedEnergy) return;
 
@@ -124,7 +146,6 @@ class EnergyController extends GetxController {
       currentEnergy.value -= amount;
       _lastEnergyRegenAt = DateTime.now();
 
-      // Salvar no Firestore
       final userId = _auth.currentUser?.uid;
       if (userId != null) {
         await _saveEnergy(userId);
@@ -132,50 +153,45 @@ class EnergyController extends GetxController {
     }
   }
 
-  /// Regenera energia baseado no tempo passado
   void regenerateEnergy() {
     _calculateEnergyRegeneration();
   }
 
-  /// Ativa energia ilimitada por X minutos
   Future<void> activateUnlimitedEnergy(int minutes) async {
     _unlimitedEnergyUntil = DateTime.now().add(Duration(minutes: minutes));
 
-    // Salvar no Firestore
     final userId = _auth.currentUser?.uid;
     if (userId != null) {
       await _saveEnergy(userId);
     }
   }
 
-  /// Recarrega energia completamente (compra na loja)
   Future<void> refillEnergy() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // Calcular regeneração para ter valor atualizado
-      _calculateEnergyRegeneration();
-
-      // Validar se já está com energia máxima
+      // CORREÇÃO: Verificar ANTES de calcular regeneração
+      // Isso evita que energia regenerada naturalmente bloqueie a compra
       if (currentEnergy.value >= 5) {
         errorMessage.value = 'Você já está com energia máxima!';
         return;
       }
 
-      // Obter userId
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
         errorMessage.value = 'Usuário não autenticado.';
         return;
       }
 
-      // Adicionar 5 energia (limitado ao máximo)
-      final newEnergy = currentEnergy.value + 5;
-      currentEnergy.value = newEnergy > 5 ? 5 : newEnergy;
+      // CORREÇÃO: Encher completamente (5) em vez de adicionar 5
+      // Comprar energia deve sempre encher até o máximo
+      currentEnergy.value = 5;
+      _lastEnergyRegenAt = DateTime.now();
 
-      // Salvar no Firestore
       await _saveEnergy(userId);
+      
+      print('⚡ Energia recarregada com sucesso! Energia atual: ${currentEnergy.value}');
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
       await loadEnergy();
@@ -188,14 +204,12 @@ class EnergyController extends GetxController {
     }
   }
 
-  /// Verifica se pode iniciar lição (tem energia suficiente)
   bool canStartLesson() {
     if (hasUnlimitedEnergy) return true;
     _calculateEnergyRegeneration();
     return currentEnergy.value > 0;
   }
 
-  /// Retorna tempo até próxima energia
   String getNextEnergyTime() {
     if (hasUnlimitedEnergy) return 'Ilimitada';
     if (currentEnergy.value >= 5) return 'Completa';
@@ -207,9 +221,46 @@ class EnergyController extends GetxController {
     return '$minutesUntilNext min';
   }
 
-  // Métodos privados
-  /// Cria energia inicial para novo curso
   Future<void> _createInitialEnergy(String userId, String courseId) async {
+    // CORREÇÃO: Verificar se documento já existe antes de criar
+    // Isso evita sobrescrever dados existentes ao reiniciar o app
+    final doc = await _retryOperation(
+      () => _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('stats')
+          .doc('gamification')
+          .get()
+          .timeout(const Duration(seconds: 30)),
+    );
+    
+    // Se já existe, apenas carregar (não sobrescrever)
+    if (doc.exists) {
+      final data = doc.data()!;
+      final energyData = data['energy'] as Map<String, dynamic>? ?? {};
+      
+      // Se tem dados de energy, carregar
+      if (energyData.isNotEmpty) {
+        currentEnergy.value = energyData['currentEnergy'] ?? 5;
+        _lastEnergyRegenAt = _timestampToDateTime(
+          energyData['lastEnergyRegenAt'],
+        );
+        _unlimitedEnergyUntil = _timestampToDateTime(
+          energyData['unlimitedEnergyUntil'],
+        );
+        
+        _calculateEnergyRegeneration();
+        
+        if (kDebugMode) {
+          debugPrint('✅ Energy carregada do Firestore: ${currentEnergy.value}/5');
+        }
+        return;
+      }
+    }
+    
+    // Se não existe ou está vazio, criar valores iniciais
     await _retryOperation(
       () => _firestore
           .collection('users')
@@ -230,12 +281,14 @@ class EnergyController extends GetxController {
           .timeout(const Duration(seconds: 30)),
     );
 
+    if (kDebugMode) {
+      debugPrint('🆕 Energy inicial criada no Firestore');
+    }
+    
     await loadEnergy();
   }
 
-  /// Salva energia no Firestore (no curso ativo)
   Future<void> _saveEnergy(String userId) async {
-    // 1. Buscar curso ativo
     final coursesSnapshot = await _firestore
         .collection('users')
         .doc(userId)
@@ -251,7 +304,6 @@ class EnergyController extends GetxController {
 
     final courseId = coursesSnapshot.docs.first.id;
 
-    // 2. Salvar energia no curso ativo
     await _retryOperation(
       () => _firestore
           .collection('users')
@@ -275,7 +327,6 @@ class EnergyController extends GetxController {
     );
   }
 
-  /// Calcula regeneração de energia baseado no tempo passado
   void _calculateEnergyRegeneration() {
     if (hasUnlimitedEnergy) return;
     if (currentEnergy.value >= 5) return;
@@ -283,15 +334,12 @@ class EnergyController extends GetxController {
     final now = DateTime.now();
     final minutesPassed = now.difference(_lastEnergyRegenAt).inMinutes;
 
-    // Calcular energia a adicionar: 1 energia a cada 30 minutos
     final energiesToAdd = minutesPassed ~/ 30;
 
     if (energiesToAdd == 0) return;
 
-    // Calcular nova energia (limitado ao máximo)
     final newEnergy = min(currentEnergy.value + energiesToAdd, 5);
 
-    // Atualizar timestamp pelo tempo de energia realmente regenerada
     final minutesConsumed = (newEnergy - currentEnergy.value) * 30;
     _lastEnergyRegenAt = _lastEnergyRegenAt.add(
       Duration(minutes: minutesConsumed),
@@ -300,7 +348,6 @@ class EnergyController extends GetxController {
     currentEnergy.value = newEnergy;
   }
 
-  /// Converte Timestamp do Firestore para DateTime
   DateTime _timestampToDateTime(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is Timestamp) return value.toDate();
@@ -308,34 +355,14 @@ class EnergyController extends GetxController {
     return DateTime.now();
   }
 
-  /// Converte DateTime para Timestamp do Firestore
   Timestamp _dateTimeToTimestamp(DateTime date) {
     return Timestamp.fromDate(date);
   }
 
-  /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Dados não encontrados.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
-  /// Retry logic com exponential backoff
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {
     int attempts = 0;
     const maxAttempts = 3;
@@ -354,11 +381,12 @@ class EnergyController extends GetxController {
     throw Exception('Operation failed after $maxAttempts attempts');
   }
 
-  // Test Helpers
+  @visibleForTesting
   void calculateEnergyRegenerationPublic() {
     _calculateEnergyRegeneration();
   }
 
+  @visibleForTesting
   void consumeEnergyPublic() {
     if (hasUnlimitedEnergy) return;
     if (currentEnergy.value > 0) {
@@ -367,14 +395,17 @@ class EnergyController extends GetxController {
     }
   }
 
+  @visibleForTesting
   void setLastEnergyRegenAt(DateTime date) {
     _lastEnergyRegenAt = date;
   }
 
+  @visibleForTesting
   void setUnlimitedEnergyUntil(DateTime? date) {
     _unlimitedEnergyUntil = date;
   }
 
+  @visibleForTesting
   DateTime getLastEnergyRegenAt() {
     return _lastEnergyRegenAt;
   }

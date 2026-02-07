@@ -1,6 +1,3 @@
-// Flutter
-import 'package:flutter/foundation.dart';
-
 // Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -114,7 +111,7 @@ class ProfileAuthController extends GetxController {
     }
   }
 
-  /// Deleta conta do usuário
+  /// Deleta conta do usuário (sem reautenticação)
   Future<void> deleteAccount() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -127,9 +124,6 @@ class ProfileAuthController extends GetxController {
       }
 
       final userId = user.uid;
-
-      // Reautenticar antes de deletar
-      await _reauthenticateForDeletion();
 
       // Deletar subcoleções do Firestore
       await _deleteUserSubcollections(userId);
@@ -149,7 +143,29 @@ class ProfileAuthController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleFirebaseAuthError(e);
+      // Se o erro for requires-recent-login, fazer logout e ir para auth
+      // O usuário já confirmou duas vezes, não precisa reautenticar
+      if (e.code == 'requires-recent-login') {
+        try {
+          // Fazer logout
+          await _auth.signOut();
+          
+          // Navegar para auth
+          Get.offAllNamed('/auth');
+          
+          Get.snackbar(
+            'Atenção',
+            'Por segurança, faça login novamente para concluir a exclusão da conta.',
+            snackPosition: SnackPosition.BOTTOM,
+            duration: const Duration(seconds: 4),
+          );
+        } catch (_) {
+          // Se falhar, apenas navegar para auth
+          Get.offAllNamed('/auth');
+        }
+      } else {
+        errorMessage.value = _handleFirebaseAuthError(e);
+      }
     } catch (e) {
       errorMessage.value = 'Erro ao deletar conta. Tente novamente.';
     } finally {
@@ -173,9 +189,6 @@ class ProfileAuthController extends GetxController {
       // Deletar courses com suas subcoleções
       await _deleteCoursesWithSubcollections(userId);
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Erro ao deletar subcoleções: $e');
-      }
     }
   }
 
@@ -195,17 +208,15 @@ class ProfileAuthController extends GetxController {
         await _deleteCourseSubcollection(userId, courseId, 'sections');
         await _deleteCourseSubcollection(userId, courseId, 'lessons');
         await _deleteCourseSubcollection(userId, courseId, 'exercises');
+        await _deleteCourseSubcollection(userId, courseId, 'progress');
 
-        // Deletar stats do curso
+        // Deletar stats do curso (com todas as subcoleções)
         await _deleteCourseStatsSubcollection(userId, courseId);
 
         // Deletar documento do curso
         await courseDoc.reference.delete();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Erro ao deletar courses: $e');
-      }
     }
   }
 
@@ -228,13 +239,10 @@ class ProfileAuthController extends GetxController {
         await doc.reference.delete();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Erro ao deletar $subcollectionName do curso: $e');
-      }
     }
   }
 
-  /// Deleta stats de um curso
+  /// Deleta stats de um curso (incluindo dailyHistory/days e gamification/history)
   Future<void> _deleteCourseStatsSubcollection(
     String userId,
     String courseId,
@@ -249,18 +257,22 @@ class ProfileAuthController extends GetxController {
           .get();
 
       for (final statsDoc in statsSnapshot.docs) {
-        // Deletar subcoleções de stats (se houver)
+        // Deletar subcoleção 'days' (se existir)
         final daysSnapshot = await statsDoc.reference.collection('days').get();
         for (final dayDoc in daysSnapshot.docs) {
           await dayDoc.reference.delete();
         }
 
+        // Deletar subcoleção 'history' (se existir - para gamification)
+        final historySnapshot = await statsDoc.reference.collection('history').get();
+        for (final historyDoc in historySnapshot.docs) {
+          await historyDoc.reference.delete();
+        }
+
+        // Deletar documento de stats
         await statsDoc.reference.delete();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Erro ao deletar stats do curso: $e');
-      }
     }
   }
 
@@ -280,9 +292,6 @@ class ProfileAuthController extends GetxController {
         await doc.reference.delete();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Erro ao deletar $subcollectionName: $e');
-      }
     }
   }
 
@@ -305,40 +314,10 @@ class ProfileAuthController extends GetxController {
         await statsDoc.reference.delete();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Erro ao deletar stats: $e');
-      }
     }
   }
 
-  /// Reautentica usuário antes de deletar conta
-  Future<void> _reauthenticateForDeletion() async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('Usuário não autenticado');
-    }
-
-    // Se usuário tem email, pedir senha
-    if (user.email != null) {
-      // TODO: Implementar modal para pedir senha
-      // Por enquanto, assumir que usuário já está autenticado recentemente
-      return;
-    }
-
-    // Se usuário tem apenas provedores sociais, reautenticar com provedor
-    for (final providerData in user.providerData) {
-      if (providerData.providerId == 'google.com') {
-        // TODO: Implementar reautenticação com Google
-        return;
-      }
-      if (providerData.providerId == 'facebook.com') {
-        // TODO: Implementar reautenticação com Facebook
-        return;
-      }
-    }
-  }
-
-  // Handlers de erro
+  // Validadores
 
   /// Valida senha atual
   String? validateCurrentPassword(String? value) {

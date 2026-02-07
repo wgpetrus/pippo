@@ -6,21 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/mocks/leaderboard_mocks.dart';
+import '../../../../shared/utils/error_handler.dart';
 
-/// Controller para gerenciar o sistema de ranking/leaderboard
-///
-/// Responsável por:
-/// - Carregar dados do leaderboard do Firestore
-/// - Calcular rankings e zonas (promoção/seguro/rebaixamento)
-/// - Gerenciar status do usuário (emoji)
-/// - Calcular recompensas baseadas no rank
-/// - Gerenciar mudanças de liga
 class LeaderboardController extends GetxController {
-  // Estados obrigatórios (padrão da empresa)
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados específicos do leaderboard
   final leaderboardData = <Map<String, dynamic>>[].obs; // 30 users
   final currentUserRank = 0.obs;
   final currentLeague = 'bronze'.obs;
@@ -30,50 +21,44 @@ class LeaderboardController extends GetxController {
   final weekStartDate = Rx<DateTime?>(null);
   final weekEndDate = Rx<DateTime?>(null);
 
-  // Firebase instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
-  // Métodos públicos
+  LeaderboardController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Carrega dados do leaderboard do Firestore
   Future<void> loadLeaderboardData() async {
     isLoading.value = true;
     errorMessage.value = '';
 
-    // 1. Verificar autenticação (capturar erros de inicialização do Firebase)
     User? user;
     try {
-      // Tentar acessar currentUser - pode falhar em ambiente de teste
       user = _auth.currentUser;
     } on PlatformException catch (e) {
-      // Firebase Auth não disponível (ambiente de teste sem mock) - usar mocks
       if (e.code == 'channel-error' || e.message?.contains('Unable to establish connection') == true) {
         _loadMockData();
         isLoading.value = false;
         return;
       }
-      // Outros erros de plataforma também devem usar mocks
       _loadMockData();
       isLoading.value = false;
       return;
     } catch (e) {
-      // Firebase não inicializado (ambiente de teste) - usar mocks
+      _loadMockData();
+      isLoading.value = false;
+      return;
+    }
+
+    if (user == null) {
       _loadMockData();
       isLoading.value = false;
       return;
     }
 
     try {
-      
-      if (user == null) {
-        throw FirebaseAuthException(
-          code: 'unauthenticated',
-          message: 'Usuário não autenticado',
-        );
-      }
-
-      // 2. Buscar dados do usuário para obter o groupId
       final userDoc = await _firestore
           .collection('users')
           .doc(user.uid)
@@ -90,18 +75,16 @@ class LeaderboardController extends GetxController {
       final userData = userDoc.data();
       final groupId = userData?['stats']?['gamification']?['leaderboardGroupId'] as String?;
       
-      // Se usuário não tem grupo, mostrar lista vazia (aguardando formação de grupo)
       if (groupId == null || groupId.isEmpty) {
         leaderboardData.value = [];
         daysRemaining.value = _calculateDaysRemaining();
         weekStartDate.value = _getWeekStartDate();
         weekEndDate.value = _getWeekEndDate();
         currentLeague.value = userData?['stats']?['gamification']?['currentLeague'] ?? 'bronze';
-        isLoading.value = false; // ✅ Marcar como não loading
+        isLoading.value = false;
         return;
       }
 
-      // 3. Buscar dados do grupo
       final groupDoc = await _firestore
           .collection('leaderboardGroups')
           .doc(groupId)
@@ -118,7 +101,6 @@ class LeaderboardController extends GetxController {
       final groupData = groupDoc.data();
       final memberIds = List<String>.from(groupData?['memberIds'] ?? []);
 
-      // 4. Buscar dados de cada membro do grupo
       final memberDataList = <Map<String, dynamic>>[];
       
       for (final memberId in memberIds) {
@@ -142,16 +124,13 @@ class LeaderboardController extends GetxController {
         }
       }
 
-      // 5. Ordenar por weeklyXP (descendente)
       memberDataList.sort((a, b) =>
           (b['weeklyXP'] as int).compareTo(a['weeklyXP'] as int));
 
-      // 6. Atribuir ranks (1-30)
       for (int i = 0; i < memberDataList.length; i++) {
         memberDataList[i]['rank'] = i + 1;
       }
 
-      // 7. Determinar zonas
       for (int i = 0; i < memberDataList.length; i++) {
         final rank = i + 1;
         if (rank >= 1 && rank <= 3) {
@@ -163,24 +142,19 @@ class LeaderboardController extends GetxController {
         }
       }
 
-      // 8. Calcular dias restantes na semana
       daysRemaining.value = _calculateDaysRemaining();
 
-      // 9. Calcular datas da semana
       weekStartDate.value = _getWeekStartDate();
       weekEndDate.value = _getWeekEndDate();
 
-      // 10. Encontrar rank do usuário atual
       final currentUserData = memberDataList.firstWhere(
         (member) => member['isCurrentUser'] == true,
         orElse: () => {'rank': 0},
       );
       currentUserRank.value = currentUserData['rank'] as int;
 
-      // 11. Atualizar liga atual
       currentLeague.value = userData?['stats']?['gamification']?['currentLeague'] ?? 'bronze';
 
-      // 12. Atualizar dados do leaderboard
       leaderboardData.value = memberDataList;
 
     } on FirebaseAuthException catch (e) {
@@ -193,28 +167,21 @@ class LeaderboardController extends GetxController {
       errorMessage.value = 'Erro ao carregar ranking. Verifique sua conexão e tente novamente.';
     } finally {
       isLoading.value = false;
-      
-      // Fallback para dados mockados APENAS se houver erro E lista vazia
-      // NÃO carregar mocks se usuário simplesmente não tem grupo ainda
+
       if (leaderboardData.isEmpty && errorMessage.value.isNotEmpty) {
         _loadMockData();
       }
     }
   }
 
-  // Métodos públicos
-
-  /// Calcula dias restantes até segunda-feira 00:00 (reset semanal)
   int getDaysRemainingInWeek() {
     return _calculateDaysRemaining();
   }
 
-  /// Retorna a data de início da semana (segunda-feira 00:00 mais recente)
   DateTime getWeekStartDate() {
     return _getWeekStartDate();
   }
 
-  /// Retorna a data de fim da semana (próxima segunda-feira 00:00)
   DateTime getWeekEndDate() {
     return _getWeekEndDate();
   }
@@ -222,27 +189,30 @@ class LeaderboardController extends GetxController {
   // Métodos privados - Helpers de data
 
   /// Calcula dias restantes até segunda-feira 00:00 (reset semanal)
+  /// CORREÇÃO: Lógica simplificada e correta para calcular dias até próxima segunda
   int _calculateDaysRemaining() {
     final now = DateTime.now();
+    
+    // Calcular dias até a próxima segunda-feira
+    // Se hoje é segunda (weekday = 1), próxima segunda é em 7 dias
+    // Se hoje é terça (weekday = 2), próxima segunda é em 6 dias
+    // Se hoje é domingo (weekday = 7), próxima segunda é em 1 dia
     final daysUntilMonday = (DateTime.monday - now.weekday + 7) % 7;
     
-    // Se já é segunda-feira, calcular até a próxima segunda
-    final nextMonday = daysUntilMonday == 0 
-        ? now.add(const Duration(days: 7))
-        : now.add(Duration(days: daysUntilMonday));
+    // Se daysUntilMonday == 0, significa que hoje é segunda-feira
+    // Neste caso, próxima segunda é em 7 dias
+    final daysToAdd = daysUntilMonday == 0 ? 7 : daysUntilMonday;
     
+    // Calcular a próxima segunda-feira às 00:00
+    final nextMonday = now.add(Duration(days: daysToAdd));
     final nextMondayMidnight = DateTime(nextMonday.year, nextMonday.month, nextMonday.day);
     
-    // Calcular diferença em dias
+    // Calcular diferença em dias (arredondado para cima)
     final difference = nextMondayMidnight.difference(now);
+    final daysRemaining = (difference.inHours / 24).ceil();
     
-    // Se a diferença é exatamente 7 dias (estamos em segunda 00:00), retornar 6
-    // porque não contamos o dia atual
-    if (difference.inDays == 7 && now.hour == 0 && now.minute == 0 && now.second == 0) {
-      return 6;
-    }
-    
-    return difference.inDays;
+    // Garantir que sempre retorna pelo menos 1 dia
+    return daysRemaining.clamp(1, 7);
   }
 
   /// Retorna a data de início da semana (segunda-feira 00:00 mais recente)
@@ -436,40 +406,7 @@ class LeaderboardController extends GetxController {
 
   /// Converte erros do Firestore em mensagens amigáveis
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Valor fora do intervalo permitido.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Argumento inválido.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   /// Carrega dados mockados como fallback

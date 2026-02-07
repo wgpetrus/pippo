@@ -344,7 +344,6 @@ final availableLanguages = [
   {'code': 'es', 'name': 'Spanish', 'flag': 'assets/flags/es.png'},
   {'code': 'fr', 'name': 'French', 'flag': 'assets/flags/fr.png'},
   {'code': 'de', 'name': 'German', 'flag': 'assets/flags/de.png'},
-  {'code': 'it', 'name': 'Italian', 'flag': 'assets/flags/it.png'},
   {'code': 'pt', 'name': 'Portuguese', 'flag': 'assets/flags/pt.png'},
 ];
 ```

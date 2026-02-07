@@ -41,7 +41,7 @@ void main() {
           reason: 'xpBoosterUntil should return the expired DateTime');
       
       // Computed property hasXpBooster deve retornar false
-      final hasXpBooster = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
+      final hasXpBooster = now.isBefore(xpBoosterUntil);
       expect(hasXpBooster, isFalse, 
           reason: 'hasXpBooster should be false when boost is expired');
     });
@@ -76,7 +76,7 @@ void main() {
           reason: 'gemMultiplierUntil should return the expired DateTime');
       
       // Computed property hasGemMultiplier deve retornar false
-      final hasGemMultiplier = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+      final hasGemMultiplier = now.isBefore(gemMultiplierUntil);
       expect(hasGemMultiplier, isFalse, 
           reason: 'hasGemMultiplier should be false when boost is expired');
     });
@@ -120,8 +120,8 @@ void main() {
           reason: 'gemMultiplierUntil should be set');
       
       // Verify computed properties
-      final hasXpBooster = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
-      final hasGemMultiplier = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+      final hasXpBooster = now.isBefore(xpBoosterUntil);
+      final hasGemMultiplier = now.isBefore(gemMultiplierUntil);
       expect(hasXpBooster, isTrue, 
           reason: 'hasXpBooster should be true');
       expect(hasGemMultiplier, isTrue, 

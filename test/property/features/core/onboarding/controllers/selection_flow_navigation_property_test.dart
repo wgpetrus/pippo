@@ -1,5 +1,4 @@
 // Dart SDK
-import 'dart:async';
 
 // Flutter
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Imports locais
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
+ 
 
 /// Feature: onboarding, Property 1: Selection Flow Navigation
 /// 

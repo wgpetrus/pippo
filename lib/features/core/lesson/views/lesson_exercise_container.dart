@@ -25,6 +25,8 @@ class LessonExerciseContainer extends StatelessWidget {
       // O dialog de confirmação é mostrado pelos botões internos
       onWillPop: () async => false,
       child: Obx(() {
+        print('🎯 LessonExerciseContainer: currentExerciseIndex=${flowController.currentExerciseIndex.value}, totalExercises=${flowController.currentExercises.length}');
+        
         // Se a lição falhou, navega para tela de falha
         if (progressController.lessonFailed.value) {
           // Usar addPostFrameCallback para navegar após o build

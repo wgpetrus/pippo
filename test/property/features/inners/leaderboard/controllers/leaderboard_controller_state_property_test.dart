@@ -45,12 +45,6 @@ class TestLeaderboardState {
     if (isLoading != true && isLoading != false) return false;
     if (isUpdatingStatus != true && isUpdatingStatus != false) return false;
 
-    // errorMessage deve ser string (pode ser vazia)
-    if (errorMessage == null) return false;
-
-    // leaderboardData deve ser lista (pode ser vazia)
-    if (leaderboardData == null) return false;
-
     // currentUserRank deve ser não-negativo
     if (currentUserRank < 0) return false;
 

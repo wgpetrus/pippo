@@ -1152,7 +1152,7 @@ void main() {
         final passwordError = validatePassword(password);
 
         // Propriedade 1: Email vazio deve retornar erro específico
-        if (email == null || email.trim().isEmpty) {
+        if (email.trim().isEmpty) {
           expect(emailError, equals('E-mail é obrigatório.'));
         }
         // Propriedade 2: Email inválido deve retornar erro específico
@@ -1165,7 +1165,7 @@ void main() {
         }
 
         // Propriedade 4: Senha vazia deve retornar erro específico
-        if (password == null || password.isEmpty) {
+        if (password.isEmpty) {
           expect(passwordError, equals('Senha é obrigatória.'));
         }
         // Propriedade 5: Senha curta deve retornar erro específico

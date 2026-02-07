@@ -354,7 +354,7 @@ void main() {
         expect(
           operations.last,
           contains('$nextLessonId'),
-          reason: 'Must unlock lesson ${nextLessonId} (current + 1)',
+          reason: 'Must unlock lesson $nextLessonId (current + 1)',
         );
       }
     });

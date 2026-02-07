@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
-import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/error_handler.dart';
+import '../../../../shared/utils/language_helper.dart';
 
 /// ProfileSocialController - Manages social features
 class ProfileSocialController extends GetxController {
@@ -27,20 +28,6 @@ class ProfileSocialController extends GetxController {
   final weeklyProgress = <Map<String, dynamic>>[].obs;
   final viewedUserWeeklyProgress = <Map<String, dynamic>>[].obs;
   final isLoadingProgress = false.obs;
-
-  // Dependencies
-  late final dynamic _dataController;
-
-  // Lifecycle
-  @override
-  void onInit() {
-    super.onInit();
-    try {
-      _dataController = Get.find();
-    } catch (e) {
-      // ProfileDataController not available
-    }
-  }
 
   // Métodos públicos
 
@@ -130,22 +117,36 @@ class ProfileSocialController extends GetxController {
 
       userData['coursesCount'] = coursesSnapshot.count ?? 0;
 
-      // Carregar curso primário do usuário
-      final primaryCourseSnapshot = await _firestore
+      final activeCourseSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
-          .where('isPrimary', isEqualTo: true)
+          .where('isActive', isEqualTo: true)
           .limit(1)
           .get();
 
-      if (primaryCourseSnapshot.docs.isNotEmpty) {
-        final courseData = primaryCourseSnapshot.docs.first.data();
+      if (activeCourseSnapshot.docs.isNotEmpty) {
+        final courseData = activeCourseSnapshot.docs.first.data();
         final languageCode = courseData['language'] as String;
         userData['primaryCourseLanguage'] = languageCode;
         userData['primaryCourseFlag'] = _getLanguageFlag(languageCode);
       } else {
-        userData['primaryCourseFlag'] = null;
+        final primaryCourseSnapshot = await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('courses')
+            .where('isPrimary', isEqualTo: true)
+            .limit(1)
+            .get();
+
+        if (primaryCourseSnapshot.docs.isNotEmpty) {
+          final courseData = primaryCourseSnapshot.docs.first.data();
+          final languageCode = courseData['language'] as String;
+          userData['primaryCourseLanguage'] = languageCode;
+          userData['primaryCourseFlag'] = _getLanguageFlag(languageCode);
+        } else {
+          userData['primaryCourseFlag'] = null;
+        }
       }
 
       viewedUserData.value = userData;
@@ -343,6 +344,22 @@ class ProfileSocialController extends GetxController {
         return;
       }
 
+      // Buscar curso ativo
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (coursesSnapshot.docs.isEmpty) {
+        // Sem curso ativo, retornar dados zerados
+        weeklyProgress.value = _getEmptyWeeklyProgress();
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
@@ -353,11 +370,14 @@ class ProfileSocialController extends GetxController {
         final dateStr =
             '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
+        // Caminho correto: users/{userId}/courses/{courseId}/stats/dailyHistory/days/{dateStr}
         final dayDoc = await _firestore
             .collection('users')
             .doc(userId)
+            .collection('courses')
+            .doc(courseId)
             .collection('stats')
-            .doc('daily')
+            .doc('dailyHistory')
             .collection('days')
             .doc(dateStr)
             .get();
@@ -373,7 +393,8 @@ class ProfileSocialController extends GetxController {
 
       weeklyProgress.value = progressList;
     } catch (e) {
-      // Silently fail
+      // Em caso de erro, retornar dados zerados
+      weeklyProgress.value = _getEmptyWeeklyProgress();
     } finally {
       isLoadingProgress.value = false;
     }
@@ -384,6 +405,22 @@ class ProfileSocialController extends GetxController {
     isLoadingProgress.value = true;
 
     try {
+      // Buscar curso ativo do usuário visualizado
+      final coursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (coursesSnapshot.docs.isEmpty) {
+        // Sem curso ativo, retornar dados zerados
+        viewedUserWeeklyProgress.value = _getEmptyWeeklyProgress();
+        return;
+      }
+
+      final courseId = coursesSnapshot.docs.first.id;
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
@@ -394,11 +431,14 @@ class ProfileSocialController extends GetxController {
         final dateStr =
             '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
+        // Caminho correto: users/{userId}/courses/{courseId}/stats/dailyHistory/days/{dateStr}
         final dayDoc = await _firestore
             .collection('users')
             .doc(userId)
+            .collection('courses')
+            .doc(courseId)
             .collection('stats')
-            .doc('daily')
+            .doc('dailyHistory')
             .collection('days')
             .doc(dateStr)
             .get();
@@ -414,7 +454,8 @@ class ProfileSocialController extends GetxController {
 
       viewedUserWeeklyProgress.value = progressList;
     } catch (e) {
-      // Silently fail
+      // Em caso de erro, retornar dados zerados
+      viewedUserWeeklyProgress.value = _getEmptyWeeklyProgress();
     } finally {
       isLoadingProgress.value = false;
     }
@@ -501,23 +542,44 @@ class ProfileSocialController extends GetxController {
     }
   }
 
+  /// Retorna progresso semanal vazio (7 dias com 0 XP)
+  List<Map<String, dynamic>> _getEmptyWeeklyProgress() {
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final progressList = <Map<String, dynamic>>[];
+
+    for (var i = 0; i < 7; i++) {
+      final date = startOfWeek.add(Duration(days: i));
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+      progressList.add({
+        'day': _getDayAbbreviation(date.weekday),
+        'xp': 0,
+        'date': dateStr,
+      });
+    }
+
+    return progressList;
+  }
+
   /// Retorna abreviação do dia da semana
   String _getDayAbbreviation(int weekday) {
     switch (weekday) {
       case 1:
-        return 'S';
+        return 'Seg'; // Segunda
       case 2:
-        return 'T';
+        return 'Ter'; // Terça
       case 3:
-        return 'Q';
+        return 'Qua'; // Quarta
       case 4:
-        return 'Q';
+        return 'Qui'; // Quinta
       case 5:
-        return 'S';
+        return 'Sex'; // Sexta
       case 6:
-        return 'S';
+        return 'Sáb'; // Sábado
       case 7:
-        return 'D';
+        return 'Dom'; // Domingo
       default:
         return '';
     }
@@ -525,65 +587,13 @@ class ProfileSocialController extends GetxController {
 
   /// Retorna bandeira do idioma
   String _getLanguageFlag(String code) {
-    switch (code.toLowerCase()) {
-      case 'en':
-        return AppAssets.flagUsa;
-      case 'es':
-        return AppAssets.flagSpain;
-      case 'fr':
-        return AppAssets.flagFrance;
-      case 'de':
-        return AppAssets.flagGermany;
-      case 'pt':
-        return AppAssets.flagBrazil;
-      case 'zh':
-        return AppAssets.flagChina;
-      case 'ja':
-        return AppAssets.flagJapan;
-      case 'ar':
-        return AppAssets.flagSaudit;
-      default:
-        return AppAssets.flagUsa;
-    }
+    return LanguageHelper.getLanguageFlag(code.toLowerCase());
   }
 
   // Handlers de erro
 
   /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Valor fora do intervalo permitido.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Argumento inválido.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

@@ -15,10 +15,6 @@ class HomeNavigationController extends GetxController {
   final currentNavIndex = 0.obs;
 
   // Lifecycle
-  @override
-  void onInit() {
-    super.onInit();
-  }
 
   // Métodos públicos
 

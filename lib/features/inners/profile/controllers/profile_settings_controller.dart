@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/utils/error_handler.dart';
+
 /// ProfileSettingsController - Manages user settings
 ///
 /// Responsibility: Manage user settings (notifications, learning controls)
@@ -125,39 +127,6 @@ class ProfileSettingsController extends GetxController {
 
   /// Trata erros do Firestore com mensagens amigáveis em português
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Erro: valor fora do intervalo permitido. Verifique os dados.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado. Verifique os dados e tente novamente.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Erro: argumento inválido. Verifique os dados e tente novamente.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

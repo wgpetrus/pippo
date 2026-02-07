@@ -46,9 +46,6 @@ class LessonMocks {
     try {
       final firestore = FirebaseFirestore.instance;
       
-      print('🔍 Carregando progresso das seções para userId=$userId, courseId=$courseId');
-      print('  📍 Path: users/$userId/courses/$courseId/progress');
-      
       // Buscar progresso de todas as lições do curso
       final progressSnapshot = await firestore
           .collection('users')
@@ -58,21 +55,15 @@ class LessonMocks {
           .collection('progress')
           .get();
       
-      print('📊 Encontrados ${progressSnapshot.docs.length} documentos de progresso');
-      print('  📝 IDs dos documentos: ${progressSnapshot.docs.map((d) => d.id).toList()}');
-      
       // Criar mapa de progresso por lessonId
       final progressMap = <String, String>{};
       for (final doc in progressSnapshot.docs) {
         final status = doc.data()['status'] as String? ?? 'not_started';
         progressMap[doc.id] = status;
-        print('  📝 Lição ${doc.id}: $status');
       }
       
       // Calcular progresso de cada seção
       final sections = getSectionsForButton(buttonIndex);
-      
-      print('📋 Seções base carregadas: ${sections.length}');
       
       // Primeiro passo: calcular progresso e status base de cada seção
       for (int i = 0; i < sections.length; i++) {
@@ -83,19 +74,13 @@ class LessonMocks {
         // SEMPRE definir totalProgress baseado no tamanho do array de lições
         section['totalProgress'] = lessons.length;
         
-        print('🔍 Analisando seção ${section['id']} (índice $i) com ${lessons.length} lições: $lessons');
-        print('  📊 totalProgress definido: ${section['totalProgress']}');
-        
         for (final lessonId in lessons) {
           final lessonStatus = progressMap[lessonId] ?? 'not_started';
-          print('  📝 Lição $lessonId: $lessonStatus');
           
           if (lessonStatus == 'completed') {
             completedCount++;
           }
         }
-        
-        print('📈 Seção ${section['id']}: $completedCount/${section['totalProgress']} lições completadas');
         
         // Atualizar progresso da seção
         section['currentProgress'] = completedCount;
@@ -113,19 +98,12 @@ class LessonMocks {
           // Senão, começa locked (será desbloqueada no próximo passo se anterior completada)
           section['status'] = i == 0 ? 'not_started' : 'locked';
         }
-        
-        print('  ✅ Status calculado: ${section['status']}, progresso: ${section['currentProgress']}/${section['totalProgress']}');
       }
       
       // Segundo passo: desbloquear seções baseado na anterior
-      print('🔓 Desbloqueando seções baseado na anterior...');
       for (int i = 1; i < sections.length; i++) {
         final currentSection = sections[i];
         final previousSection = sections[i - 1];
-        
-        print('  🔍 Verificando seção ${currentSection['id']}:');
-        print('    Seção anterior (${previousSection['id']}): ${previousSection['status']}');
-        print('    Seção atual: ${currentSection['status']}');
         
         // Se a seção anterior foi completada, desbloquear a atual
         if (previousSection['status'] == 'completed') {
@@ -133,21 +111,11 @@ class LessonMocks {
             // Se não tem progresso, muda para not_started
             // Se tem progresso, já está in_progress do primeiro passo
             currentSection['status'] = 'not_started';
-            print('    ✅ Seção ${currentSection['id']} desbloqueada (anterior completada)');
           }
         }
-        
-        print('    📊 Status final seção ${currentSection['id']}: ${currentSection['status']} (${currentSection['currentProgress']}/${currentSection['totalProgress']})');
-      }
-      
-      print('✅ Seções carregadas com sucesso');
-      print('📦 RETORNANDO SEÇÕES:');
-      for (final section in sections) {
-        print('  - Seção ${section['id']}: ${section['currentProgress']}/${section['totalProgress']} (${section['status']})');
       }
       return sections;
     } catch (e) {
-      print('❌ Erro ao carregar progresso das seções: $e');
       // Fallback para seções estáticas
       return getSections();
     }
@@ -167,7 +135,7 @@ class LessonMocks {
         'status': 'in_progress',
         'currentProgress': 0,
         'lessons': [
-          '${baseLesson}',
+          '$baseLesson',
           '${baseLesson + 1}',
           '${baseLesson + 2}',
         ],
@@ -249,8 +217,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 1 - Saudações',
         'description': 'Aprenda saudações básicas',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': false,
         'exercises': [
           // Exercício 1: Image - Mostrar palavra "boy" e pedir para selecionar imagem
@@ -329,8 +297,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 2 - Animais',
         'description': 'Aprenda nomes de animais',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           // Exercício 1: Image - Mostrar palavra "dog" e pedir para selecionar imagem
@@ -409,8 +377,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 3 - Profissões',
         'description': 'Aprenda nomes de profissões',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           // Exercício 1: Image - Mostrar palavra "waiter" e pedir para selecionar imagem
@@ -491,8 +459,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 4 - Pessoas',
         'description': 'Aprenda mais sobre pessoas',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -549,8 +517,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 5 - Ações',
         'description': 'Aprenda verbos de ação',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -607,8 +575,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 6 - Revisão',
         'description': 'Revise tudo que aprendeu',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -667,8 +635,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 7 - Frases Complexas',
         'description': 'Aprenda frases mais complexas',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -725,8 +693,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 8 - Conversação',
         'description': 'Pratique conversação',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -783,8 +751,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 9 - Teste Final',
         'description': 'Teste final de conhecimento',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -843,8 +811,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 10 - Números',
         'description': 'Aprenda números básicos',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           {
@@ -903,8 +871,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 11 - Cores',
         'description': 'Aprenda nomes de cores',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           {
@@ -963,8 +931,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 12 - Comida',
         'description': 'Aprenda nomes de alimentos',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           {
@@ -1023,8 +991,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 13 - Família',
         'description': 'Aprenda membros da família',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -1083,8 +1051,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 14 - Casa',
         'description': 'Aprenda partes da casa',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -1143,8 +1111,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 15 - Tempo',
         'description': 'Aprenda sobre tempo',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -1203,8 +1171,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 16 - Revisão',
         'description': 'Revise tudo que aprendeu',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -1263,8 +1231,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 17 - Conversação',
         'description': 'Pratique conversação',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -1323,8 +1291,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 18 - Teste Final',
         'description': 'Teste final da unidade',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -1385,8 +1353,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 19 - Avançado 1',
         'description': 'Conteúdo avançado',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           {
@@ -1445,8 +1413,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 20 - Avançado 2',
         'description': 'Conteúdo avançado',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           {
@@ -1505,8 +1473,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 21 - Avançado 3',
         'description': 'Conteúdo avançado',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 50,
+        'gemsReward': 5,
         'isLocked': true,
         'exercises': [
           {
@@ -1565,8 +1533,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 22 - Revisão',
         'description': 'Revisão do conteúdo',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -1625,8 +1593,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 23 - Conversação',
         'description': 'Pratique conversação',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -1685,8 +1653,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 24 - Frases',
         'description': 'Construa frases',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 75,
+        'gemsReward': 7,
         'isLocked': true,
         'exercises': [
           {
@@ -1745,8 +1713,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 25 - Diálogos',
         'description': 'Pratique diálogos',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -1805,8 +1773,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 26 - Revisão Final',
         'description': 'Revisão final',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {
@@ -1865,8 +1833,8 @@ class LessonMocks {
         'courseId': 'mock_course_id',
         'title': 'Lição 27 - Teste Final',
         'description': 'Teste final da unidade',
-        'xpReward': 10,
-        'gemsReward': 1,
+        'xpReward': 100,
+        'gemsReward': 10,
         'isLocked': true,
         'exercises': [
           {

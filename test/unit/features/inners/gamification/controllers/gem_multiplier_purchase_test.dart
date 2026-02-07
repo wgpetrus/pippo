@@ -36,7 +36,7 @@ void main() {
         expect(totalSpent, equals(200), reason: 'Total gems spent should be 200');
 
         // Verify: hasGemMultiplier is true
-        final hasMultiplierAfter = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+        final hasMultiplierAfter = now.isBefore(gemMultiplierUntil);
         expect(hasMultiplierAfter, isTrue, reason: 'hasGemMultiplier should be true after purchase');
 
         // Verify: Expiration time set to now + 1 hour
@@ -90,7 +90,7 @@ void main() {
         expect(canAfford, isTrue, reason: 'User should have sufficient gems');
 
         // Validate: Multiplier is already active (idempotency check)
-        final hasActiveMultiplier = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+        final hasActiveMultiplier = now.isBefore(gemMultiplierUntil);
         expect(hasActiveMultiplier, isTrue, reason: 'User should have active multiplier');
 
         // Verify: Error message should indicate multiplier already active
@@ -141,7 +141,7 @@ void main() {
         final gemMultiplierUntil = now.subtract(const Duration(minutes: 1)); // Expired
 
         // Verify: hasGemMultiplier returns false after expiration
-        final hasMultiplier = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+        final hasMultiplier = now.isBefore(gemMultiplierUntil);
         expect(hasMultiplier, isFalse, 
             reason: 'hasGemMultiplier should return false after expiration');
       });
@@ -152,7 +152,7 @@ void main() {
         final gemMultiplierUntil = now.add(const Duration(minutes: 30)); // Still active
 
         // Verify: hasGemMultiplier returns true before expiration
-        final hasMultiplier = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+        final hasMultiplier = now.isBefore(gemMultiplierUntil);
         expect(hasMultiplier, isTrue, 
             reason: 'hasGemMultiplier should return true before expiration');
       });
@@ -301,7 +301,7 @@ void main() {
         }
 
         // This should not be reached
-        final hasActiveMultiplier = gemMultiplierUntil != null && now.isBefore(gemMultiplierUntil);
+        final hasActiveMultiplier = now.isBefore(gemMultiplierUntil);
         expect(hasActiveMultiplier, isTrue); // This line should not execute
       });
     });

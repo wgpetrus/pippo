@@ -125,12 +125,30 @@ class EnergyModal extends StatelessWidget {
                 onPressed: energyController.isLoading.value || gemsController.gems.value < 100
                     ? null
                     : () async {
-                        // Purchase via shop controller
-                        // This will be handled by ShopController
-                        await energyController.refillEnergy();
+                        // CORREÇÃO: Ordem correta - gastar gems ANTES de recarregar
+                        // 1. Verificar se tem gems suficientes
+                        if (gemsController.gems.value < 100) {
+                          Get.snackbar(
+                            'Gems Insuficientes',
+                            'Você precisa de 100 gems para recarregar energia.',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppTheme.red,
+                            colorText: AppTheme.white,
+                            margin: const EdgeInsets.all(16),
+                          );
+                          return;
+                        }
+                        
+                        // 2. Gastar gems primeiro
                         await gemsController.spendGems(100);
                         
-                        // Feedback visual
+                        // 3. Recarregar energia
+                        await energyController.refillEnergy();
+                        
+                        // 4. Recarregar energia do controller para atualizar UI
+                        await energyController.loadEnergy();
+                        
+                        // 5. Feedback visual
                         if (energyController.errorMessage.value.isNotEmpty) {
                           Get.snackbar(
                             'Erro',
@@ -149,6 +167,9 @@ class EnergyModal extends StatelessWidget {
                             colorText: AppTheme.white,
                             margin: const EdgeInsets.all(16),
                           );
+                          
+                          // Fechar modal após sucesso
+                          Navigator.of(context).pop();
                         }
                       },
                 prefixIcon: Image.asset(AppAssets.appbarRay, width: 24, height: 24),

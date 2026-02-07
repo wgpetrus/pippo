@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/utils/app_assets.dart';
@@ -208,6 +207,10 @@ class HomeStatsController extends GetxController {
     // Stats são carregados pelos controllers de gamificação
     // Este método existe para compatibilidade
   }
+
+  void loadActiveCourse() {
+    _loadActiveCourse();
+  }
   
   /// Recarrega stats (sincroniza com gamificação)
   void refreshStats() {
@@ -243,9 +246,7 @@ class HomeStatsController extends GetxController {
       Get.lazyPut(() => LessonRewardsController());
       Get.lazyPut(() => LessonFlowController());
     }
-    
-    debugPrint('🎯 onStartTap: buttonIndex=$buttonIndex');
-    
+
     // Navegar para as seções do botão clicado
     Get.to(() => SectionsPage(
       courseName: activeCourseName.value.isEmpty ? 'French' : activeCourseName.value,
@@ -264,7 +265,6 @@ class HomeStatsController extends GetxController {
   
   /// Troca o curso ativo
   Future<void> switchActiveCourse(String newCourseId) async {
-    debugPrint('🔄 switchActiveCourse() INICIADO: $newCourseId');
     isLoading.value = true;
     errorMessage.value = '';
     
@@ -272,13 +272,11 @@ class HomeStatsController extends GetxController {
       final userId = _auth.currentUser?.uid;
       if (userId == null) {
         errorMessage.value = 'Usuário não autenticado.';
-        debugPrint('  ❌ Usuário não autenticado');
         return;
       }
       
       // Não trocar se já é o curso ativo
       if (activeCourseId.value == newCourseId) {
-        debugPrint('  ⚠️ Curso já está ativo');
         return;
       }
       
@@ -293,7 +291,6 @@ class HomeStatsController extends GetxController {
             .doc(activeCourseId.value);
         
         batch.update(currentCourseRef, {'isActive': false});
-        debugPrint('  📝 Desativando curso atual: ${activeCourseId.value}');
       }
       
       // Ativar novo curso
@@ -304,46 +301,38 @@ class HomeStatsController extends GetxController {
           .doc(newCourseId);
       
       batch.update(newCourseRef, {'isActive': true});
-      debugPrint('  📝 Ativando novo curso: $newCourseId');
       
       await batch.commit();
-      debugPrint('  ✅ Batch commit realizado');
       
       // Recarregar curso ativo e progresso
       await _loadActiveCourse();
       await _loadLessonProgress();
       
       // Recarregar stats do novo curso (gamificação)
-      debugPrint('  🔄 Recarregando stats do novo curso...');
       try {
         // Recarregar todos os controllers de gamificação
         if (_gemsController != null) {
-          await _gemsController!.loadGems();
+          await _gemsController.loadGems();
         }
         if (_xpLevelController != null) {
-          await _xpLevelController!.loadXpAndLevel();
+          await _xpLevelController.loadXpAndLevel();
         }
         if (_streakController != null) {
-          await _streakController!.loadStreak();
+          await _streakController.loadStreak();
         }
         if (_energyController != null) {
-          await _energyController!.loadEnergy();
+          await _energyController.loadEnergy();
         }
-        debugPrint('  ✅ Stats recarregados com sucesso');
       } catch (e) {
-        debugPrint('  ⚠️ Erro ao recarregar stats: $e');
       }
 
       // ATUALIZAR GRÁFICO DO PERFIL após trocar curso
-      debugPrint('  🔄 Atualizando gráfico do perfil...');
       try {
         if (Get.isRegistered<ProfileSocialController>()) {
           final profileSocialController = Get.find<ProfileSocialController>();
           await profileSocialController.loadWeeklyProgress();
-          debugPrint('  ✅ Gráfico do perfil atualizado com sucesso');
         }
       } catch (e) {
-        debugPrint('  ⚠️ ProfileSocialController não encontrado ou erro ao atualizar gráfico: $e');
       }
       
       Get.snackbar(
@@ -351,11 +340,8 @@ class HomeStatsController extends GetxController {
         'Curso alterado para ${activeCourseName.value}!',
         snackPosition: SnackPosition.BOTTOM,
       );
-      
-      debugPrint('✅ switchActiveCourse() CONCLUÍDO');
     } catch (e) {
       errorMessage.value = 'Erro ao trocar curso. Tente novamente.';
-      debugPrint('❌ Erro ao trocar curso: $e');
     } finally {
       isLoading.value = false;
     }
@@ -363,22 +349,14 @@ class HomeStatsController extends GetxController {
 
   /// Recarrega o progresso das lições (chamar após completar uma lição)
   Future<void> reloadProgress() async {
-    debugPrint('🔄 reloadProgress() CHAMADO');
-    debugPrint('  📊 currentUnitIndex ANTES: ${currentUnitIndex.value}');
-    
     await _loadActiveCourse();
     await _loadLessonProgress();
     _checkInProgressLesson();
-    
-    debugPrint('  📊 currentUnitIndex DEPOIS: ${currentUnitIndex.value}');
-    debugPrint('✅ reloadProgress() CONCLUÍDO');
   }
   
   /// Recarrega TUDO após adicionar novo curso
   /// Chamado pelo OnboardingController após addNewCourse()
   Future<void> reloadAfterAddCourse() async {
-    debugPrint('🔄 reloadAfterAddCourse() INICIADO');
-    
     try {
       // 1. Recarregar curso ativo
       await _loadActiveCourse();
@@ -391,20 +369,18 @@ class HomeStatsController extends GetxController {
       try {
         // Recarregar todos os controllers de gamificação
         if (_gemsController != null) {
-          await _gemsController!.loadGems();
+          await _gemsController.loadGems();
         }
         if (_xpLevelController != null) {
-          await _xpLevelController!.loadXpAndLevel();
+          await _xpLevelController.loadXpAndLevel();
         }
         if (_streakController != null) {
-          await _streakController!.loadStreak();
+          await _streakController.loadStreak();
         }
         if (_energyController != null) {
-          await _energyController!.loadEnergy();
+          await _energyController.loadEnergy();
         }
-        debugPrint('  ✅ Gamificação recarregada');
       } catch (e) {
-        debugPrint('  ⚠️ Erro ao recarregar gamificação: $e');
       }
       
       // 4. Recarregar profile (se estiver registrado)
@@ -412,32 +388,22 @@ class HomeStatsController extends GetxController {
         if (Get.isRegistered<ProfileDataController>()) {
           final profileDataController = Get.find<ProfileDataController>();
           await profileDataController.loadOwnProfile();
-          debugPrint('  ✅ Profile recarregado');
         }
       } catch (e) {
-        debugPrint('  ⚠️ Erro ao recarregar profile: $e');
       }
-      
-      debugPrint('✅ reloadAfterAddCourse() CONCLUÍDO');
     } catch (e) {
-      debugPrint('❌ Erro em reloadAfterAddCourse: $e');
       errorMessage.value = 'Erro ao recarregar dados. Tente novamente.';
     }
   }
   
   /// Carrega todos os cursos do usuário
   Future<void> loadUserCourses() async {
-    debugPrint('🔄 loadUserCourses() INICIADO');
-    
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null) {
-        debugPrint('  ❌ Usuário não autenticado');
+        errorMessage.value = 'Usuário não autenticado.';
         return;
       }
-      
-      debugPrint('  👤 UserId: $userId');
-      debugPrint('  📡 Buscando cursos em: users/$userId/courses');
       
       final coursesSnapshot = await _firestore
           .collection('users')
@@ -445,23 +411,9 @@ class HomeStatsController extends GetxController {
           .collection('courses')
           .get();
       
-      debugPrint('  📊 Snapshot recebido: ${coursesSnapshot.docs.length} documentos');
-      
       if (coursesSnapshot.docs.isEmpty) {
-        debugPrint('  ⚠️ Nenhum curso encontrado');
         userCourses.value = [];
         return;
-      }
-      
-      // Log de cada curso encontrado
-      for (var doc in coursesSnapshot.docs) {
-        final data = doc.data();
-        debugPrint('  📚 Curso encontrado:');
-        debugPrint('    - ID: ${doc.id}');
-        debugPrint('    - Idioma: ${data['language']}');
-        debugPrint('    - Nome: ${data['languageName']}');
-        debugPrint('    - Ativo: ${data['isActive']}');
-        debugPrint('    - Nível: ${data['level']}');
       }
       
       userCourses.value = coursesSnapshot.docs.map((doc) {
@@ -478,45 +430,16 @@ class HomeStatsController extends GetxController {
           'studyTime': data['studyTime'],
         };
       }).toList();
-      
-      debugPrint('  ✅ ${userCourses.length} cursos carregados e convertidos');
-      debugPrint('  📋 Lista final de cursos:');
-      for (var course in userCourses) {
-        debugPrint('    - ${course['languageName']} (${course['language']}): isActive=${course['isActive']}');
-      }
     } catch (e) {
-      debugPrint('  ❌ Erro ao carregar cursos: $e');
-      debugPrint('  📍 Stack trace: ${StackTrace.current}');
+      errorMessage.value = 'Erro ao carregar cursos. Tente novamente.';
     } finally {
-      debugPrint('✅ loadUserCourses() CONCLUÍDO');
     }
   }
 
-  /// Determina o status de um botão de lição baseado no progresso
-  /// 
-  /// ESTRUTURA CORRETA:
-  /// - Cada BOTÃO = 1 UNIDADE COMPLETA = 9 lições (3 seções × 3 lições)
-  /// - Botão 1 (lesson_1) = lições 1-9
-  /// - Botão 2 (lesson_2) = lições 10-18
-  /// - Botão 3 (lesson_3) = lições 19-27
-  /// - Botões 4-5 = placeholders (não implementados ainda)
-  /// 
-  /// O currentUnitIndex apenas controla qual HEADER é exibido, NÃO quais botões são visíveis.
-  /// Todos os 5 botões são SEMPRE visíveis, apenas habilitam/desabilitam baseado no progresso.
   LessonStatus getLessonStatus(String lessonId, int lessonIndex) {
-    debugPrint('🔍 getLessonStatus: lessonId=$lessonId, lessonIndex=$lessonIndex');
-    debugPrint('  📊 completedLessons: ${completedLessons.join(", ")}');
-    
-    // Cada botão representa 9 lições
-    // Botão 0 (lesson_1) = lições 1-9
-    // Botão 1 (lesson_2) = lições 10-18
-    // Botão 2 (lesson_3) = lições 19-27
-    // etc.
     const lessonsPerButton = 9;
     final firstLessonOfButton = (lessonIndex * lessonsPerButton) + 1;
     final lastLessonOfButton = firstLessonOfButton + lessonsPerButton - 1;
-    
-    debugPrint('  📋 Botão $lessonIndex ($lessonId): lições $firstLessonOfButton-$lastLessonOfButton');
     
     // Verificar se TODAS as 9 lições deste botão foram completadas
     int completedCount = 0;
@@ -528,18 +451,13 @@ class HomeStatsController extends GetxController {
     
     final allLessonsCompleted = completedCount == lessonsPerButton;
     
-    debugPrint('  ✅ Lições completadas: $completedCount/$lessonsPerButton');
-    debugPrint('  ✅ Todas lições completadas: $allLessonsCompleted');
-    
     // Se todas as 9 lições foram completadas, botão está COMPLETED
     if (allLessonsCompleted) {
-      debugPrint('  → Status: COMPLETED (todas $lessonsPerButton lições completadas)');
       return LessonStatus.completed;
     }
     
     // Primeiro botão (lesson_1) sempre disponível
     if (lessonIndex == 0) {
-      debugPrint('  → Status: AVAILABLE (primeiro botão do curso)');
       return LessonStatus.available;
     }
     
@@ -547,9 +465,6 @@ class HomeStatsController extends GetxController {
     final previousButtonIndex = lessonIndex - 1;
     final prevFirstLesson = (previousButtonIndex * lessonsPerButton) + 1;
     final prevLastLesson = prevFirstLesson + lessonsPerButton - 1;
-    
-    debugPrint('  🔍 Verificando botão anterior (index $previousButtonIndex)');
-    debugPrint('    📋 Botão anterior: lições $prevFirstLesson-$prevLastLesson');
     
     // Verificar se TODAS as 9 lições do botão anterior foram completadas
     int prevCompletedCount = 0;
@@ -561,17 +476,12 @@ class HomeStatsController extends GetxController {
     
     final prevAllCompleted = prevCompletedCount == lessonsPerButton;
     
-    debugPrint('    ✅ Lições completadas do botão anterior: $prevCompletedCount/$lessonsPerButton');
-    debugPrint('    ✅ Botão anterior completado: $prevAllCompleted');
-    
     // Se o botão anterior foi completado, este botão está AVAILABLE
     if (prevAllCompleted) {
-      debugPrint('  → Status: AVAILABLE (botão anterior completado)');
       return LessonStatus.available;
     }
     
     // Caso contrário, está LOCKED
-    debugPrint('  → Status: LOCKED (botão anterior não completado)');
     return LessonStatus.locked;
   }
 
@@ -584,11 +494,8 @@ class HomeStatsController extends GetxController {
     const lessonsPerButton = 9;
     final currentButtonIndex = completedCount ~/ lessonsPerButton;
     
-    debugPrint('🎯 getTooltipText: lessonIndex=$lessonIndex, completedCount=$completedCount, currentButtonIndex=$currentButtonIndex');
-    
     // Apenas o botão da unidade atual pode ter tooltip
     if (lessonIndex != currentButtonIndex) {
-      debugPrint('  ❌ Não é o botão atual');
       return null;
     }
     
@@ -604,22 +511,17 @@ class HomeStatsController extends GetxController {
       }
     }
     
-    debugPrint('  📊 Lições $firstLessonOfButton-$lastLessonOfButton: $completedCountInButton/$lessonsPerButton completadas');
-    
     // Se TODAS as lições foram completadas, não mostrar tooltip
     if (completedCountInButton == lessonsPerButton) {
-      debugPrint('  ✅ Todas completadas, sem tooltip');
       return null;
     }
     
     // Se tem alguma lição completada, mostrar "Continuar"
     if (completedCountInButton > 0) {
-      debugPrint('  ✅ Retornando: Continuar');
       return 'Continuar';
     }
     
     // Se não tem nenhuma lição completada, mostrar "Começar"
-    debugPrint('  ✅ Retornando: Começar');
     return 'Começar';
   }
 
@@ -641,17 +543,13 @@ class HomeStatsController extends GetxController {
   
   /// Carrega o curso ativo do usuário
   Future<void> _loadActiveCourse() async {
-    debugPrint('🔄 _loadActiveCourse() INICIADO');
     isLoadingCourses.value = true;
 
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null) {
-        debugPrint('  ❌ Usuário não autenticado');
         return;
       }
-      
-      debugPrint('  👤 UserId: $userId');
 
       // Buscar curso ativo
       final coursesSnapshot = await _firestore
@@ -663,7 +561,6 @@ class HomeStatsController extends GetxController {
           .get();
 
       if (coursesSnapshot.docs.isEmpty) {
-        debugPrint('  ⚠️ Nenhum curso ativo encontrado - usando valores padrão');
         // Definir valores padrão para evitar problemas na UI
         activeCourseId.value = '';
         activeCourseLanguage.value = 'fr';
@@ -685,32 +582,20 @@ class HomeStatsController extends GetxController {
       // Converter para int para exibição (1 = beginner, 2 = intermediate, 3 = advanced)
       final levelString = courseData['level'] as String? ?? 'beginner';
       activeCourseLevel.value = _levelStringToInt(levelString);
-      
-      debugPrint('  ✅ Curso ativo carregado:');
-      debugPrint('    ID: ${activeCourseId.value}');
-      debugPrint('    Idioma: ${activeCourseName.value} ($languageCode)');
-      debugPrint('    Bandeira: ${activeCourseFlag.value}');
-      debugPrint('    Nível: ${activeCourseLevel.value}');
     } catch (e) {
-      debugPrint('  ❌ Erro ao carregar curso ativo: $e');
     } finally {
       isLoadingCourses.value = false;
-      debugPrint('✅ _loadActiveCourse() CONCLUÍDO');
     }
   }
   
   Future<void> _loadLessonProgress() async {
-    debugPrint('🔄 _loadLessonProgress() INICIADO');
     isLoadingProgress.value = true;
 
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null) {
-        debugPrint('  ❌ Usuário não autenticado');
         return;
       }
-      
-      debugPrint('  👤 UserId: $userId');
 
       // Buscar curso ativo
       final coursesSnapshot = await _firestore
@@ -722,12 +607,10 @@ class HomeStatsController extends GetxController {
           .get();
 
       if (coursesSnapshot.docs.isEmpty) {
-        debugPrint('  ⚠️ Nenhum curso ativo encontrado');
         return;
       }
 
       final courseId = coursesSnapshot.docs.first.id;
-      debugPrint('  📚 Curso ativo: $courseId');
 
       // Buscar lições completadas
       final completedSnapshot = await _firestore
@@ -743,9 +626,6 @@ class HomeStatsController extends GetxController {
           .map((doc) => doc.data()['lessonId'] as String)
           .toList();
       
-      debugPrint('  ✅ Lições completadas: ${completedLessons.length}');
-      debugPrint('    IDs: ${completedLessons.join(", ")}');
-      
       // Buscar lições em progresso
       final inProgressSnapshot = await _firestore
           .collection('users')
@@ -760,66 +640,41 @@ class HomeStatsController extends GetxController {
           .map((doc) => doc.data()['lessonId'] as String)
           .toList();
       
-      debugPrint('  ✅ Lições em progresso: ${inProgressLessons.length}');
-      debugPrint('    IDs: ${inProgressLessons.join(", ")}');
-      
       // Determinar unidade atual baseada no progresso
       _updateCurrentUnit();
-      
-      debugPrint('  ✅ Unidade atual: ${currentUnitIndex.value}');
-      debugPrint('  ✅ Nível do curso: ${activeCourseLevel.value}');
     } catch (e) {
       // Silenciosamente falhar - não é crítico
-      debugPrint('  ❌ Erro ao carregar progresso: $e');
     } finally {
       isLoadingProgress.value = false;
-      debugPrint('✅ _loadLessonProgress() CONCLUÍDO');
     }
   }
   
   /// Verifica se há lição em progresso para mostrar "Continuar"
   void _checkInProgressLesson() {
-    debugPrint('🔍 _checkInProgressLesson() INICIADO');
-    debugPrint('  📊 inProgressLessons: ${inProgressLessons.length}');
-    debugPrint('    IDs: ${inProgressLessons.join(", ")}');
-    debugPrint('  📊 completedLessons: ${completedLessons.length}');
-    debugPrint('    IDs: ${completedLessons.join(", ")}');
-    
     // Mostrar "Continue" se:
     // 1. Há lições em progresso OU
     // 2. Há lições completadas (usuário já começou o curso)
     final hasProgress = inProgressLessons.isNotEmpty || completedLessons.isNotEmpty;
     showContinue.value = hasProgress;
-    
-    debugPrint('  ✅ showContinue: ${showContinue.value} (inProgress: ${inProgressLessons.isNotEmpty}, completed: ${completedLessons.isNotEmpty})');
-    debugPrint('✅ _checkInProgressLesson() CONCLUÍDO');
   }
   
   /// Atualiza a unidade atual baseada nas lições completadas
+  /// CORREÇÃO: Comentários agora refletem corretamente a lógica
   void _updateCurrentUnit() {
     // Contar quantas lições foram completadas
     final completedCount = completedLessons.length;
     
-    // Cada BOTÃO representa uma unidade completa (9 lições)
-    // 0-8 completadas = Botão 1 ativo (Unidade 1)
-    // 9-17 completadas = Botão 2 ativo (Unidade 2)
-    // 18-26 completadas = Botão 3 ativo (Unidade 3)
+    // Cada BOTÃO tem 9 lições
+    // 0-8 completadas = Trabalhando no Botão 1 (index 0)
+    // 9-17 completadas = Trabalhando no Botão 2 (index 1)
+    // 18-26 completadas = Trabalhando no Botão 3 (index 2)
     const lessonsPerButton = 9;
     
-    // Calcular qual botão está ativo (em qual unidade o usuário está trabalhando)
-    // Se completou 0-8 lições, está na unidade 0 (index 0)
-    // Se completou 9-17 lições, está na unidade 1 (index 1)
-    // Se completou 18-26 lições, está na unidade 2 (index 2)
+    // Calcular qual botão o usuário está trabalhando atualmente
+    // Divisão inteira: 0-8 → 0, 9-17 → 1, 18-26 → 2
     final activeButtonIndex = completedCount ~/ lessonsPerButton;
     
-    // O header da unidade deve mostrar a unidade em que o usuário está TRABALHANDO
-    // Se o usuário completou todas as lições de uma unidade, avança para a próxima
-    // Mas se está no meio de uma unidade, mostra essa unidade
+    // Limitar ao número de unidades disponíveis
     currentUnitIndex.value = activeButtonIndex.clamp(0, _units.length - 1);
-    
-    debugPrint('📊 _updateCurrentUnit:');
-    debugPrint('  ✅ Lições completadas: $completedCount');
-    debugPrint('  📐 Cálculo: $completedCount ~/ $lessonsPerButton = $activeButtonIndex');
-    debugPrint('  🎯 Header da unidade: ${currentUnitIndex.value + 1} (index ${currentUnitIndex.value})');
   }
 }

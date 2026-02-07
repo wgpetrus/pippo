@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+
+import '../../../../shared/utils/error_handler.dart';
 
 /// ProfileSearchController - Manages user search functionality
 ///
@@ -96,39 +97,6 @@ class ProfileSearchController extends GetxController {
 
   /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Valor fora do intervalo permitido.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Argumento inválido.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

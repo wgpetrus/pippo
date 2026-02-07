@@ -6,39 +6,34 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-/// Controller de gems (moeda virtual)
-///
-/// Gerencia:
-/// - Gems atuais
-/// - Total ganho e gasto
-/// - Gem multiplier temporário
+import '../../../../shared/utils/error_handler.dart';
+
 class GemsController extends GetxController {
-  // Firebase instances
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Estados reativos - Gems
+  @override
+  void onInit() {
+    super.onInit();
+    // Carregar dados ao inicializar
+    loadGems();
+  }
+
   final gems = 0.obs;
   final totalGemsEarned = 0.obs;
   final totalGemsSpent = 0.obs;
 
-  // Estados internos (não reativos)
   DateTime? _gemMultiplierUntil;
 
-  // Computed properties
-  /// Verifica se gem multiplier está ativo
   bool get hasGemMultiplier =>
       _gemMultiplierUntil != null &&
       DateTime.now().isBefore(_gemMultiplierUntil!);
 
-  /// Retorna o tempo de expiração do gem multiplier (null se não ativo)
   DateTime? get gemMultiplierUntil => _gemMultiplierUntil;
 
-  /// Retorna tempo restante do gem multiplier formatado
   String getGemMultiplierTimeRemaining() {
     if (_gemMultiplierUntil == null) return '';
 
@@ -54,14 +49,6 @@ class GemsController extends GetxController {
     }
   }
 
-  // Lifecycle
-  @override
-  void onInit() {
-    super.onInit();
-  }
-
-  // Métodos públicos
-  /// Carrega gems do Firestore (do curso ativo)
   Future<void> loadGems() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -73,26 +60,62 @@ class GemsController extends GetxController {
         return;
       }
 
-      // 1. Buscar curso ativo
-      final coursesSnapshot = await _retryOperation(
-        () => _firestore
-            .collection('users')
-            .doc(userId)
-            .collection('courses')
-            .where('isActive', isEqualTo: true)
-            .limit(1)
-            .get()
-            .timeout(const Duration(seconds: 30)),
-      );
+      String? courseId;
 
-      if (coursesSnapshot.docs.isEmpty) {
-        errorMessage.value = 'Nenhum curso ativo encontrado.';
-        return;
+      // Tentar 3 vezes com delay para dar tempo do Firestore indexar
+      for (int attempt = 1; attempt <= 3; attempt++) {
+        final coursesSnapshot = await _retryOperation(
+          () => _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .where('isActive', isEqualTo: true)
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 30)),
+        );
+
+        if (coursesSnapshot.docs.isNotEmpty) {
+          courseId = coursesSnapshot.docs.first.id;
+          break;
+        }
+
+        // Se não encontrou e não é a última tentativa, aguardar
+        if (attempt < 3) {
+          await Future.delayed(Duration(milliseconds: 500 * attempt));
+        }
       }
 
-      final courseId = coursesSnapshot.docs.first.id;
+      // Se ainda não encontrou curso ativo, buscar qualquer curso
+      if (courseId == null) {
+        final allCoursesSnapshot = await _retryOperation(
+          () => _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .limit(1)
+              .get()
+              .timeout(const Duration(seconds: 30)),
+        );
 
-      // 2. Buscar stats do curso ativo
+        if (allCoursesSnapshot.docs.isNotEmpty) {
+          courseId = allCoursesSnapshot.docs.first.id;
+          
+          // Marcar este curso como ativo
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('courses')
+              .doc(courseId)
+              .update({'isActive': true});
+        } else {
+          if (kDebugMode) {
+            debugPrint('⚠️ Nenhum curso encontrado para o usuário');
+          }
+          return;
+        }
+      }
+
       final doc = await _retryOperation(
         () => _firestore
             .collection('users')
@@ -106,7 +129,6 @@ class GemsController extends GetxController {
       );
 
       if (!doc.exists) {
-        // Criar documento inicial
         await _createInitialGems(userId, courseId);
         return;
       }
@@ -132,55 +154,137 @@ class GemsController extends GetxController {
     }
   }
 
-  /// Adiciona gems e atualiza gems e totalGemsEarned atomicamente
-  void addGems(int amount) {
-    // Validar gems não negativas
+  Future<void> addGems(int amount) async {
     if (amount < 0) {
       throw Exception('Cannot add negative gems');
     }
 
-    // Aplicar multiplicador se ativo (2×)
     final gemsToAdd = hasGemMultiplier ? amount * 2 : amount;
 
-    // Atualizar gems e totalGemsEarned atomicamente
     gems.value += gemsToAdd;
     totalGemsEarned.value += gemsToAdd;
+
+    // Salvar gems no Firestore
+    final userId = _auth.currentUser?.uid;
+    if (userId != null) {
+      try {
+        await _saveGems(userId);
+      } on TimeoutException {
+        errorMessage.value =
+            'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+        // Reverter valores locais em caso de erro
+        gems.value -= gemsToAdd;
+        totalGemsEarned.value -= gemsToAdd;
+      } on FirebaseException catch (e) {
+        errorMessage.value = _handleFirestoreError(e);
+        // Reverter valores locais em caso de erro
+        gems.value -= gemsToAdd;
+        totalGemsEarned.value -= gemsToAdd;
+      } catch (e) {
+        errorMessage.value = 'Erro ao salvar gems. Tente novamente.';
+        // Reverter valores locais em caso de erro
+        gems.value -= gemsToAdd;
+        totalGemsEarned.value -= gemsToAdd;
+      }
+    }
   }
 
-  /// Gasta gems (compras na loja)
   Future<void> spendGems(int amount) async {
-    // Validar gems suficientes
     if (gems.value < amount) {
       errorMessage.value =
           'Você precisa de ${amount - gems.value} gemas a mais.';
       return;
     }
 
-    // Deduzir gems
     gems.value -= amount;
     totalGemsSpent.value += amount;
 
-    // Salvar no Firestore
     final userId = _auth.currentUser?.uid;
     if (userId != null) {
-      await _saveGems(userId);
+      try {
+        await _saveGems(userId);
+      } on TimeoutException {
+        errorMessage.value =
+            'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+        // Reverter valores locais em caso de erro
+        gems.value += amount;
+        totalGemsSpent.value -= amount;
+      } on FirebaseException catch (e) {
+        errorMessage.value = _handleFirestoreError(e);
+        // Reverter valores locais em caso de erro
+        gems.value += amount;
+        totalGemsSpent.value -= amount;
+      } catch (e) {
+        errorMessage.value = 'Erro ao salvar gems. Tente novamente.';
+        // Reverter valores locais em caso de erro
+        gems.value += amount;
+        totalGemsSpent.value -= amount;
+      }
     }
   }
 
-  /// Ativa gem multiplier por X minutos
   Future<void> activateGemMultiplier(int minutes) async {
+    final previousMultiplier = _gemMultiplierUntil;
     _gemMultiplierUntil = DateTime.now().add(Duration(minutes: minutes));
 
-    // Salvar no Firestore
     final userId = _auth.currentUser?.uid;
     if (userId != null) {
-      await _saveGems(userId);
+      try {
+        await _saveGems(userId);
+      } on TimeoutException {
+        errorMessage.value =
+            'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+        // Reverter valor em caso de erro
+        _gemMultiplierUntil = previousMultiplier;
+      } on FirebaseException catch (e) {
+        errorMessage.value = _handleFirestoreError(e);
+        // Reverter valor em caso de erro
+        _gemMultiplierUntil = previousMultiplier;
+      } catch (e) {
+        errorMessage.value = 'Erro ao ativar multiplicador. Tente novamente.';
+        // Reverter valor em caso de erro
+        _gemMultiplierUntil = previousMultiplier;
+      }
     }
   }
 
-  // Métodos privados
-  /// Cria gems inicial para novo curso
   Future<void> _createInitialGems(String userId, String courseId) async {
+    // CORREÇÃO: Verificar se documento já existe antes de criar
+    // Isso evita sobrescrever dados existentes ao reiniciar o app
+    final doc = await _retryOperation(
+      () => _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('stats')
+          .doc('gamification')
+          .get()
+          .timeout(const Duration(seconds: 30)),
+    );
+    
+    // Se já existe, apenas carregar (não sobrescrever)
+    if (doc.exists) {
+      final data = doc.data()!;
+      final gemsData = data['gems'] as Map<String, dynamic>? ?? {};
+      
+      // Se tem dados de gems, carregar
+      if (gemsData.isNotEmpty) {
+        gems.value = gemsData['gems'] ?? 0;
+        totalGemsEarned.value = gemsData['totalGemsEarned'] ?? 0;
+        totalGemsSpent.value = gemsData['totalGemsSpent'] ?? 0;
+        _gemMultiplierUntil = _timestampToDateTime(
+          gemsData['gemMultiplierUntil'],
+        );
+        
+        if (kDebugMode) {
+          debugPrint('✅ Gems carregadas do Firestore: ${gems.value} gems');
+        }
+        return;
+      }
+    }
+    
+    // Se não existe ou está vazio, criar valores iniciais
     await _retryOperation(
       () => _firestore
           .collection('users')
@@ -201,12 +305,14 @@ class GemsController extends GetxController {
           .timeout(const Duration(seconds: 30)),
     );
 
+    if (kDebugMode) {
+      debugPrint('🆕 Gems iniciais criadas no Firestore');
+    }
+    
     await loadGems();
   }
 
-  /// Salva gems no Firestore (no curso ativo)
   Future<void> _saveGems(String userId) async {
-    // 1. Buscar curso ativo
     final coursesSnapshot = await _firestore
         .collection('users')
         .doc(userId)
@@ -222,7 +328,6 @@ class GemsController extends GetxController {
 
     final courseId = coursesSnapshot.docs.first.id;
 
-    // 2. Salvar gems no curso ativo
     await _retryOperation(
       () => _firestore
           .collection('users')
@@ -246,7 +351,6 @@ class GemsController extends GetxController {
     );
   }
 
-  /// Converte Timestamp do Firestore para DateTime
   DateTime? _timestampToDateTime(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
@@ -254,34 +358,14 @@ class GemsController extends GetxController {
     return null;
   }
 
-  /// Converte DateTime para Timestamp do Firestore
   Timestamp _dateTimeToTimestamp(DateTime date) {
     return Timestamp.fromDate(date);
   }
 
-  /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Dados não encontrados.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
-  /// Retry logic com exponential backoff
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {
     int attempts = 0;
     const maxAttempts = 3;
@@ -300,11 +384,12 @@ class GemsController extends GetxController {
     throw Exception('Operation failed after $maxAttempts attempts');
   }
 
-  // Test Helpers
+  @visibleForTesting
   void setGemMultiplierUntil(DateTime? date) {
     _gemMultiplierUntil = date;
   }
 
+  @visibleForTesting
   DateTime? getGemMultiplierUntil() {
     return _gemMultiplierUntil;
   }

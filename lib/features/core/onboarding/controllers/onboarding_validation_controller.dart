@@ -2,15 +2,13 @@
 import 'dart:async';
 import 'dart:math';
 
-// Flutter
-import 'package:flutter/foundation.dart';
-
 // Packages externos
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 // Imports locais
+import '../../../../shared/utils/error_handler.dart';
 import '../../../../shared/utils/validation_helper.dart';
 import '../navigation/onboarding_navigation.dart';
 import 'onboarding_data_controller.dart';
@@ -97,10 +95,6 @@ class OnboardingValidationController extends GetxController {
       _dataController.userName.value = sanitizedName;
       _dataController.userEmail.value = sanitizedEmail;
 
-      if (kDebugMode) {
-        debugPrint('🔍 Verificando se email já existe no Firestore');
-      }
-
       try {
         final emailQuery = await _firestore
             .collection('users')
@@ -133,18 +127,10 @@ class OnboardingValidationController extends GetxController {
       }
 
       await _dataController.retryWithBackoff(() async {
-        if (kDebugMode) {
-          debugPrint('📝 Tentando criar usuário');
-        }
-
         await _auth.createUserWithEmailAndPassword(
           email: sanitizedEmail,
           password: _dataController.tempPassword!,
         );
-
-        if (kDebugMode) {
-          debugPrint('✅ Usuário criado com sucesso');
-        }
       });
 
       _dataController.setUserPassword('');
@@ -171,13 +157,7 @@ class OnboardingValidationController extends GetxController {
       final user = _auth.currentUser;
 
       if (user != null) {
-        if (kDebugMode) {
-          debugPrint('🗑️ Deletando usuário criado: ${user.uid}');
-        }
         await user.delete();
-        if (kDebugMode) {
-          debugPrint('✅ Usuário deletado com sucesso');
-        }
       }
 
       _dataController.tempEmail = null;
@@ -187,17 +167,11 @@ class OnboardingValidationController extends GetxController {
       errorMessage.value = '';
       _dataController.showLoginOption.value = false;
       Get.back();
-    } on FirebaseAuthException catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Erro Firebase ao cancelar verificação: ${e.code}');
-      }
+    } on FirebaseAuthException catch (_) {
       _dataController.tempEmail = null;
       _dataController.setUserPassword('');
       Get.back();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Erro ao cancelar verificação: $e');
-      }
+    } catch (_) {
       _dataController.tempEmail = null;
       _dataController.setUserPassword('');
       Get.back();
@@ -231,12 +205,6 @@ class OnboardingValidationController extends GetxController {
 
       _dataController.tempEmail = _dataController.userEmail.value;
       _startResendTimer();
-
-      if (kDebugMode) {
-        debugPrint('🔓 DEBUG MODE: Código OTP salvo no Firestore');
-        debugPrint('📧 Email: ${_dataController.userEmail.value}');
-        debugPrint('🔑 Código: $code (copie do Firestore Console)');
-      }
 
       nav.goToVerifyCode();
     } on TimeoutException {
@@ -279,12 +247,6 @@ class OnboardingValidationController extends GetxController {
 
       _startResendTimer();
 
-      if (kDebugMode) {
-        debugPrint('🔓 DEBUG MODE: Novo código OTP salvo no Firestore');
-        debugPrint('📧 Email: ${_dataController.tempEmail}');
-        debugPrint('🔑 Código: $code (copie do Firestore Console)');
-      }
-
       Get.snackbar(
         'Código reenviado',
         'Um novo código foi enviado para seu e-mail.',
@@ -306,13 +268,6 @@ class OnboardingValidationController extends GetxController {
   /// Verifica código OTP com bypass em debug mode
   Future<void> verifyCode(String code) async {
     final sanitizedCode = code.trim();
-
-    if (kDebugMode && sanitizedCode == '00000') {
-      debugPrint('🔓 DEBUG MODE: Bypass OTP com código $sanitizedCode');
-      final flowController = Get.find<OnboardingFlowController>();
-      await flowController.finishOnboarding();
-      return;
-    }
 
     if (sanitizedCode.length != 5) {
       errorMessage.value = 'O código deve ter 5 dígitos.';
@@ -368,13 +323,8 @@ class OnboardingValidationController extends GetxController {
       _resendCountdownTimer?.cancel();
       resendTimer.value = 0;
       _dataController.tempEmail = null;
-
-      debugPrint('✅ verifyCode: Código verificado com sucesso. Chamando finishOnboarding...');
-
       final flowController = Get.find<OnboardingFlowController>();
       await flowController.finishOnboarding();
-
-      debugPrint('✅ verifyCode: finishOnboarding finalizado.');
     } on TimeoutException {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
@@ -391,21 +341,15 @@ class OnboardingValidationController extends GetxController {
     try {
       final querySnapshot = await _firestore
           .collection('users')
-          .where('username', isEqualTo: username)
+          .where('username', isEqualTo: username.toLowerCase())
           .limit(1)
-          .get()
-          .timeout(const Duration(seconds: 30));
+          .get();
 
       return querySnapshot.docs.isEmpty;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Erro ao verificar username: $e');
-      }
       return false;
     }
   }
-
-  // Métodos privados
 
   String _generateOTP() {
     final random = Random();
@@ -432,58 +376,10 @@ class OnboardingValidationController extends GetxController {
   // Handlers
 
   String _handleFirebaseAuthError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'email-already-in-use':
-        return 'Este e-mail já está sendo usado por outra conta.';
-      case 'invalid-email':
-        return 'Por favor, insira um e-mail válido.';
-      case 'operation-not-allowed':
-        return 'Operação não permitida no momento.';
-      case 'weak-password':
-        return 'A senha deve ter pelo menos 6 caracteres.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      default:
-        return 'Não foi possível criar sua conta. Tente novamente.';
-    }
+    return ErrorHandler.getRegisterErrorMessage(e);
   }
 
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Valor fora do intervalo permitido.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Argumento inválido.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

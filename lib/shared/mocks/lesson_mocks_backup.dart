@@ -41,9 +41,6 @@ class LessonMocks {
     try {
       final firestore = FirebaseFirestore.instance;
       
-      print('🔍 Carregando progresso das seções para userId=$userId, courseId=$courseId');
-      print('  📍 Path: users/$userId/courses/$courseId/progress');
-      
       // Buscar progresso de todas as lições do curso
       final progressSnapshot = await firestore
           .collection('users')
@@ -53,21 +50,15 @@ class LessonMocks {
           .collection('progress')
           .get();
       
-      print('📊 Encontrados ${progressSnapshot.docs.length} documentos de progresso');
-      print('  📝 IDs dos documentos: ${progressSnapshot.docs.map((d) => d.id).toList()}');
-      
       // Criar mapa de progresso por lessonId
       final progressMap = <String, String>{};
       for (final doc in progressSnapshot.docs) {
         final status = doc.data()['status'] as String? ?? 'not_started';
         progressMap[doc.id] = status;
-        print('  📝 Lição ${doc.id}: $status');
       }
       
       // Calcular progresso de cada seção
       final sections = getSections();
-      
-      print('📋 Seções base carregadas: ${sections.length}');
       
       // Primeiro passo: calcular progresso e status base de cada seção
       for (final section in sections) {
@@ -77,19 +68,13 @@ class LessonMocks {
         // SEMPRE definir totalProgress baseado no tamanho do array de lições
         section['totalProgress'] = lessons.length;
         
-        print('🔍 Analisando seção ${section['id']} com ${lessons.length} lições: $lessons');
-        print('  📊 totalProgress definido: ${section['totalProgress']}');
-        
         for (final lessonId in lessons) {
           final lessonStatus = progressMap[lessonId] ?? 'not_started';
-          print('  📝 Lição $lessonId: $lessonStatus');
           
           if (lessonStatus == 'completed') {
             completedCount++;
           }
         }
-        
-        print('📈 Seção ${section['id']}: $completedCount/${section['totalProgress']} lições completadas');
         
         // Atualizar progresso da seção
         section['currentProgress'] = completedCount;
@@ -107,19 +92,12 @@ class LessonMocks {
           // Senão, começa locked (será desbloqueada no próximo passo)
           section['status'] = section['id'] == '1' ? 'in_progress' : 'locked';
         }
-        
-        print('  ✅ Status calculado: ${section['status']}, progresso: ${section['currentProgress']}/${section['totalProgress']}');
       }
       
       // Segundo passo: desbloquear seções baseado na anterior
-      print('🔓 Desbloqueando seções baseado na anterior...');
       for (int i = 1; i < sections.length; i++) {
         final currentSection = sections[i];
         final previousSection = sections[i - 1];
-        
-        print('  🔍 Verificando seção ${currentSection['id']}:');
-        print('    Seção anterior (${previousSection['id']}): ${previousSection['status']}');
-        print('    Seção atual: ${currentSection['status']}');
         
         // Se a seção anterior foi completada, desbloquear a atual
         if (previousSection['status'] == 'completed') {
@@ -127,21 +105,11 @@ class LessonMocks {
             // Se não tem progresso, muda para not_started
             // Se tem progresso, já está in_progress do primeiro passo
             currentSection['status'] = 'not_started';
-            print('    ✅ Seção ${currentSection['id']} desbloqueada (anterior completada)');
           }
         }
-        
-        print('    📊 Status final seção ${currentSection['id']}: ${currentSection['status']} (${currentSection['currentProgress']}/${currentSection['totalProgress']})');
-      }
-      
-      print('✅ Seções carregadas com sucesso');
-      print('📦 RETORNANDO SEÇÕES:');
-      for (final section in sections) {
-        print('  - Seção ${section['id']}: ${section['currentProgress']}/${section['totalProgress']} (${section['status']})');
       }
       return sections;
     } catch (e) {
-      print('❌ Erro ao carregar progresso das seções: $e');
       // Fallback para seções estáticas
       return getSections();
     }

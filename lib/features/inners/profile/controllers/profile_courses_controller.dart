@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/error_handler.dart';
+import '../../../../shared/utils/language_helper.dart';
 
 /// ProfileCoursesController - Manages user courses
 ///
@@ -58,9 +58,11 @@ class ProfileCoursesController extends GetxController {
         courses.add({
           'id': doc.id,
           'language': languageCode,
-          'languageName': _getLanguageName(languageCode),
-          'flag': _getLanguageFlag(languageCode),
+          'languageName': LanguageHelper.getLanguageName(languageCode),
+          'flag': LanguageHelper.getLanguageFlag(languageCode),
+          'flagAsset': LanguageHelper.getLanguageFlag(languageCode),
           'isPrimary': courseData['isPrimary'] ?? false,
+          'isActive': courseData['isActive'] ?? true,
           'progress': courseData['progress'] ?? 0,
           'startedAt': courseData['startedAt'],
         });
@@ -211,93 +213,10 @@ class ProfileCoursesController extends GetxController {
     }
   }
 
-  // Métodos privados
-
-  /// Retorna nome do idioma
-  String _getLanguageName(String code) {
-    switch (code.toLowerCase()) {
-      case 'en':
-        return 'English';
-      case 'es':
-        return 'Spanish';
-      case 'fr':
-        return 'French';
-      case 'de':
-        return 'German';
-      case 'pt':
-        return 'Portuguese';
-      case 'zh':
-        return 'Chinese';
-      case 'ja':
-        return 'Japanese';
-      case 'ar':
-        return 'Arabic';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  /// Retorna bandeira do idioma
-  String _getLanguageFlag(String code) {
-    switch (code.toLowerCase()) {
-      case 'en':
-        return AppAssets.flagUsa;
-      case 'es':
-        return AppAssets.flagSpain;
-      case 'fr':
-        return AppAssets.flagFrance;
-      case 'de':
-        return AppAssets.flagGermany;
-      case 'pt':
-        return AppAssets.flagBrazil;
-      case 'zh':
-        return AppAssets.flagChina;
-      case 'ja':
-        return AppAssets.flagJapan;
-      case 'ar':
-        return AppAssets.flagSaudit;
-      default:
-        return AppAssets.flagUsa;
-    }
-  }
-
   // Handlers de erro
 
   /// Handler de erros do Firestore
   String _handleFirestoreError(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.';
-      case 'unavailable':
-        return 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
-      case 'deadline-exceeded':
-        return 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
-      case 'resource-exhausted':
-        return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-      case 'failed-precondition':
-        return 'Operação não permitida no estado atual. Tente novamente.';
-      case 'aborted':
-        return 'Operação cancelada. Tente novamente.';
-      case 'out-of-range':
-        return 'Valor fora do intervalo permitido.';
-      case 'unimplemented':
-        return 'Operação não implementada.';
-      case 'internal':
-        return 'Erro interno do servidor. Tente novamente em alguns instantes.';
-      case 'unauthenticated':
-        return 'Usuário não autenticado. Faça login novamente.';
-      case 'not-found':
-        return 'Recurso não encontrado.';
-      case 'already-exists':
-        return 'Recurso já existe.';
-      case 'cancelled':
-        return 'Operação cancelada.';
-      case 'data-loss':
-        return 'Erro de integridade de dados.';
-      case 'invalid-argument':
-        return 'Argumento inválido.';
-      default:
-        return 'Erro ao salvar dados. Verifique sua conexão e tente novamente.';
-    }
+    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

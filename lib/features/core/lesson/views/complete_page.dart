@@ -10,7 +10,6 @@ import '../../../inners/gamification/controllers/gems_controller.dart';
 import '../../../inners/gamification/controllers/xp_level_controller.dart';
 import '../../../inners/gamification/controllers/streak_controller.dart';
 import '../../../inners/gamification/controllers/energy_controller.dart';
-import '../controllers/lesson_flow_controller.dart';
 import '../controllers/lesson_progress_controller.dart';
 import '../controllers/lesson_rewards_controller.dart';
 
@@ -23,7 +22,6 @@ class CompletePage extends StatefulWidget {
 }
 
 class _CompletePageState extends State<CompletePage> {
-  late final LessonFlowController _flowController;
   late final LessonProgressController _progressController;
   late final LessonRewardsController _rewardsController;
   bool _rewardsClaimed = false;
@@ -31,7 +29,6 @@ class _CompletePageState extends State<CompletePage> {
   @override
   void initState() {
     super.initState();
-    _flowController = Get.find<LessonFlowController>();
     _progressController = Get.find<LessonProgressController>();
     _rewardsController = Get.find<LessonRewardsController>();
     

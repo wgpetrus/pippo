@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../inners/gamification/controllers/xp_level_controller.dart';
@@ -12,25 +11,20 @@ import 'lesson_progress_controller.dart';
 
 /// Controller para gerenciar recompensas (XP, gems, achievements)
 class LessonRewardsController extends GetxController {
-  // Firebase instances
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   
-  // Dependências
   late final XpLevelController _xpLevelController;
   late final GemsController _gemsController;
   late final LessonProgressController _progressController;
   late final LessonFlowController _flowController;
 
-  // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-  // Recompensas calculadas (para exibição na tela de conclusão)
   final calculatedXp = 0.obs;
   final calculatedGems = 0.obs;
 
-  // Lifecycle
   @override
   void onInit() {
     super.onInit();
@@ -44,9 +38,6 @@ class LessonRewardsController extends GetxController {
     }
   }
 
-  // Métodos públicos
-  
-  /// Calcula as recompensas da lição
   Future<void> calculateRewards() async {
     final totalXp = await _calculateTotalXP();
     final totalGems = _calculateTotalGems();
@@ -55,10 +46,7 @@ class LessonRewardsController extends GetxController {
     calculatedGems.value = totalGems;
   }
 
-  /// Aplica as recompensas e salva progresso
   Future<void> applyRewards() async {
-    debugPrint('🎯 applyRewards() INICIADO');
-    
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -67,73 +55,40 @@ class LessonRewardsController extends GetxController {
     
     while (retryCount < maxRetries) {
       try {
-        debugPrint('🔄 Tentativa ${retryCount + 1}/$maxRetries');
-        
-        // Step 1: Calcular recompensas
-        debugPrint('📝 Step 1: Calculando recompensas...');
         final totalXp = await _calculateTotalXP();
         final totalGems = _calculateTotalGems();
-        debugPrint('  ⭐ Total XP: $totalXp');
-        debugPrint('  💎 Total Gems: $totalGems');
         
-        // Armazenar valores calculados para exibição na UI
         calculatedXp.value = totalXp;
         calculatedGems.value = totalGems;
         
-        // Step 2: Distribuir XP (atomic operation via XpLevelController)
-        debugPrint('📝 Step 2: Distribuindo XP...');
         await _xpLevelController.addXp(totalXp);
-        debugPrint('  ✅ XP distribuído');
         
-        // Step 3: Adicionar gems (via GemsController)
-        debugPrint('📝 Step 3: Adicionando gems...');
         _gemsController.addGems(totalGems);
-        debugPrint('  ✅ Gems adicionadas');
         
-        // Step 4: Salvar gems no Firestore
-        debugPrint('📝 Step 4: Salvando gems no Firestore...');
         final userId = _auth.currentUser?.uid;
         if (userId != null) {
           await _gemsController.loadGems(); // Reload to ensure sync
         }
-        debugPrint('  ✅ Gems salvas');
-        
-        // Step 5: Verificar e executar level up (já feito automaticamente pelo XpLevelController.addXp)
-        debugPrint('📝 Step 5: Level up verificado automaticamente');
-        
-        // Step 6: Atualizar streak (apenas se primeira lição hoje)
-        debugPrint('📝 Step 6: Verificando streak...');
+
         final isFirstToday = await _isFirstLessonToday();
         if (isFirstToday) {
           await _updateStreak();
-          debugPrint('  ✅ Streak atualizado');
-        } else {
-          debugPrint('  ⏭️ Não é primeira lição hoje, streak não atualizado');
         }
         
-        // Step 7: Salvar progresso da lição
         final courseId = _flowController.currentLesson.value?['courseId'] as String? ?? '';
         final lessonId = _flowController.currentLesson.value?['id'] as String? ?? '';
         
-        debugPrint('📝 Step 7: Salvando progresso da lição...');
-        debugPrint('  📚 CourseId: $courseId');
-        debugPrint('  📖 LessonId: $lessonId');
-        
         if (courseId.isEmpty || lessonId.isEmpty) {
-          debugPrint('❌ ERRO: CourseId ou LessonId vazio!');
           throw Exception('CourseId ou LessonId não pode ser vazio');
         }
         
         await _updateLessonProgress(courseId, lessonId, totalXp, totalGems);
         
-        // Step 8: Atualizar histórico diário
         final timeSpent = _progressController.getElapsedTime();
         await _updateDailyHistory(totalXp, totalGems, timeSpent);
         
-        // Step 9: Atualizar desafios
         await _updateChallenges();
         
-        // Step 10: Integração com TreasureChallengesController (se disponível)
         try {
           if (Get.isRegistered<TreasureChallengesController>()) {
             final challengesController = Get.find<TreasureChallengesController>();
@@ -143,95 +98,105 @@ class LessonRewardsController extends GetxController {
               'correct_exercises', 
               _progressController.correctAnswers.value,
             );
-            
-            debugPrint('✅ Desafios atualizados: 1 lição, ${_progressController.correctAnswers.value} exercícios corretos');
           }
-        } catch (e) {
-          debugPrint('⚠️ Erro ao atualizar desafios: $e');
+        } catch (_) {
         }
         
-        // Step 11: Desbloquear próxima lição
         await _unlockNextLesson(courseId, lessonId);
         
-        // Step 12: Recarregar progresso das lições na home
         try {
           final homeStatsController = Get.find<HomeStatsController>();
           await homeStatsController.reloadProgress();
-        } catch (e) {
-          debugPrint('⚠️ HomeStatsController não encontrado para recarregar progresso: $e');
+        } catch (_) {
         }
-        
-        debugPrint('✅ applyRewards() CONCLUÍDO COM SUCESSO');
         break;
         
-      } on FirebaseException catch (e) {
+      } on FirebaseException catch (_) {
         retryCount++;
-        debugPrint('❌ FirebaseException na tentativa $retryCount: ${e.code} - ${e.message}');
         
         if (retryCount >= maxRetries) {
-          debugPrint('❌ Todas as tentativas falharam');
           errorMessage.value = 'Não foi possível salvar seu progresso. Tentaremos novamente automaticamente.';
         } else {
           final delayMs = 500 * retryCount;
-          debugPrint('⏳ Aguardando ${delayMs}ms antes de tentar novamente...');
           await Future.delayed(Duration(milliseconds: delayMs));
         }
-      } catch (e) {
+      } catch (_) {
         retryCount++;
-        debugPrint('❌ Exception na tentativa $retryCount: $e');
         
         if (retryCount >= maxRetries) {
-          debugPrint('❌ Todas as tentativas falharam');
           errorMessage.value = 'Não foi possível salvar seu progresso. Tentaremos novamente automaticamente.';
         } else {
           final delayMs = 500 * retryCount;
-          debugPrint('⏳ Aguardando ${delayMs}ms antes de tentar novamente...');
           await Future.delayed(Duration(milliseconds: delayMs));
         }
       }
     }
     
     isLoading.value = false;
-    debugPrint('✅ applyRewards() FINALIZADO');
   }
 
   // Métodos privados - Cálculo de recompensas
   
   /// Calcula XP total seguindo ordem CRÍTICA:
-  /// 1. Base: lesson.xpReward
-  /// 2. Perfect bonus: +5 se accuracy == 100%
+  /// 1. Base: lesson.xpReward * (accuracy / 100) - proporcional ao desempenho
+  /// 2. Perfect bonus: +5 se isPerfect (todas corretas)
   /// 3. First today bonus: +5 se _isFirstLessonToday()
   /// 4. XP Booster: multiplica por 2 se ativo e não expirado
   Future<int> _calculateTotalXP() async {
-    // Step 1: Base XP da lição
-    int totalXp = _flowController.currentLesson.value?['xpReward'] as int? ?? 10;
+    final baseXp = _flowController.currentLesson.value?['xpReward'] as int? ?? 10;
+    final accuracy = _progressController.accuracy;
     
-    // Step 2: Perfect bonus (+5 se 100% accuracy)
-    if (_progressController.accuracy == 100.0) {
+    print('📊 CÁLCULO DE XP:');
+    print('   Base XP: $baseXp');
+    print('   Accuracy: ${accuracy.toStringAsFixed(1)}%');
+    print('   Corretas: ${_progressController.correctAnswers.value}');
+    print('   Total: ${_progressController.totalAnswers.value}');
+    print('   isPerfect: ${_progressController.isPerfect}');
+    
+    // Step 1: Base XP proporcional ao desempenho (accuracy)
+    // Se acertar 50%, recebe 50% do XP base
+    // Se acertar 100%, recebe 100% do XP base
+    // Se acertar 0%, recebe 0 XP (sem garantia mínima)
+    int totalXp = (baseXp * (accuracy / 100)).round();
+    print('   XP Base Calculado: $totalXp');
+    
+    // Step 2: Perfect bonus (+5 se todas as respostas corretas)
+    if (_progressController.isPerfect) {
       totalXp += 5;
+      print('   + Perfect Bonus: +5 XP');
     }
     
     // Step 3: First today bonus (+5 se primeira lição hoje)
     final isFirstToday = await _isFirstLessonToday();
     if (isFirstToday) {
       totalXp += 5;
+      print('   + First Today Bonus: +5 XP');
     }
     
     // Step 4: XP Booster (multiplica por 2 se ativo)
     final hasXpBooster = _xpLevelController.hasXpBooster;
     if (hasXpBooster) {
       totalXp *= 2;
+      print('   × XP Booster: ×2');
     }
+    
+    print('   🎯 XP FINAL: $totalXp');
     
     return totalXp;
   }
   
   /// Calcula gems totais seguindo ordem CRÍTICA:
-  /// 1. Base: lesson.gemsReward
+  /// 1. Base: lesson.gemsReward * (accuracy / 100) - proporcional ao desempenho
   /// 2. Gem Multiplier: multiplica por 2 se ativo e não expirado
   int _calculateTotalGems() {
-    // Step 1: Base gems da lição
-    int totalGems = _flowController.currentLesson.value?['gemsReward'] as int? ?? 1;
+    final baseGems = _flowController.currentLesson.value?['gemsReward'] as int? ?? 1;
+    final accuracy = _progressController.accuracy;
+    
+    // Step 1: Base gems proporcional ao desempenho (accuracy)
+    // Se acertar 50%, recebe 50% das gems base
+    // Se acertar 100%, recebe 100% das gems base
+    // Se acertar 0%, recebe 0 gems (sem garantia mínima)
+    int totalGems = (baseGems * (accuracy / 100)).round();
     
     // Step 2: Gem Multiplier (multiplica por 2 se ativo)
     final hasGemMultiplier = _gemsController.hasGemMultiplier;

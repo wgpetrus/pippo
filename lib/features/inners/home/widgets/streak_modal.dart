@@ -5,7 +5,6 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../../gamification/controllers/streak_controller.dart';
 import '../../gamification/controllers/gems_controller.dart';
 

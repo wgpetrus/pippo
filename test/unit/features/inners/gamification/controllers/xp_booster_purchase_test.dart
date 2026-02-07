@@ -36,7 +36,7 @@ void main() {
         expect(totalSpent, equals(150), reason: 'Total gems spent should be 150');
 
         // Verify: hasXpBooster is true
-        final hasBoosterAfter = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
+        final hasBoosterAfter = now.isBefore(xpBoosterUntil);
         expect(hasBoosterAfter, isTrue, reason: 'hasXpBooster should be true after purchase');
 
         // Verify: Expiration time set to now + 1 hour
@@ -90,7 +90,7 @@ void main() {
         expect(canAfford, isTrue, reason: 'User should have sufficient gems');
 
         // Validate: Booster is already active (idempotency check)
-        final hasActiveBooster = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
+        final hasActiveBooster = now.isBefore(xpBoosterUntil);
         expect(hasActiveBooster, isTrue, reason: 'User should have active booster');
 
         // Verify: Error message should indicate booster already active
@@ -141,7 +141,7 @@ void main() {
         final xpBoosterUntil = now.subtract(const Duration(minutes: 1)); // Expired
 
         // Verify: hasXpBooster returns false after expiration
-        final hasBooster = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
+        final hasBooster = now.isBefore(xpBoosterUntil);
         expect(hasBooster, isFalse, 
             reason: 'hasXpBooster should return false after expiration');
       });
@@ -152,7 +152,7 @@ void main() {
         final xpBoosterUntil = now.add(const Duration(minutes: 30)); // Still active
 
         // Verify: hasXpBooster returns true before expiration
-        final hasBooster = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
+        final hasBooster = now.isBefore(xpBoosterUntil);
         expect(hasBooster, isTrue, 
             reason: 'hasXpBooster should return true before expiration');
       });
@@ -301,7 +301,7 @@ void main() {
         }
 
         // This should not be reached
-        final hasActiveBooster = xpBoosterUntil != null && now.isBefore(xpBoosterUntil);
+        final hasActiveBooster = now.isBefore(xpBoosterUntil);
         expect(hasActiveBooster, isTrue); // This line should not execute
       });
     });

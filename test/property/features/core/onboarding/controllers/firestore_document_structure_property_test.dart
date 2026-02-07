@@ -1,8 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/core/onboarding/controllers/onboarding_controller.dart';
-import 'package:uuid/uuid.dart';
 
 /// Feature: onboarding, Property 9: Firestore Document Structure Completeness
 /// Validates: Requirements 7.5, 7.6, 7.7, 7.8, 7.9, 7.10, 7.11, 7.12, 7.13, 7.14, 7.15

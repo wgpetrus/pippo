@@ -1,12 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
-import '../../gamification/controllers/xp_level_controller.dart';
-import '../../gamification/controllers/streak_controller.dart';
 import '../../home/controllers/home_stats_controller.dart';
 import '../controllers/profile_data_controller.dart';
 import '../controllers/profile_social_controller.dart';
@@ -32,8 +29,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   late final ProfileDataController _dataController;
   late final ProfileSocialController _socialController;
   late final ProfileCoursesController _coursesController;
-  late final XpLevelController _xpLevelController;
-  late final StreakController _streakController;
 
   @override
   bool get wantKeepAlive => true; // Manter estado da página
@@ -44,15 +39,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     _dataController = Get.find<ProfileDataController>();
     _socialController = Get.find<ProfileSocialController>();
     _coursesController = Get.find<ProfileCoursesController>();
-    _xpLevelController = Get.find<XpLevelController>();
-    _streakController = Get.find<StreakController>();
-    
-    // Carregar perfil e progresso semanal ao iniciar
+
     _dataController.loadOwnProfile();
     _socialController.loadWeeklyProgress();
   }
 
-  // Recarregar dados quando a página é exibida
   void _refreshData() {
     _dataController.loadOwnProfile();
     _socialController.loadWeeklyProgress();
@@ -65,14 +56,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     return Scaffold(
       backgroundColor: AppTheme.white,
       body: Obx(() {
-        // Mostrar loading
         if (_dataController.isLoading.value) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
 
-        // Mostrar erro
         if (_dataController.errorMessage.value.isNotEmpty) {
           return Center(
             child: Padding(
@@ -109,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Header com card azul (já é um Sliver, não precisa de SliverToBoxAdapter)
+              // Header com card azul
               Obx(() => ProfileHeader(
                 title: 'Perfil',
                 avatarAsset: _getAvatarAsset(_dataController.avatarId.value),
@@ -121,15 +110,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 coursesCount: _coursesController.userCourses.length,
                 isOwnProfile: true,
                 showFollowButton: false,
-                onSettingsTap: () {
-                  Get.to(() => const SettingsPage());
-                },
-                onFollowingTap: () {
-                  Get.to(() => const FriendsView(), arguments: {'tab': 'following'});
-                },
-                onFollowersTap: () {
-                  Get.to(() => const FriendsView(), arguments: {'tab': 'followers'});
-                },
+                onSettingsTap: () => Get.to(() => const SettingsPage()),
+                onFollowingTap: () => Get.to(() => const FriendsView(), arguments: {'tab': 'following'}),
+                onFollowersTap: () => Get.to(() => const FriendsView(), arguments: {'tab': 'followers'}),
                 onAvatarTap: () {
                   ChangeAvatarModal.show(
                     context,
@@ -292,34 +275,30 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   }
 
   String _getActiveCourseFlag() {
-    if (kDebugMode) {
-      debugPrint('🔍 _getActiveCourseFlag: Buscando curso ativo');
-      debugPrint('   Total de cursos: ${_coursesController.userCourses.length}');
-    }
-
     // Buscar curso ATIVO (não primário)
     final activeCourse = _coursesController.userCourses.firstWhere(
       (course) => course['isActive'] == true,
       orElse: () => <String, dynamic>{},
     );
 
-    if (kDebugMode) {
-      debugPrint('   Curso ativo encontrado: ${activeCourse.isNotEmpty}');
-      if (activeCourse.isNotEmpty) {
-        debugPrint('   - Idioma: ${activeCourse['languageName']}');
-        debugPrint('   - Bandeira: ${activeCourse['flagAsset']}');
-      }
-    }
+    final fallbackCourse = activeCourse.isNotEmpty
+        ? activeCourse
+        : _coursesController.userCourses.firstWhere(
+            (course) => course['isPrimary'] == true,
+            orElse: () => _coursesController.userCourses.isNotEmpty
+                ? _coursesController.userCourses.first
+                : <String, dynamic>{},
+          );
 
-    // Se encontrou curso ativo, retornar sua bandeira
-    if (activeCourse.isNotEmpty && activeCourse['flagAsset'] != null) {
-      return activeCourse['flagAsset'] as String;
+    // Se encontrou curso ativo (ou fallback), retornar sua bandeira
+    if (fallbackCourse.isNotEmpty && fallbackCourse['flagAsset'] != null) {
+      return fallbackCourse['flagAsset'] as String;
+    }
+    if (fallbackCourse.isNotEmpty && fallbackCourse['flag'] != null) {
+      return fallbackCourse['flag'] as String;
     }
 
     // Fallback: usar bandeira do país do usuário
-    if (kDebugMode) {
-      debugPrint('   ⚠️ Usando fallback: bandeira do país ${_dataController.country.value}');
-    }
     return _getCountryFlag(_dataController.country.value);
   }
 }

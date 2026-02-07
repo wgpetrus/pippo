@@ -72,12 +72,12 @@ Progresso: 3/7 ✅
 
 ### Integração com Lições
 
-O sistema está integrado no `LessonController`:
+O sistema está integrado no `LessonRewardsController`:
 
 ```dart
 // Quando você completa uma lição, o sistema automaticamente:
-await controller.updateChallengeProgress('lessons', 1);
-await controller.updateChallengeProgress('correct_exercises', correctAnswers.value);
+await treasureController.updateChallengeProgress('lessons', 1);
+await treasureController.updateChallengeProgress('correct_exercises', correctAnswers.value);
 ```
 
 ---
@@ -253,7 +253,7 @@ Os desafios são atualizados automaticamente quando:
 ## Integração com Outros Módulos
 
 ### Gamification
-- Gems e XP das recompensas são adicionados ao `GamificationController`
+- Gems e XP das recompensas são adicionados aos controllers de gamificação (`GemsController`, `XpLevelController`)
 - Streak é rastreado para desafios de streak
 
 ### Lessons
@@ -270,27 +270,30 @@ Os desafios são atualizados automaticamente quando:
 
 ## Código Relevante
 
-### TreasureController
+### TreasureChallengesController
 ```dart
 // Carregar desafios
-await controller.loadChallenges();
+await challengesController.loadChallenges();
 
 // Atualizar progresso (automático)
-await controller.updateChallengeProgress('lessons', 1);
-
-// Reivindicar recompensa
-await controller.claimReward(challengeId);
+await challengesController.updateChallengeProgress('lessons', 1);
 ```
 
-### LessonController (Integração)
+### TreasureRewardsController
+```dart
+// Reivindicar recompensa
+await rewardsController.claimReward(challengeId);
+```
+
+### LessonRewardsController (Integração)
 ```dart
 // Ao completar lição, atualiza desafios automaticamente
 try {
-  final controller = Get.find<TreasureController>();
-  await controller.updateChallengeProgress('lessons', 1);
-  await controller.updateChallengeProgress('correct_exercises', correctAnswers.value);
+  final challengesController = Get.find<TreasureChallengesController>();
+  await challengesController.updateChallengeProgress('lessons', 1);
+  await challengesController.updateChallengeProgress('correct_exercises', correctAnswers.value);
 } catch (e) {
-  // TreasureController não registrado - não é crítico
+  // TreasureChallengesController não registrado - não é crítico
 }
 ```
 

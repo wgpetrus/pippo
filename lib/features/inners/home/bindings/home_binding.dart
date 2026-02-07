@@ -17,6 +17,7 @@ import '../../leaderboard/controllers/leaderboard_controller.dart';
 import '../../profile/controllers/profile_auth_controller.dart';
 import '../../profile/controllers/profile_courses_controller.dart';
 import '../../profile/controllers/profile_data_controller.dart';
+import '../../profile/controllers/profile_search_controller.dart';
 import '../../profile/controllers/profile_settings_controller.dart';
 import '../../profile/controllers/profile_social_controller.dart';
 import '../../shop/controllers/shop_controller.dart';
@@ -57,12 +58,13 @@ class HomeBinding extends Bindings {
       Get.put(XpLevelController(), permanent: true);
     }
 
-    // Instanciar ProfileControllers (5 novos controllers)
+    // Instanciar ProfileControllers (6 controllers)
     Get.lazyPut<ProfileDataController>(() => ProfileDataController());
     Get.lazyPut<ProfileSettingsController>(() => ProfileSettingsController());
-    Get.lazyPut<ProfileSocialController>(() => ProfileSocialController());
-    Get.lazyPut<ProfileCoursesController>(() => ProfileCoursesController());
     Get.lazyPut<ProfileAuthController>(() => ProfileAuthController());
+    Get.lazyPut<ProfileSocialController>(() => ProfileSocialController());
+    Get.lazyPut<ProfileSearchController>(() => ProfileSearchController());
+    Get.lazyPut<ProfileCoursesController>(() => ProfileCoursesController());
 
     // Instanciar LessonControllers (4 novos controllers)
     Get.lazyPut<LessonFlowController>(() => LessonFlowController());

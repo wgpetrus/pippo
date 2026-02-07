@@ -1,5 +1,4 @@
 // Dart SDK
-import 'dart:async';
 
 // Flutter packages
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,15 +7,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Project imports
-import 'package:pippo/features/core/auth/controllers/auth_credentials_controller.dart';
-import 'package:pippo/features/core/auth/controllers/auth_providers_controller.dart';
-import 'package:pippo/features/inners/splash/controllers/splash_controller.dart';
 
-import 'auth_integration_test.mocks.dart';
 
 @GenerateMocks([
   FirebaseAuth,

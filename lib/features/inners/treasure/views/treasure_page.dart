@@ -5,7 +5,6 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_dialog.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../controllers/treasure_challenges_controller.dart';
-import '../controllers/treasure_rewards_controller.dart';
 import '../widgets/challenge_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/treasure_header.dart';
@@ -178,14 +177,14 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
 
     if (confirm != true) return;
 
-    // Mostrar loading
+    if (!mounted) return;
     AppDialog.loading(context: context, message: 'Deletando...');
 
     try {
       // Deletar todos os desafios
       await challengesController.deleteAllChallenges();
 
-      // Fechar loading
+      if (!mounted) return;
       Get.back();
 
       // Mostrar sucesso
@@ -195,7 +194,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
         message: 'Todos os desafios foram deletados.',
       );
     } catch (e) {
-      // Fechar loading
+      if (!mounted) return;
       Get.back();
 
       // Mostrar erro
@@ -209,7 +208,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
 
   /// Gera desafios diários e semanais para desenvolvimento/testes
   Future<void> _generateChallenges(TreasureChallengesController challengesController) async {
-    // Mostrar loading
+    if (!mounted) return;
     AppDialog.loading(context: context, message: 'Gerando desafios...');
 
     try {
@@ -217,7 +216,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       await challengesController.generateDailyChallenges();
       await challengesController.generateWeeklyChallenges();
 
-      // Fechar loading
+      if (!mounted) return;
       Get.back();
 
       // Mostrar sucesso
@@ -227,7 +226,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
         message: 'Desafios diários e semanais foram gerados.',
       );
     } catch (e) {
-      // Fechar loading
+      if (!mounted) return;
       Get.back();
 
       // Mostrar erro
@@ -243,8 +242,6 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
 
   /// Constrói desafios agrupados por tipo (daily, weekly, special)
   Widget _buildChallengesByType(TreasureChallengesController challengesController, ResponsiveUtils r) {
-    debugPrint('🎨 _buildChallengesByType() - Total de desafios: ${challengesController.challenges.length}');
-    
     // Agrupar desafios por tipo
     final dailyChallenges = challengesController.challenges
         .where((c) => c['type'] == 'daily')
@@ -255,8 +252,6 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
     final specialChallenges = challengesController.challenges
         .where((c) => c['type'] == 'special')
         .toList();
-
-    debugPrint('📊 Diários: ${dailyChallenges.length}, Semanais: ${weeklyChallenges.length}, Especiais: ${specialChallenges.length}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
