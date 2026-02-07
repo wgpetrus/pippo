@@ -1,354 +1,286 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+
+import '../../../lib/features/inners/gamification/controllers/energy_controller.dart';
+import '../../../lib/features/inners/gamification/controllers/gems_controller.dart';
+import '../../../lib/features/inners/gamification/controllers/streak_controller.dart';
+import '../../../lib/features/inners/gamification/controllers/xp_level_controller.dart';
+import '../helpers/firebase_test_helper.dart';
 
 /// Integration Tests for Shop System - Boost Application
 /// 
-/// **NOTA IMPORTANTE:** Estes são testes de documentação devido a limitações técnicas.
-/// Os controllers (XpLevelController, GemsController, StreakController, EnergyController)
-/// acessam Firebase.instance diretamente durante a inicialização, o que requer platform
-/// channels que não estão disponíveis em testes unitários/integração. A arquitetura atual
-/// não suporta injeção de dependência para instâncias do Firebase.
-/// 
-/// Estes testes documentam o comportamento esperado da aplicação de boosts:
+/// Testes FUNCIONAIS que validam o comportamento real da aplicação de boosts:
 /// - XP booster doubles XP rewards
 /// - Gem multiplier doubles gem rewards
 /// - Streak freeze protects streak
 /// - Boost expiration prevents application
 /// - Multiple boosts work simultaneously
 void main() {
-  group('Boost Application - XP Booster', () {
-    test('Documentation: XP booster should double XP rewards during lesson', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com XP booster ativo (xpBoosterUntil = now + 1 hour)
-      //   - Lição com 10 XP base
-      //   - Perfect bonus: +5 XP
-      //   - First lesson bonus: +5 XP
-      // 
-      // Act: Completar lição
-      // 
-      // Assert:
-      //   - XP ganho = (10 + 5 + 5) × 2 = 40 XP
-      //   - totalXp incrementado em 40
-      //   - weeklyXp incrementado em 40
-      //   - todayXp incrementado em 40
-      // 
-      // IMPLEMENTAÇÃO:
-      // - XpLevelController.addXp(amount) verifica hasXpBooster
-      // - final xpToAdd = hasXpBooster ? amount * 2 : amount;
-      // - totalXp.value += xpToAdd;
-      // - Multiplicador aplicado automaticamente
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/xp_level_controller.dart
-      // - lib/features/core/lesson/controllers/lesson_rewards_controller.dart
-      
-      expect(true, true, reason: 'XP booster doubles XP rewards');
+  late FakeFirebaseFirestore mockFirestore;
+  late MockFirebaseAuth mockAuth;
+  late XpLevelController xpController;
+  late GemsController gemsController;
+  late StreakController streakController;
+  late EnergyController energyController;
+
+  setUp(() async {
+    await FirebaseTestHelper.setupFirebase();
+    
+    mockFirestore = FakeFirebaseFirestore();
+    mockAuth = MockFirebaseAuth(signedIn: true);
+
+    // Criar curso ativo para o usuário PRIMEIRO
+    await mockFirestore
+        .collection('users')
+        .doc(mockAuth.currentUser!.uid)
+        .collection('courses')
+        .doc('test-course')
+        .set({
+      'isActive': true,
+      'language': 'en',
+      'createdAt': DateTime.now(),
     });
 
-    test('Documentation: XP booster should not apply after expiration', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com XP booster expirado (xpBoosterUntil = now - 1 second)
-      //   - Lição com 10 XP base
-      // 
-      // Act: Completar lição
-      // 
-      // Assert:
-      //   - XP ganho = 10 (sem multiplicador)
-      //   - hasXpBooster = false
-      //   - Multiplicador NÃO aplicado
-      // 
-      // IMPLEMENTAÇÃO:
-      // - hasXpBooster computed property verifica DateTime.now() < _xpBoosterUntil
-      // - Se expirado, retorna false
-      // - addXp() não aplica multiplicador
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/xp_level_controller.dart
+    // Popular dados iniciais no documento de gamification
+    await mockFirestore
+        .collection('users')
+        .doc(mockAuth.currentUser!.uid)
+        .collection('courses')
+        .doc('test-course')
+        .collection('stats')
+        .doc('gamification')
+        .set({
+      'xp': {
+        'totalXp': 0,
+        'weeklyXP': 0,
+        'todayXp': 0,
+        'level': 1,
+        'xpToNextLevel': 100,
+        'xpBoosterUntil': null,
+        'lastWeeklyResetDate': '',
+        'lastDailyResetDate': '',
+      },
+      'gems': {
+        'gems': 500,
+        'totalGemsEarned': 500,
+        'totalGemsSpent': 0,
+        'gemMultiplierUntil': null,
+      },
+      'streak': {
+        'currentStreak': 5,
+        'longestStreak': 5,
+        'lastStreakDate': DateTime.now().subtract(const Duration(days: 2)).toIso8601String().split('T')[0],
+        'streakFreezeAvailable': true,
+        'streakFreezeUsedToday': false,
+        'milestonesReached': [],
+      },
+      'energy': {
+        'currentEnergy': 3,
+        'maxEnergy': 5,
+        'lastEnergyRegenAt': DateTime.now(),
+        'unlimitedEnergyUntil': null,
+      },
+      'lastUpdated': DateTime.now(),
+    });
+
+    // Instanciar controllers com DI
+    xpController = XpLevelController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
+    gemsController = GemsController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
+    streakController = StreakController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
+    energyController = EnergyController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
+
+    Get.put<XpLevelController>(xpController);
+    Get.put<GemsController>(gemsController);
+    Get.put<StreakController>(streakController);
+    Get.put<EnergyController>(energyController);
+
+    // Aguardar carregamento inicial dos controllers
+    await Future.delayed(const Duration(milliseconds: 200));
+  });
+
+  tearDown(() {
+    Get.reset();
+  });
+  group('Boost Application - XP Booster', () {
+    test('XP booster should double XP rewards during lesson', () async {
+      // Arrange: Ativar XP booster por 60 minutos
+      await xpController.activateXpBooster(60);
+      expect(xpController.hasXpBooster, true);
       
-      expect(true, true, reason: 'Expired XP booster does not apply');
+      final initialXp = xpController.totalXp.value;
+
+      // Act: Adicionar 20 XP (simulando lição completa)
+      await xpController.addXp(20);
+
+      // Assert: XP ganho = 20 × 2 = 40 XP
+      expect(xpController.totalXp.value, initialXp + 40);
+      expect(xpController.weeklyXP.value, 40);
+      expect(xpController.todayXp.value, 40);
+    });
+
+    test('XP booster should not apply after expiration', () async {
+      // Arrange: Ativar XP booster que já expirou
+      xpController.setXpBoosterUntil(DateTime.now().subtract(const Duration(seconds: 1)));
+      expect(xpController.hasXpBooster, false);
+      
+      final initialXp = xpController.totalXp.value;
+
+      // Act: Adicionar 10 XP
+      await xpController.addXp(10);
+
+      // Assert: XP ganho = 10 (sem multiplicador)
+      expect(xpController.totalXp.value, initialXp + 10);
     });
   });
 
   group('Boost Application - Gem Multiplier', () {
-    test('Documentation: Gem multiplier should double gem rewards during lesson', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com gem multiplier ativo (gemMultiplierUntil = now + 1 hour)
-      //   - Lição com 5 gems base
-      // 
-      // Act: Completar lição
-      // 
-      // Assert:
-      //   - Gems ganhas = 5 × 2 = 10 gems
-      //   - gems.value incrementado em 10
-      //   - totalGemsEarned incrementado em 10
-      // 
-      // IMPLEMENTAÇÃO:
-      // - GemsController.addGems(amount) verifica hasGemMultiplier
-      // - final gemsToAdd = hasGemMultiplier ? amount * 2 : amount;
-      // - gems.value += gemsToAdd;
-      // - Multiplicador aplicado automaticamente
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/gems_controller.dart
-      // - lib/features/core/lesson/controllers/lesson_rewards_controller.dart
+    test('Gem multiplier should double gem rewards during lesson', () async {
+      // Arrange: Ativar gem multiplier por 60 minutos
+      await gemsController.activateGemMultiplier(60);
+      expect(gemsController.hasGemMultiplier, true);
       
-      expect(true, true, reason: 'Gem multiplier doubles gem rewards');
+      final initialGems = gemsController.gems.value;
+
+      // Act: Adicionar 5 gems (simulando lição completa)
+      await gemsController.addGems(5);
+
+      // Assert: Gems ganhas = 5 × 2 = 10 gems
+      expect(gemsController.gems.value, initialGems + 10);
+      expect(gemsController.totalGemsEarned.value, greaterThanOrEqualTo(510)); // 500 inicial + 10
     });
 
-    test('Documentation: Gem multiplier should not apply after expiration', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com gem multiplier expirado (gemMultiplierUntil = now - 1 second)
-      //   - Lição com 5 gems base
-      // 
-      // Act: Completar lição
-      // 
-      // Assert:
-      //   - Gems ganhas = 5 (sem multiplicador)
-      //   - hasGemMultiplier = false
-      //   - Multiplicador NÃO aplicado
-      // 
-      // IMPLEMENTAÇÃO:
-      // - hasGemMultiplier computed property verifica DateTime.now() < _gemMultiplierUntil
-      // - Se expirado, retorna false
-      // - addGems() não aplica multiplicador
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/gems_controller.dart
+    test('Gem multiplier should not apply after expiration', () async {
+      // Arrange: Ativar gem multiplier que já expirou
+      gemsController.setGemMultiplierUntil(DateTime.now().subtract(const Duration(seconds: 1)));
+      expect(gemsController.hasGemMultiplier, false);
       
-      expect(true, true, reason: 'Expired gem multiplier does not apply');
+      final initialGems = gemsController.gems.value;
+
+      // Act: Adicionar 5 gems
+      await gemsController.addGems(5);
+
+      // Assert: Gems ganhas = 5 (sem multiplicador)
+      expect(gemsController.gems.value, initialGems + 5);
     });
   });
 
   group('Boost Application - Streak Freeze', () {
-    test('Documentation: Streak freeze should protect streak when day is skipped', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com streak de 5 dias
-      //   - Última atualização: 2 dias atrás
-      //   - Streak freeze disponível (streakFreezeAvailable = true)
-      // 
-      // Act: Completar lição hoje
-      // 
-      // Assert:
-      //   - Streak mantido: 5 dias
-      //   - Streak freeze consumido (streakFreezeAvailable = false)
-      //   - streakFreezeUsedToday = true
-      //   - lastStreakDate atualizado para hoje
-      // 
-      // IMPLEMENTAÇÃO:
-      // - StreakController.updateStreak() verifica se dia foi perdido
-      // - Se perdido E streakFreezeAvailable:
-      //   - Mantém currentStreak
-      //   - Define streakFreezeAvailable = false
-      //   - Define streakFreezeUsedToday = true
-      // - Se perdido E NÃO streakFreezeAvailable:
-      //   - Reseta currentStreak = 0
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/streak_controller.dart
-      // - lib/features/core/lesson/controllers/lesson_rewards_controller.dart
-      
-      expect(true, true, reason: 'Streak freeze protects streak when day is skipped');
+    test('Streak freeze should protect streak when day is skipped', () async {
+      // Arrange: Usuário com streak de 5 dias, última atualização 2 dias atrás, freeze disponível
+      expect(streakController.currentStreak.value, 5);
+      expect(streakController.streakFreezeAvailable, true);
+
+      // Act: Atualizar streak (simula completar lição hoje)
+      await streakController.updateStreak();
+
+      // Assert: Streak mantido, freeze consumido
+      expect(streakController.currentStreak.value, 5); // Mantido
+      expect(streakController.streakFreezeAvailable, false); // Consumido
     });
 
-    test('Documentation: Streak should reset when freeze not available', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com streak de 5 dias
-      //   - Última atualização: 2 dias atrás
-      //   - Streak freeze NÃO disponível (streakFreezeAvailable = false)
-      // 
-      // Act: Completar lição hoje
-      // 
-      // Assert:
-      //   - Streak resetado: 0 → 1 dia
-      //   - streakFreezeAvailable permanece false
-      //   - lastStreakDate atualizado para hoje
-      // 
-      // IMPLEMENTAÇÃO:
-      // - StreakController.updateStreak() verifica se dia foi perdido
-      // - Se perdido E NÃO streakFreezeAvailable:
-      //   - Reseta currentStreak = 0
-      //   - Incrementa para 1 (dia atual)
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/streak_controller.dart
-      
-      expect(true, true, reason: 'Streak resets when freeze not available');
+    test('Streak should reset when freeze not available', () async {
+      // Arrange: Usuário com streak de 5 dias, sem freeze disponível
+      streakController.setStreakFreezeAvailable(false);
+      streakController.setLastStreakDate(
+        DateTime.now().subtract(const Duration(days: 2)).toIso8601String().split('T')[0]
+      );
+      expect(streakController.currentStreak.value, 5);
+      expect(streakController.streakFreezeAvailable, false);
+
+      // Act: Atualizar streak
+      await streakController.updateStreak();
+
+      // Assert: Streak resetado para 1
+      expect(streakController.currentStreak.value, 1); // Resetado e incrementado para hoje
     });
   });
 
   group('Boost Application - Energy Refill', () {
-    test('Documentation: Energy refill should restore energy to maximum', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com 2 energia (de 5 máximo)
-      //   - Compra Energy Refill (50 gems)
-      // 
+    test('Energy refill should restore energy to maximum', () async {
+      // Arrange: Usuário com 3 energia (de 5 máximo)
+      expect(energyController.currentEnergy.value, 3);
+
       // Act: Aplicar energy refill
-      // 
-      // Assert:
-      //   - Energia restaurada: 2 → 5
-      //   - currentEnergy.value = 5
-      //   - lastEnergyRegenAt atualizado para now
-      // 
-      // IMPLEMENTAÇÃO:
-      // - EnergyController.refillEnergy() define currentEnergy = 5
-      // - Atualiza lastEnergyRegenAt = DateTime.now()
-      // - Salva no Firestore
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/energy_controller.dart
-      // - lib/features/inners/shop/views/shop_page.dart
-      
-      expect(true, true, reason: 'Energy refill restores energy to maximum');
+      await energyController.refillEnergy();
+
+      // Assert: Energia restaurada para 5
+      expect(energyController.currentEnergy.value, 5);
+      expect(energyController.errorMessage.value, isEmpty);
     });
 
-    test('Documentation: Energy refill should not work when energy is full', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com 5 energia (máximo)
-      //   - Tenta comprar Energy Refill
-      // 
+    test('Energy refill should not work when energy is full', () async {
+      // Arrange: Usuário com 5 energia (máximo)
+      energyController.currentEnergy.value = 5;
+
       // Act: Tentar aplicar energy refill
-      // 
-      // Assert:
-      //   - errorMessage definido: "Você já está com energia máxima!"
-      //   - Energia permanece 5
-      //   - Gems não são deduzidas
-      // 
-      // IMPLEMENTAÇÃO:
-      // - EnergyController.refillEnergy() verifica currentEnergy >= 5
-      // - Se já está cheio, define errorMessage e retorna
-      // - Não modifica estado
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/energy_controller.dart
-      
-      expect(true, true, reason: 'Energy refill blocked when energy is full');
+      await energyController.refillEnergy();
+
+      // Assert: Erro definido, energia permanece 5
+      expect(energyController.errorMessage.value, isNotEmpty);
+      expect(energyController.errorMessage.value, contains('energia máxima'));
+      expect(energyController.currentEnergy.value, 5);
     });
   });
 
   group('Boost Application - Multiple Boosts', () {
-    test('Documentation: Multiple boosts should work simultaneously', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - Usuário com XP booster ativo
-      //   - Usuário com gem multiplier ativo
-      //   - Lição com 10 XP e 5 gems
-      // 
-      // Act: Completar lição
-      // 
-      // Assert:
-      //   - XP ganho = 10 × 2 = 20 XP
-      //   - Gems ganhas = 5 × 2 = 10 gems
-      //   - Ambos multiplicadores aplicados independentemente
-      // 
-      // IMPLEMENTAÇÃO:
-      // - XpLevelController.addXp() aplica multiplicador de XP
-      // - GemsController.addGems() aplica multiplicador de gems
-      // - Cada controller verifica seu próprio boost
-      // - Boosts funcionam independentemente
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/xp_level_controller.dart
-      // - lib/features/inners/gamification/controllers/gems_controller.dart
-      // - lib/features/core/lesson/controllers/lesson_rewards_controller.dart
+    test('Multiple boosts should work simultaneously', () async {
+      // Arrange: Ativar XP booster e gem multiplier
+      await xpController.activateXpBooster(60);
+      await gemsController.activateGemMultiplier(60);
+      expect(xpController.hasXpBooster, true);
+      expect(gemsController.hasGemMultiplier, true);
       
-      expect(true, true, reason: 'Multiple boosts work simultaneously');
+      final initialXp = xpController.totalXp.value;
+      final initialGems = gemsController.gems.value;
+
+      // Act: Adicionar 10 XP e 5 gems (simulando lição)
+      await xpController.addXp(10);
+      await gemsController.addGems(5);
+
+      // Assert: Ambos multiplicadores aplicados
+      expect(xpController.totalXp.value, initialXp + 20); // 10 × 2
+      expect(gemsController.gems.value, initialGems + 10); // 5 × 2
     });
 
-    test('Documentation: Boosts expire independently', () {
-      // COMPORTAMENTO ESPERADO:
-      // 
-      // Arrange:
-      //   - XP booster expira em 1 segundo
-      //   - Gem multiplier expira em 1 hora
-      //   - Aguardar 2 segundos
-      // 
-      // Act: Completar lição
-      // 
-      // Assert:
-      //   - XP ganho = 10 (sem multiplicador, expirado)
-      //   - Gems ganhas = 5 × 2 = 10 (com multiplicador, ainda ativo)
-      //   - hasXpBooster = false
-      //   - hasGemMultiplier = true
-      // 
-      // IMPLEMENTAÇÃO:
-      // - Cada controller verifica seu próprio expiration time
-      // - hasXpBooster verifica _xpBoosterUntil
-      // - hasGemMultiplier verifica _gemMultiplierUntil
-      // - Expiração é independente
-      // 
-      // ARQUIVOS:
-      // - lib/features/inners/gamification/controllers/xp_level_controller.dart
-      // - lib/features/inners/gamification/controllers/gems_controller.dart
+    test('Boosts expire independently', () async {
+      // Arrange: XP booster expirado, gem multiplier ativo
+      xpController.setXpBoosterUntil(DateTime.now().subtract(const Duration(seconds: 1)));
+      await gemsController.activateGemMultiplier(60);
       
-      expect(true, true, reason: 'Boosts expire independently');
+      expect(xpController.hasXpBooster, false);
+      expect(gemsController.hasGemMultiplier, true);
+      
+      final initialXp = xpController.totalXp.value;
+      final initialGems = gemsController.gems.value;
+
+      // Act: Adicionar 10 XP e 5 gems
+      await xpController.addXp(10);
+      await gemsController.addGems(5);
+
+      // Assert: Apenas gem multiplier aplicado
+      expect(xpController.totalXp.value, initialXp + 10); // Sem multiplicador
+      expect(gemsController.gems.value, initialGems + 10); // Com multiplicador (5 × 2)
     });
   });
 
   group('Integration Test Summary', () {
-    test('Documentation: All boost application flows verified', () {
-      // VERIFICAÇÃO MANUAL COMPLETADA:
-      // 
-      // ✅ XP Booster application
-      //    - Dobra XP durante lição
-      //    - Não aplica após expiração
-      //    - hasXpBooster verifica expiration time
-      // 
-      // ✅ Gem Multiplier application
-      //    - Dobra gems durante lição
-      //    - Não aplica após expiração
-      //    - hasGemMultiplier verifica expiration time
-      // 
-      // ✅ Streak Freeze application
-      //    - Protege streak quando dia é perdido
-      //    - Consome freeze quando usado
-      //    - Streak reseta quando freeze não disponível
-      // 
-      // ✅ Energy Refill application
-      //    - Restaura energia para máximo (5)
-      //    - Bloqueado quando energia já está cheia
-      //    - Atualiza lastEnergyRegenAt
-      // 
-      // ✅ Multiple Boosts
-      //    - Múltiplos boosts funcionam simultaneamente
-      //    - Cada boost expira independentemente
-      //    - Cada controller verifica seu próprio boost
-      // 
-      // CONCLUSÃO:
-      // Todos os boosts são aplicados corretamente:
-      // - Multiplicadores aplicados automaticamente
-      // - Verificação de expiration time
-      // - Boosts funcionam independentemente
-      // - Streak freeze protege streak
-      // - Energy refill restaura energia
-      // 
-      // LIMITAÇÃO TÉCNICA:
-      // Testes funcionais não podem ser implementados devido a:
-      // - Controllers acessam Firebase.instance diretamente
-      // - Platform channels não disponíveis em ambiente de teste
-      // - Arquitetura atual não suporta injeção de dependência
-      // 
-      // SOLUÇÃO FUTURA:
-      // - Refatorar controllers para aceitar Firebase instances via construtor
-      // - Implementar testes funcionais com mocks injetados
-      // - Manter estes testes de documentação como referência
-      
-      expect(true, true, reason: 'All boost application flows verified and documented');
+    test('All boost application flows verified', () {
+      // Verificação de que todos os fluxos foram testados
+      expect(true, true, reason: 'All boost application flows verified');
     });
   });
 }

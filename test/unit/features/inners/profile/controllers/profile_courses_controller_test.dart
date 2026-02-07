@@ -2,60 +2,204 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:pippo/features/inners/profile/controllers/profile_courses_controller.dart';
 
-import '../../../../../helpers/firebase_test_helper.dart';
+import 'package:pippo/features/inners/profile/controllers/profile_courses_controller.dart';
 
 void main() {
   late ProfileCoursesController controller;
-  late FakeFirebaseFirestore fakeFirestore;
-  late MockFirebaseAuth mockAuth;
+  late FakeFirebaseFirestore firestore;
+  late MockFirebaseAuth auth;
+  late MockUser user;
 
-  setUp(() async {
-    await FirebaseTestHelper.setupFirebase();
+  setUp(() {
+    firestore = FakeFirebaseFirestore();
+    auth = MockFirebaseAuth(signedIn: true);
+    user = auth.currentUser as MockUser;
     
-    fakeFirestore = FirebaseTestHelper.createMockFirestore();
-    mockAuth = FirebaseTestHelper.createMockAuth(
-      signedIn: true,
-      uid: 'test-user-id',
-      email: 'test@example.com',
-    );
-
     Get.testMode = true;
+    
+    controller = ProfileCoursesController(
+      firestore: firestore,
+      auth: auth,
+    );
   });
 
-  tearDown(() async {
+  tearDown(() {
     Get.reset();
-    await FirebaseTestHelper.teardownFirebase();
   });
 
-  group('ProfileCoursesController - Course Management Tests', () {
-    setUp(() {
-      controller = ProfileCoursesController();
+  group('ProfileCoursesController - loadUserCourses()', () {
+    test('carrega cursos do usuário', () async {
+      // Arrange - Criar cursos
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course1')
+          .set({
+        'language': 'en',
+        'isActive': true,
+        'isPrimary': true,
+        'progress': 25,
+      });
+
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course2')
+          .set({
+        'language': 'es',
+        'isActive': true,
+        'isPrimary': false,
+        'progress': 10,
+      });
+
+      // Act
+      await controller.loadUserCourses();
+
+      // Assert
+      expect(controller.userCourses.length, 2);
+      expect(controller.primaryCourseId.value, 'course1');
+      expect(controller.isLoading.value, false);
+      expect(controller.errorMessage.value, isEmpty);
     });
 
-    group('21.1 Test loadUserCourses() success', () {
-      test('should load 3 active courses with 1 primary and set primaryCourseId correctly', () async {
-        expect(true, isTrue, reason: 'Test structure created - requires DI implementation');
+    test('retorna lista vazia quando não há cursos', () async {
+      // Act
+      await controller.loadUserCourses();
+
+      // Assert
+      expect(controller.userCourses.length, 0);
+    });
+  });
+
+  group('ProfileCoursesController - setPrimaryCourse()', () {
+    test('define curso como primário', () async {
+      // Arrange - Criar cursos
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course1')
+          .set({
+        'language': 'en',
+        'isActive': true,
+        'isPrimary': true,
       });
+
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course2')
+          .set({
+        'language': 'es',
+        'isActive': true,
+        'isPrimary': false,
+      });
+
+      controller.userCourses.value = [
+        {'id': 'course1', 'isPrimary': true},
+        {'id': 'course2', 'isPrimary': false},
+      ];
+
+      // Act
+      await controller.setPrimaryCourse('course2', showSnackbar: false);
+
+      // Assert
+      expect(controller.primaryCourseId.value, 'course2');
+      expect(controller.isLoading.value, false);
+      
+      // Verificar no Firestore
+      final doc1 = await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course1')
+          .get();
+      expect(doc1.data()?['isPrimary'], false);
+
+      final doc2 = await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course2')
+          .get();
+      expect(doc2.data()?['isPrimary'], true);
+    });
+  });
+
+  group('ProfileCoursesController - removeCourse()', () {
+    test('remove curso da lista', () async {
+      // Arrange - Criar múltiplos cursos
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course1')
+          .set({
+        'language': 'en',
+        'isActive': true,
+        'isPrimary': true,
+      });
+
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course2')
+          .set({
+        'language': 'es',
+        'isActive': true,
+        'isPrimary': false,
+      });
+
+      controller.userCourses.value = [
+        {'id': 'course1', 'isPrimary': true},
+        {'id': 'course2', 'isPrimary': false},
+      ];
+
+      // Act
+      await controller.removeCourse('course2');
+
+      // Assert
+      expect(controller.userCourses.length, 1);
+      expect(controller.userCourses.first['id'], 'course1');
+      
+      // Verificar no Firestore
+      final doc = await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course2')
+          .get();
+      expect(doc.data()?['isActive'], false);
     });
 
-    group('21.2 Test setPrimaryCourse() success', () {
-      test('should batch write unsetting all courses and setting course2 as primary', () async {
-        expect(true, isTrue, reason: 'Test structure created - requires DI implementation');
+    test('não permite remover único curso', () async {
+      // Arrange - Criar apenas um curso
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course1')
+          .set({
+        'language': 'en',
+        'isActive': true,
+        'isPrimary': true,
       });
-    });
 
-    group('21.3 Test removeCourse() success', () {
-      test('should mark course3 as inactive and remove from local list', () async {
-        expect(true, isTrue, reason: 'Test structure created - requires DI implementation');
-      });
-    });
+      controller.userCourses.value = [
+        {'id': 'course1', 'isPrimary': true},
+      ];
 
-    group('21.4 Test removeCourse() prevent primary removal', () {
-      test('should set error message and not write to Firestore when trying to remove primary course', () async {
-        expect(true, isTrue, reason: 'Test structure created - requires DI implementation');
-      });
+      // Act
+      await controller.removeCourse('course1');
+
+      // Assert
+      expect(controller.errorMessage.value, contains('pelo menos um curso'));
+      expect(controller.userCourses.length, 1);
     });
   });
 }
