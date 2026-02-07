@@ -75,3 +75,12 @@ service-account.json
 # Coverage
 coverage/
 *.lcov
+
+# Logs e arquivos temporários
+*.log
+hs_err_pid*.log
+android/.kotlin/errors/
+
+# Arquivos temporários de teste
+test_disabled/
+unit_test_results.txt
