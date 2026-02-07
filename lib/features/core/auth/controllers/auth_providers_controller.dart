@@ -19,6 +19,17 @@ import '../views/new_password_view.dart';
 import '../views/verify_code_view.dart';
 
 class AuthProvidersController extends GetxController {
+  // Dependency Injection com valores padrão (backward compatible)
+  AuthProvidersController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    FlutterSecureStorage? secureStorage,
+    GoogleSignIn? googleSignIn,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance,
+        _secureStorage = secureStorage ?? const FlutterSecureStorage(),
+        _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email', 'profile']);
+
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
@@ -28,12 +39,10 @@ class AuthProvidersController extends GetxController {
 
   String? _tempEmail;
 
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
-  final _secureStorage = const FlutterSecureStorage();
-  final _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  final FlutterSecureStorage _secureStorage;
+  final GoogleSignIn _googleSignIn;
 
   Timer? _resendCountdownTimer;
 

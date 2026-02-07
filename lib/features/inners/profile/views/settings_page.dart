@@ -31,6 +31,12 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Garantir que controllers estão registrados
+    if (!Get.isRegistered<ProfileSettingsController>()) {
+      Get.lazyPut<ProfileSettingsController>(() => ProfileSettingsController());
+    }
+    
     _authController = Get.find<AuthProvidersController>();
     _settingsController = Get.find<ProfileSettingsController>();
     

@@ -11,13 +11,20 @@ import 'package:get/get.dart';
 
 /// Controller de credenciais de autenticação (email/senha)
 class AuthCredentialsController extends GetxController {
+  // Dependency Injection com valores padrão (backward compatible)
+  AuthCredentialsController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
+
   // Estados obrigatórios
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
   // Firebase instances
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
   // Validadores
 

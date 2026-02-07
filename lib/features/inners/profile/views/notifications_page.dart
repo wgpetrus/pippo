@@ -22,6 +22,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Garantir que controller está registrado
+    if (!Get.isRegistered<ProfileSettingsController>()) {
+      Get.lazyPut<ProfileSettingsController>(() => ProfileSettingsController());
+    }
+    
     _controller = Get.find<ProfileSettingsController>();
   }
 

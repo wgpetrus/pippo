@@ -14,8 +14,8 @@ import '../widgets/purchase_confirmation_dialog.dart';
 
 /// Controller da loja
 class ShopController extends GetxController {
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
   final isLoading = false.obs;
   final errorMessage = ''.obs;
@@ -28,6 +28,13 @@ class ShopController extends GetxController {
   late final XpLevelController _xpLevelController;
   late final GemsController _gemsController;
   late final StreakController _streakController;
+
+  /// Constructor com DI opcional (backward compatible)
+  ShopController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   @override
   void onInit() {

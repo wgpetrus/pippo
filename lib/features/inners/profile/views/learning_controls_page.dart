@@ -24,6 +24,12 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Garantir que controller está registrado
+    if (!Get.isRegistered<ProfileSettingsController>()) {
+      Get.lazyPut<ProfileSettingsController>(() => ProfileSettingsController());
+    }
+    
     _controller = Get.find<ProfileSettingsController>();
   }
 
