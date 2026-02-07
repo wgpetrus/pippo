@@ -9,8 +9,15 @@ import 'package:get/get.dart';
 import '../../../../shared/utils/error_handler.dart';
 
 class EnergyController extends GetxController {
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  // Dependency Injection com valores padrão (backward compatible)
+  EnergyController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
+
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
   final isLoading = false.obs;
   final errorMessage = ''.obs;

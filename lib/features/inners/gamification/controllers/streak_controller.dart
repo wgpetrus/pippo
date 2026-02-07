@@ -10,8 +10,15 @@ import '../../../../shared/utils/error_handler.dart';
 import 'gems_controller.dart';
 
 class StreakController extends GetxController {
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  // Dependency Injection com valores padrão (backward compatible)
+  StreakController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
+
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
   final isLoading = false.obs;
   final errorMessage = ''.obs;
