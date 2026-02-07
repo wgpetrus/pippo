@@ -11,8 +11,15 @@ class TreasureChallengesController extends GetxController {
 
   final challenges = <Map<String, dynamic>>[].obs;
 
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  // Constructor com DI
+  TreasureChallengesController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   void onInit() {

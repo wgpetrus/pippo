@@ -23,8 +23,15 @@ import '../widgets/home_appbar.dart';
 /// Controller de stats e curso da home
 class HomeStatsController extends GetxController {
   // Firebase instances
-  final _firestore = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  // Constructor com DI
+  HomeStatsController({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   // Estados obrigatórios
   final isLoading = false.obs;

@@ -13,8 +13,15 @@ class TreasureRewardsController extends GetxController {
 
   final isClaimingReward = false.obs;
 
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
+  // Constructor com DI
+  TreasureRewardsController({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   TreasureChallengesController? _challengesController;
 
