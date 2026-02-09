@@ -42,12 +42,12 @@ class TreasureRewardsController extends GetxController {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        errorMessage.value = 'Você precisa estar autenticado para coletar recompensas.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
       if (_challengesController == null) {
-        errorMessage.value = 'Controller de desafios não disponível.';
+        errorMessage.value = 'error_controller_unavailable'.tr;
         return;
       }
 
@@ -56,23 +56,23 @@ class TreasureRewardsController extends GetxController {
       );
 
       if (challengeData == null) {
-        errorMessage.value = 'Desafio não encontrado.';
+        errorMessage.value = 'error_challenge_not_found'.tr;
         return;
       }
 
       if (!_isCompleted(challengeData)) {
-        errorMessage.value = 'Este desafio ainda não foi completado.';
+        errorMessage.value = 'error_challenge_not_completed'.tr;
         return;
       }
 
       final isClaimed = challengeData['isClaimed'] as bool? ?? false;
       if (isClaimed) {
-        errorMessage.value = 'Você já coletou esta recompensa.';
+        errorMessage.value = 'error_reward_already_claimed'.tr;
         return;
       }
 
       if (_isExpired(challengeData)) {
-        errorMessage.value = 'Este desafio expirou.';
+        errorMessage.value = 'error_challenge_expired'.tr;
         return;
       }
 
@@ -84,7 +84,7 @@ class TreasureRewardsController extends GetxController {
     } on FirebaseException catch (e) {
       errorMessage.value = _handleFirestoreError(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao coletar recompensa. Tente novamente.';
+      errorMessage.value = 'error_claim_reward'.tr;
     } finally {
       isClaimingReward.value = false;
     }
@@ -117,7 +117,7 @@ class TreasureRewardsController extends GetxController {
     final rewardAmount = challengeData['rewardAmount'] as int?;
 
     if (rewardType == null || rewardAmount == null) {
-      errorMessage.value = 'Dados de recompensa inválidos.';
+      errorMessage.value = 'error_reward_invalid_data'.tr;
       return;
     }
 

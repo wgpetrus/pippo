@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -35,7 +36,7 @@ class TreasureHeader extends StatelessWidget {
                       children: [
                         // Título no topo
                         Text(
-                          'Treasure Hunt',
+                          'treasure_header_title'.tr,
                           style: AppTheme.displayXsExtrabold.copyWith(color: AppTheme.white),
                         ),
                         
@@ -43,7 +44,7 @@ class TreasureHeader extends StatelessWidget {
                         
                         // Descrição no bottom
                         Text(
-                          'Where every challenge\nleads to a reward.',
+                          'treasure_header_subtitle'.tr,
                           style: AppTheme.textSmRegular.copyWith(
                             color: AppTheme.white90,
                           ),

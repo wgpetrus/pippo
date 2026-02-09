@@ -47,7 +47,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Perfil'),
+      appBar: AppAppbar(title: 'profile_title'.tr),
       body: Obx(() {
         if (_controller.isLoading.value) {
           return const Center(
@@ -71,7 +71,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   TextButton(
                     onPressed: () => _controller.loadUserProfile(widget.userId),
                     child: Text(
-                      'Tentar novamente',
+                      'profile_try_again'.tr,
                       style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
                     ),
                   ),
@@ -82,8 +82,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
         }
 
         if (_controller.viewedUserData.isEmpty) {
-          return const Center(
-            child: Text('Usuário não encontrado'),
+          return Center(
+            child: Text('profile_user_not_found'.tr),
           );
         }
 

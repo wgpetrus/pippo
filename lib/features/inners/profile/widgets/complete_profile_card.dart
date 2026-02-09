@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -59,14 +60,14 @@ class CompleteProfileCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Complete seu perfil!',
+                      'complete_profile_title'.tr,
                       style: AppTheme.textLgBold.copyWith(color: AppTheme.white),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       stepsLeft == 1
-                          ? '$stepsLeft passo restante'
-                          : '$stepsLeft passos restantes',
+                          ? '$stepsLeft ${'complete_profile_step_singular'.tr}'
+                          : '$stepsLeft ${'complete_profile_step_plural'.tr}',
                       style: AppTheme.textSmRegular.copyWith(
                         color: AppTheme.white.withOpacity(0.9),
                       ),
@@ -81,7 +82,7 @@ class CompleteProfileCard extends StatelessWidget {
 
           // Botão
           AppButton(
-            text: 'Completar agora',
+            text: 'complete_profile_button'.tr,
             isPrimary: false,
             onPressed: onTap,
           ),

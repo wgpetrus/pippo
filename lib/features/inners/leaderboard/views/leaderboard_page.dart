@@ -80,7 +80,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   ),
                   SizedBox(height: r.spacing24),
                   AppButton(
-                    text: 'Tentar novamente',
+                    text: 'leaderboard_try_again'.tr,
                     onPressed: () => _controller.loadLeaderboardData(),
                   ),
                 ],
@@ -95,7 +95,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           slivers: [
             // Header colapsável com escudos
             LeaderboardHeader(
-              title: 'Ranking',
+              title: 'leaderboard_title'.tr,
               shieldAssets: [
                 AppAssets.shield1,
                 AppAssets.shield2,
@@ -159,14 +159,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     color: AppTheme.gray300,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Aguardando formação de grupo',
+                  Text(
+                    'leaderboard_waiting_group'.tr,
                     style: AppTheme.textLgBold,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Você será adicionado a um grupo de competição em breve. Continue completando lições para ganhar XP!',
+                  Text(
+                    'leaderboard_waiting_message'.tr,
                     style: AppTheme.textMdMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -210,34 +210,34 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   String _getLeagueName(String league) {
     switch (league) {
       case 'bronze':
-        return 'Liga Bronze';
+        return 'leaderboard_league_bronze'.tr;
       case 'silver':
-        return 'Liga Prata';
+        return 'leaderboard_league_silver'.tr;
       case 'gold':
-        return 'Liga Ouro';
+        return 'leaderboard_league_gold'.tr;
       case 'platinum':
-        return 'Liga Platina';
+        return 'leaderboard_league_platinum'.tr;
       case 'diamond':
-        return 'Liga Diamante';
+        return 'leaderboard_league_diamond'.tr;
       default:
-        return 'Liga';
+        return 'leaderboard_league_default'.tr;
     }
   }
 
   String _getLeagueDescription(String league) {
     switch (league) {
       case 'bronze':
-        return 'Os 3 melhores avançam para a Liga Prata!';
+        return 'leaderboard_description_bronze'.tr;
       case 'silver':
-        return 'Os 3 melhores avançam para a Liga Ouro!';
+        return 'leaderboard_description_silver'.tr;
       case 'gold':
-        return 'Os 3 melhores avançam para a Liga Platina!';
+        return 'leaderboard_description_gold'.tr;
       case 'platinum':
-        return 'Os 3 melhores avançam para a Liga Diamante!';
+        return 'leaderboard_description_platinum'.tr;
       case 'diamond':
-        return 'Você está na liga mais alta! Continue competindo!';
+        return 'leaderboard_description_diamond'.tr;
       default:
-        return 'Compete e avance para a próxima liga!';
+        return 'leaderboard_description_default'.tr;
     }
   }
 

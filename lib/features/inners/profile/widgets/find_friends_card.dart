@@ -54,14 +54,14 @@ class FindFriendsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Encontrar amigos',
+                    'find_friends_title'.tr,
                     style: AppTheme.textMdBold.copyWith(
                       color: AppTheme.black,
                     ),
                   ),
                   SizedBox(height: r.spacing4),
                   Text(
-                    'Busque por username ou nome',
+                    'find_friends_subtitle'.tr,
                     style: AppTheme.textSm.copyWith(
                       color: AppTheme.primary,
                     ),

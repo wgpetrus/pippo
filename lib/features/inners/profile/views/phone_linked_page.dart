@@ -72,7 +72,7 @@ class _PhoneLinkedPageState extends State<PhoneLinkedPage>
 
               // Título
               Text(
-                'Seu Número Está Vinculado!',
+                'phone_linked_title'.tr,
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                 textAlign: TextAlign.center,
               ),
@@ -81,7 +81,7 @@ class _PhoneLinkedPageState extends State<PhoneLinkedPage>
 
               // Descrição
               Text(
-                "Usaremos isso para enviar seus códigos mágicos e proteger suas gemas.",
+                'phone_linked_description'.tr,
                 style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                 textAlign: TextAlign.center,
               ),
@@ -90,7 +90,7 @@ class _PhoneLinkedPageState extends State<PhoneLinkedPage>
 
               // Botão Back to home
               AppButton(
-                text: 'Voltar para o início',
+                text: 'phone_linked_back_home'.tr,
                 onPressed: () => Get.offAllNamed('/home'),
               ),
 

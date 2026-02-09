@@ -73,12 +73,12 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                 child: Column(
                   children: [
                     Text(
-                      '🔓 DEBUG MODE',
+                      'onboarding_verify_code_debug_banner_title'.tr,
                       style: AppTheme.textSmBold.copyWith(color: AppTheme.orange),
                     ),
                     SizedBox(height: r.spacing4),
                     Text(
-                      'Use test code 00000 to skip verification',
+                      'onboarding_verify_code_debug_banner_subtitle'.tr,
                       style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray600),
                     ),
                   ],
@@ -92,12 +92,12 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'One step closer to your streak!',
+                      'onboarding_verify_code_title'.tr,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     ),
                     SizedBox(height: r.spacing12),
                     Text(
-                      'We\'ve sent a 5-digit code to your e-mail. Enter it below to unlock your next adventure!',
+                      'onboarding_verify_code_subtitle'.tr,
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                     ),
                     SizedBox(height: r.spacing32),
@@ -144,7 +144,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                                   child: TextButton(
                                     onPressed: () => _dataController.cancelRetry(),
                                     child: Text(
-                                      'Cancelar',
+                                      'onboarding_verify_code_button_cancel'.tr,
                                       style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
                                     ),
                                   ),
@@ -177,7 +177,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                     if (!isKeyboardVisible) ...[
                       SizedBox(height: r.spacing24),
                       AppButton(
-                        text: 'Cancelar',
+                        text: 'onboarding_verify_code_button_cancel'.tr,
                         isPrimary: false,
                         onPressed: _validationController.isLoading.value
                             ? null
@@ -194,7 +194,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                 child: Column(
                   children: [
                     Obx(() => AppButton(
-                      text: 'Verify',
+                      text: 'onboarding_verify_code_button_verify'.tr,
                       isLoading: _validationController.isLoading.value,
                       onPressed: (_isComplete && !_validationController.isLoading.value)
                           ? () => _validationController.verifyCode(_pinController.text)
@@ -203,7 +203,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                     )),
                     SizedBox(height: r.spacing12),
                     AppButton(
-                      text: 'Cancelar',
+                      text: 'onboarding_verify_code_button_cancel'.tr,
                       isPrimary: false,
                       onPressed: _validationController.isLoading.value
                           ? null

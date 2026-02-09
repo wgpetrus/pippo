@@ -81,17 +81,17 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
               _showSecondBubble ? _buildSecondBubble() : _buildFirstShowcase(),
               const Spacer(flex: 1),
               Text(
-                'Comece Sua Aventura!',
+                'onboarding_intro_title'.tr,
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.primary),
               ),
               const SizedBox(height: 8),
               Text(
-                "Só mais alguns passos e você está dentro!",
+                'onboarding_intro_subtitle'.tr,
                 style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
               ),
               const SizedBox(height: 32),
               AppButton(
-                text: 'Começar',
+                text: 'onboarding_intro_button'.tr,
                 onPressed: _flowController.nav.goToSelectLanguage,
               ),
               const SizedBox(height: 48),
@@ -111,7 +111,7 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
           offset: Offset(0, _bounceAnim.value),
           child: Showcase(
             key: _showcaseKey,
-            description: "Oi! Eu sou o Gem!",
+            description: 'onboarding_intro_mascot_greeting'.tr,
             descTextStyle: AppTheme.textXlBold.copyWith(color: AppTheme.black),
             tooltipBackgroundColor: AppTheme.gray700,
             tooltipBorderRadius: BorderRadius.circular(12),
@@ -169,7 +169,7 @@ class _IntroContentState extends State<_IntroContent> with SingleTickerProviderS
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            "Vamos juntos!",
+                            'onboarding_intro_mascot_lets_go'.tr,
                             style: AppTheme.textXlBold.copyWith(color: AppTheme.black),
                           ),
                         ),

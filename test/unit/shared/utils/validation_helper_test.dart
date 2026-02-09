@@ -11,34 +11,34 @@ void main() {
     });
 
     test('should return error for null or empty name', () {
-      expect(ValidationHelper.validateName(null), 'Nome é obrigatório.');
-      expect(ValidationHelper.validateName(''), 'Nome é obrigatório.');
-      expect(ValidationHelper.validateName('   '), 'Nome é obrigatório.');
+      expect(ValidationHelper.validateName(null), 'error_name_required');
+      expect(ValidationHelper.validateName(''), 'error_name_required');
+      expect(ValidationHelper.validateName('   '), 'error_name_required');
     });
 
     test('should return error for name with less than 2 characters', () {
       expect(
         ValidationHelper.validateName('A'),
-        'Nome deve ter pelo menos 2 caracteres.',
+        'error_name_min_length',
       );
       expect(
         ValidationHelper.validateName(' B '),
-        'Nome deve ter pelo menos 2 caracteres.',
+        'error_name_min_length',
       );
     });
 
     test('should return error for name with invalid characters', () {
       expect(
         ValidationHelper.validateName('João123'),
-        'Nome deve conter apenas letras e espaços.',
+        'error_name_invalid',
       );
       expect(
         ValidationHelper.validateName('Maria@Silva'),
-        'Nome deve conter apenas letras e espaços.',
+        'error_name_invalid',
       );
       expect(
         ValidationHelper.validateName('José_Silva'),
-        'Nome deve conter apenas letras e espaços.',
+        'error_name_invalid',
       );
     });
 
@@ -64,31 +64,31 @@ void main() {
     });
 
     test('should return error for null or empty email', () {
-      expect(ValidationHelper.validateEmail(null), 'E-mail é obrigatório.');
-      expect(ValidationHelper.validateEmail(''), 'E-mail é obrigatório.');
-      expect(ValidationHelper.validateEmail('   '), 'E-mail é obrigatório.');
+      expect(ValidationHelper.validateEmail(null), 'error_email_required');
+      expect(ValidationHelper.validateEmail(''), 'error_email_required');
+      expect(ValidationHelper.validateEmail('   '), 'error_email_required');
     });
 
     test('should return error for invalid email format', () {
       expect(
         ValidationHelper.validateEmail('invalid'),
-        'Por favor, insira um e-mail válido.',
+        'error_email_invalid',
       );
       expect(
         ValidationHelper.validateEmail('user@'),
-        'Por favor, insira um e-mail válido.',
+        'error_email_invalid',
       );
       expect(
         ValidationHelper.validateEmail('@domain.com'),
-        'Por favor, insira um e-mail válido.',
+        'error_email_invalid',
       );
       expect(
         ValidationHelper.validateEmail('user@domain'),
-        'Por favor, insira um e-mail válido.',
+        'error_email_invalid',
       );
       expect(
         ValidationHelper.validateEmail('user domain@test.com'),
-        'Por favor, insira um e-mail válido.',
+        'error_email_invalid',
       );
     });
 
@@ -107,22 +107,22 @@ void main() {
     });
 
     test('should return error for null or empty password', () {
-      expect(ValidationHelper.validatePassword(null), 'Senha é obrigatória.');
-      expect(ValidationHelper.validatePassword(''), 'Senha é obrigatória.');
+      expect(ValidationHelper.validatePassword(null), 'error_password_required');
+      expect(ValidationHelper.validatePassword(''), 'error_password_required');
     });
 
     test('should return error for password with less than 6 characters', () {
       expect(
         ValidationHelper.validatePassword('12345'),
-        'Senha deve ter pelo menos 6 caracteres.',
+        'error_password_min_length',
       );
       expect(
         ValidationHelper.validatePassword('abc'),
-        'Senha deve ter pelo menos 6 caracteres.',
+        'error_password_min_length',
       );
       expect(
         ValidationHelper.validatePassword('a'),
-        'Senha deve ter pelo menos 6 caracteres.',
+        'error_password_min_length',
       );
     });
 

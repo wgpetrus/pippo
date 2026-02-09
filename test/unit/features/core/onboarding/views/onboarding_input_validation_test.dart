@@ -2,16 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pippo/shared/utils/validation_helper.dart';
 
 void main() {
-
   group('Real-time Validation Logic - Name', () {
     test('should return error for invalid name with numbers', () {
       final error = ValidationHelper.validateName('João123');
-      expect(error, 'Nome deve conter apenas letras e espaços.');
+      expect(error, 'error_name_invalid');
     });
 
     test('should return error for short name', () {
       final error = ValidationHelper.validateName('A');
-      expect(error, 'Nome deve ter pelo menos 2 caracteres.');
+      expect(error, 'error_name_min_length');
     });
 
     test('should return null for valid name', () {
@@ -21,24 +20,24 @@ void main() {
 
     test('should return error for empty name', () {
       final error = ValidationHelper.validateName('');
-      expect(error, 'Nome é obrigatório.');
+      expect(error, 'error_name_required');
     });
 
     test('should return error for name with special characters', () {
       final error = ValidationHelper.validateName('João@Silva');
-      expect(error, 'Nome deve conter apenas letras e espaços.');
+      expect(error, 'error_name_invalid');
     });
   });
 
   group('Real-time Validation Logic - Email', () {
     test('should return error for invalid email format', () {
       final error = ValidationHelper.validateEmail('invalid');
-      expect(error, 'Por favor, insira um e-mail válido.');
+      expect(error, 'error_email_invalid');
     });
 
     test('should return error for email without domain', () {
       final error = ValidationHelper.validateEmail('user@');
-      expect(error, 'Por favor, insira um e-mail válido.');
+      expect(error, 'error_email_invalid');
     });
 
     test('should return null for valid email', () {
@@ -48,19 +47,19 @@ void main() {
 
     test('should return error for empty email', () {
       final error = ValidationHelper.validateEmail('');
-      expect(error, 'E-mail é obrigatório.');
+      expect(error, 'error_email_required');
     });
 
     test('should return error for email without @', () {
       final error = ValidationHelper.validateEmail('userexample.com');
-      expect(error, 'Por favor, insira um e-mail válido.');
+      expect(error, 'error_email_invalid');
     });
   });
 
   group('Real-time Validation Logic - Password', () {
     test('should return error for short password', () {
       final error = ValidationHelper.validatePassword('12345');
-      expect(error, 'Senha deve ter pelo menos 6 caracteres.');
+      expect(error, 'error_password_min_length');
     });
 
     test('should return null for valid password', () {
@@ -70,7 +69,7 @@ void main() {
 
     test('should return error for empty password', () {
       final error = ValidationHelper.validatePassword('');
-      expect(error, 'Senha é obrigatória.');
+      expect(error, 'error_password_required');
     });
 
     test('should return null for password with exactly 6 characters', () {
@@ -95,9 +94,9 @@ void main() {
       }
 
       // Verifica que validação retorna erro imediatamente
-      expect(errors[0], 'Nome deve ter pelo menos 2 caracteres.'); // 'A'
+      expect(errors[0], 'error_name_min_length'); // 'A'
       expect(errors[1], null); // 'Ab' - válido
-      expect(errors[2], 'Nome deve conter apenas letras e espaços.'); // 'Ab1'
+      expect(errors[2], 'error_name_invalid'); // 'Ab1'
       expect(errors[3], null); // 'Abc' - válido
     });
 
@@ -110,11 +109,11 @@ void main() {
       }
 
       // Todos os inputs incompletos devem retornar erro
-      expect(errors[0], 'Por favor, insira um e-mail válido.'); // 'u'
-      expect(errors[1], 'Por favor, insira um e-mail válido.'); // 'us'
-      expect(errors[2], 'Por favor, insira um e-mail válido.'); // 'user'
-      expect(errors[3], 'Por favor, insira um e-mail válido.'); // 'user@'
-      expect(errors[4], 'Por favor, insira um e-mail válido.'); // 'user@e'
+      expect(errors[0], 'error_email_invalid'); // 'u'
+      expect(errors[1], 'error_email_invalid'); // 'us'
+      expect(errors[2], 'error_email_invalid'); // 'user'
+      expect(errors[3], 'error_email_invalid'); // 'user@'
+      expect(errors[4], 'error_email_invalid'); // 'user@e'
       expect(errors[5], null); // 'user@example.com' - válido
     });
 
@@ -127,11 +126,11 @@ void main() {
       }
 
       // Senhas com menos de 6 caracteres devem retornar erro
-      expect(errors[0], 'Senha deve ter pelo menos 6 caracteres.');
-      expect(errors[1], 'Senha deve ter pelo menos 6 caracteres.');
-      expect(errors[2], 'Senha deve ter pelo menos 6 caracteres.');
-      expect(errors[3], 'Senha deve ter pelo menos 6 caracteres.');
-      expect(errors[4], 'Senha deve ter pelo menos 6 caracteres.');
+      expect(errors[0], 'error_password_min_length');
+      expect(errors[1], 'error_password_min_length');
+      expect(errors[2], 'error_password_min_length');
+      expect(errors[3], 'error_password_min_length');
+      expect(errors[4], 'error_password_min_length');
       expect(errors[5], null); // '123456' - válido
     });
   });
@@ -169,7 +168,7 @@ void main() {
       final shouldShowError = error != null;
 
       expect(shouldShowError, true);
-      expect(error, 'Nome deve conter apenas letras e espaços.');
+      expect(error, 'error_name_invalid');
     });
 
     test('error message should be hidden when validation passes', () {
@@ -182,10 +181,10 @@ void main() {
     test('error message should update on each validation', () {
       // Simula mudança de erro conforme input muda
       var error = ValidationHelper.validateName('A');
-      expect(error, 'Nome deve ter pelo menos 2 caracteres.');
+      expect(error, 'error_name_min_length');
 
       error = ValidationHelper.validateName('João123');
-      expect(error, 'Nome deve conter apenas letras e espaços.');
+      expect(error, 'error_name_invalid');
 
       error = ValidationHelper.validateName('João Silva');
       expect(error, null);
@@ -196,15 +195,15 @@ void main() {
     test('should show error when passwords do not match', () {
       final password = '123456';
       final confirm = '654321';
-      final error = password != confirm ? 'As senhas não coincidem.' : null;
+      final error = password != confirm ? 'error_passwords_dont_match' : null;
 
-      expect(error, 'As senhas não coincidem.');
+      expect(error, 'error_passwords_dont_match');
     });
 
     test('should clear error when passwords match', () {
       final password = '123456';
       final confirm = '123456';
-      final error = password != confirm ? 'As senhas não coincidem.' : null;
+      final error = password != confirm ? 'error_passwords_dont_match' : null;
 
       expect(error, null);
     });
@@ -213,13 +212,13 @@ void main() {
       // Simula re-validação do campo de confirmação quando senha muda
       var password = '123456';
       var confirm = '123456';
-      var error = password != confirm ? 'As senhas não coincidem.' : null;
+      var error = password != confirm ? 'error_passwords_dont_match' : null;
       expect(error, null);
 
       // Usuário muda a senha
       password = '654321';
-      error = password != confirm ? 'As senhas não coincidem.' : null;
-      expect(error, 'As senhas não coincidem.');
+      error = password != confirm ? 'error_passwords_dont_match' : null;
+      expect(error, 'error_passwords_dont_match');
     });
   });
 

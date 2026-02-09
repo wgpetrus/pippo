@@ -57,7 +57,7 @@ class SplashView extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: AppButton(
-                  text: 'Tentar novamente',
+                  text: 'splash_retry_button'.tr,
                   onPressed: () => controller.retry(),
                 ),
               );

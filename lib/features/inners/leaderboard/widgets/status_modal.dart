@@ -32,7 +32,7 @@ class StatusModal {
           backgroundColor: AppTheme.white,
           surfaceTintColor: AppTheme.white,
           hasSabGradient: false,
-          topBarTitle: Text('Defina seu status', style: AppTheme.textXlBold),
+          topBarTitle: Text('leaderboard_status_modal_title'.tr, style: AppTheme.textXlBold),
           isTopBarLayerAlwaysVisible: true,
           child: StatefulBuilder(
             builder: (context, setState) {
@@ -86,7 +86,7 @@ class StatusModal {
 
                       // Botões
                       AppButton(
-                        text: 'Pronto',
+                        text: 'leaderboard_status_modal_done'.tr,
                         isLoading: isUpdating,
                         onPressed: isUpdating
                             ? null
@@ -99,7 +99,7 @@ class StatusModal {
                       ),
                       SizedBox(height: r.spacing12),
                       AppButton(
-                        text: 'Limpar status',
+                        text: 'leaderboard_status_modal_clear'.tr,
                         isPrimary: false,
                         onPressed: isUpdating
                             ? null

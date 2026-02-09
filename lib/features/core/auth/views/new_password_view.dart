@@ -42,17 +42,17 @@ class _NewPasswordViewState extends State<NewPasswordView> {
 
   // Validadores
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Senha é obrigatória.';
-    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
+    if (value == null || value.isEmpty) return 'error_password_required'.tr;
+    if (value.length < 6) return 'error_password_min_length'.tr;
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Confirmação de senha é obrigatória.';
+      return 'error_confirm_password_required'.tr;
     }
     if (value != _newPasswordController.text) {
-      return 'As senhas não coincidem.';
+      return 'error_passwords_dont_match'.tr;
     }
     return null;
   }
@@ -62,7 +62,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Nova senha'),
+      appBar: AppAppbar(title: 'auth_new_password_title'.tr),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -75,7 +75,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 
                 // Texto explicativo
                 Text(
-                  'Crie uma nova senha para sua conta.',
+                  'auth_new_password_description'.tr,
                   style: AppTheme.textMd.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -85,8 +85,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 
                 // Campo de nova senha
                 AppTextField(
-                  label: 'Nova senha',
-                  hint: 'Digite sua nova senha',
+                  label: 'auth_new_password_label'.tr,
+                  hint: 'auth_new_password_hint'.tr,
                   controller: _newPasswordController,
                   obscureText: _obscureNewPassword,
                   validator: _validatePassword,
@@ -107,8 +107,8 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 
                 // Campo de confirmação de senha
                 AppTextField(
-                  label: 'Confirmar senha',
-                  hint: 'Digite sua senha novamente',
+                  label: 'auth_confirm_password_label'.tr,
+                  hint: 'auth_confirm_password_hint'.tr,
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   validator: _validateConfirmPassword,
@@ -145,7 +145,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 
                 // Botão redefinir senha
                 Obx(() => AppButton(
-                  text: 'Redefinir senha',
+                  text: 'auth_reset_password_button'.tr,
                   isLoading: _controller.isLoading.value,
                   onPressed: _controller.isLoading.value
                       ? null
@@ -162,7 +162,7 @@ class _NewPasswordViewState extends State<NewPasswordView> {
                 
                 // Botão cancelar
                 AppButton(
-                  text: 'Cancelar',
+                  text: 'auth_cancel_button'.tr,
                   isPrimary: false,
                   onPressed: _controller.isLoading.value
                       ? null

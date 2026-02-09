@@ -26,7 +26,7 @@ class DeleteAccountModal {
               children: [
                 // Título
                 Text(
-                  'Excluir Conta',
+                  'delete_account_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.red),
                   textAlign: TextAlign.center,
                 ),
@@ -35,7 +35,7 @@ class DeleteAccountModal {
 
                 // Descrição das consequências
                 Text(
-                  'Tem certeza que deseja excluir sua conta?\n\nEsta ação é permanente e irá apagar:',
+                  '${'delete_account_question'.tr}\n\n${'delete_account_warning'.tr}',
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -43,17 +43,17 @@ class DeleteAccountModal {
                 SizedBox(height: r.spacing12),
 
                 // Lista de consequências
-                _buildConsequenceItem(r, 'Todo seu progresso de aprendizado'),
-                _buildConsequenceItem(r, 'Sua sequência de dias consecutivos'),
-                _buildConsequenceItem(r, 'Todas as suas gemas e recompensas'),
-                _buildConsequenceItem(r, 'Seus cursos e estatísticas'),
-                _buildConsequenceItem(r, 'Suas conexões sociais (seguidores/seguindo)'),
+                _buildConsequenceItem(r, 'delete_account_consequence_1'.tr),
+                _buildConsequenceItem(r, 'delete_account_consequence_2'.tr),
+                _buildConsequenceItem(r, 'delete_account_consequence_3'.tr),
+                _buildConsequenceItem(r, 'delete_account_consequence_4'.tr),
+                _buildConsequenceItem(r, 'delete_account_consequence_5'.tr),
 
                 SizedBox(height: r.spacing24),
 
                 // Botão Cancel (secundário)
                 AppButton(
-                  text: 'Cancelar',
+                  text: 'delete_account_cancel'.tr,
                   isPrimary: false,
                   onPressed: () => Get.back(),
                 ),
@@ -139,7 +139,7 @@ class _DeleteButtonState extends State<_DeleteButton> {
           ),
           child: Center(
             child: Text(
-              'Continuar',
+              'delete_account_continue'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.white),
             ),
           ),

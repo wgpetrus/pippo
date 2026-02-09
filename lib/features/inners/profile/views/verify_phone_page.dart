@@ -62,7 +62,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
 
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Telefone'),
+      appBar: AppAppbar(title: 'verify_phone_title'.tr),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -80,7 +80,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
                   children: [
                     // Título
                     Text(
-                      'OTP',
+                      'verify_phone_otp_title'.tr,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     ),
 
@@ -88,7 +88,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
 
                     // Descrição
                     Text(
-                      "Enviamos um código de 6 dígitos para seu telefone. Digite abaixo para desbloquear sua próxima aventura!",
+                      'verify_phone_description'.tr,
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                     ),
 
@@ -145,7 +145,7 @@ class _VerifyPhonePageState extends State<VerifyPhonePage> {
                   r.spacing16,
                 ),
                 child: Obx(() => AppButton(
-                  text: 'Verificar',
+                  text: 'verify_phone_verify'.tr,
                   isLoading: _controller.isLoading.value,
                   onPressed: _controller.isLoading.value ? null : _verifyCode,
                 )),

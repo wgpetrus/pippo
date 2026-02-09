@@ -25,11 +25,11 @@ class EnergyModal extends StatelessWidget {
 
   String _getMessageText(int currentEnergy, int maxEnergy) {
     if (_isFull(currentEnergy, maxEnergy)) {
-      return 'Sua energia de aprendizado está totalmente carregada ⚡\nPronto para começar?';
+      return 'home_energy_modal_full_message'.tr;
     } else if (_isEmpty(currentEnergy)) {
-      return 'Sem energia restante. Faça uma pausa e\nvolte mais forte.';
+      return 'home_energy_modal_empty_message'.tr;
     } else {
-      return 'Apenas uma energia restante... use com sabedoria!';
+      return 'home_energy_modal_low_message'.tr;
     }
   }
 
@@ -64,8 +64,8 @@ class EnergyModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Título
-              const Text(
-                'Sua Energia',
+              Text(
+                'home_energy_modal_title'.tr,
                 style: AppTheme.displayXsBold,
               ),
               SizedBox(height: spacing),
@@ -88,7 +88,7 @@ class EnergyModal extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Próxima energia em  ',
+                      'home_energy_modal_next_energy'.tr,
                       style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray300),
                     ),
                     Text(
@@ -102,7 +102,7 @@ class EnergyModal extends StatelessWidget {
 
               // Botão Unlimited Flashes
               AppButton(
-                text: 'Ilimitado',
+                text: 'home_energy_modal_unlimited_button'.tr,
                 isPrimary: true,
                 onPressed: onUnlimitedTap,
                 prefixIcon: const FaIcon(
@@ -111,7 +111,7 @@ class EnergyModal extends StatelessWidget {
                   size: 18,
                 ),
                 suffixIcon: Text(
-                  'Teste grátis',
+                  'home_energy_modal_free_trial'.tr,
                   style: AppTheme.textMdBold.copyWith(color: AppTheme.white),
                 ),
               ),
@@ -119,7 +119,7 @@ class EnergyModal extends StatelessWidget {
 
               // Botão Refill Flashes
               Obx(() => AppButton(
-                text: 'Recarregar',
+                text: 'home_energy_modal_refill_button'.tr,
                 isPrimary: false,
                 isLoading: energyController.isLoading.value,
                 onPressed: energyController.isLoading.value || gemsController.gems.value < 100
@@ -129,8 +129,8 @@ class EnergyModal extends StatelessWidget {
                         // 1. Verificar se tem gems suficientes
                         if (gemsController.gems.value < 100) {
                           Get.snackbar(
-                            'Gems Insuficientes',
-                            'Você precisa de 100 gems para recarregar energia.',
+                            'home_energy_modal_insufficient_gems'.tr,
+                            'home_energy_modal_insufficient_gems_message'.tr,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppTheme.red,
                             colorText: AppTheme.white,
@@ -151,7 +151,7 @@ class EnergyModal extends StatelessWidget {
                         // 5. Feedback visual
                         if (energyController.errorMessage.value.isNotEmpty) {
                           Get.snackbar(
-                            'Erro',
+                            'home_energy_modal_error_title'.tr,
                             energyController.errorMessage.value,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppTheme.red,
@@ -160,8 +160,8 @@ class EnergyModal extends StatelessWidget {
                           );
                         } else {
                           Get.snackbar(
-                            'Sucesso',
-                            'Energia recarregada!',
+                            'home_energy_modal_success_title'.tr,
+                            'home_energy_modal_success_message'.tr,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: AppTheme.primary,
                             colorText: AppTheme.white,

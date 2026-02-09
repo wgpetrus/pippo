@@ -39,8 +39,8 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
   // Validador de email
   String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return 'E-mail é obrigatório.';
-    if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';
+    if (value == null || value.trim().isEmpty) return 'error_email_required'.tr;
+    if (!GetUtils.isEmail(value)) return 'error_email_invalid'.tr;
     return null;
   }
 
@@ -51,7 +51,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Esqueci minha senha'),
+      appBar: AppAppbar(title: 'auth_forgot_password_title'.tr),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -64,7 +64,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 
                 // Texto explicativo
                 Text(
-                  'Digite seu e-mail para receber um link de recuperação de senha.',
+                  'auth_forgot_password_description'.tr,
                   style: AppTheme.textMd.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -74,8 +74,8 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 
                 // Campo de e-mail
                 AppTextField(
-                  label: 'E-mail',
-                  hint: 'Digite seu e-mail',
+                  label: 'common_email_label'.tr,
+                  hint: 'common_email_hint'.tr,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
@@ -101,7 +101,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 
                 // Botão enviar link
                 Obx(() => AppButton(
-                  text: 'Enviar link',
+                  text: 'auth_send_link_button'.tr,
                   isLoading: _controller.isLoading.value,
                   onPressed: _controller.isLoading.value
                       ? null
@@ -123,7 +123,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     child: Opacity(
                       opacity: _controller.isLoading.value ? 0.5 : 1.0,
                       child: Text(
-                        'Lembrei minha senha',
+                        'auth_remembered_password'.tr,
                         style: AppTheme.textMdSemibold.copyWith(
                           color: AppTheme.primary,
                           decoration: TextDecoration.underline,

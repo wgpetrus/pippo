@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 
@@ -43,7 +44,7 @@ class LessonPopoverContent extends StatelessWidget {
 
           // Subtítulo
           Text(
-            'Lição $currentLesson de $totalLessons',
+            'home_lesson_popover_lesson_label'.tr.replaceAll('{current}', currentLesson.toString()).replaceAll('{total}', totalLessons.toString()),
             style: AppTheme.textMdMedium.copyWith(
               color: AppTheme.white80,
             ),
@@ -71,7 +72,7 @@ class LessonPopoverContent extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            'Começar + $xpReward XP',
+            'home_lesson_popover_start_button'.tr.replaceAll('{xp}', xpReward.toString()),
             style: AppTheme.textLgBold.copyWith(
               color: isCompleted ? AppTheme.white : AppTheme.primary,
             ),

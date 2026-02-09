@@ -1,0 +1,197 @@
+{
+    "profile_main_pages": {
+        "profile_page": {
+            "profile_title": "Perfil",
+            "profile_try_again": "Tentar novamente"
+        },
+        "user_profile_page": {
+            "profile_title": "Perfil",
+            "profile_user_not_found": "Usuário não encontrado",
+            "profile_try_again": "Tentar novamente"
+        },
+        "edit_profile_page": {
+            "profile_edit_title": "Perfil",
+            "profile_edit_save": "Salvar",
+            "profile_edit_change_avatar": "Trocar avatar",
+            "profile_edit_name_label": "Nome",
+            "profile_edit_name_hint": "digite seu nome",
+            "profile_edit_username_label": "Nome de usuário",
+            "profile_edit_username_hint": "digite seu nome de usuário",
+            "profile_edit_bio_label": "Bio",
+            "profile_edit_bio_hint": "conte um pouco sobre você",
+            "profile_edit_country_label": "País",
+            "profile_edit_country_hint": "selecione seu país",
+            "profile_edit_email_label": "E-mail",
+            "profile_edit_email_hint": "seu e-mail",
+            "profile_edit_phone_label": "Telefone",
+            "profile_edit_phone_hint": "adicione seu telefone",
+            "profile_edit_change_password": "Alterar senha",
+            "profile_edit_delete_profile": "Excluir perfil",
+            "profile_edit_country_brazil": "Brasil",
+            "profile_edit_country_usa": "Estados Unidos",
+            "profile_edit_country_france": "França",
+            "profile_edit_country_spain": "Espanha",
+            "profile_edit_country_germany": "Alemanha",
+            "profile_edit_country_china": "China",
+            "profile_edit_country_japan": "Japão",
+            "profile_edit_country_saudi": "Arábia Saudita"
+        }
+    },
+    "profile_settings_pages": {
+        "settings_page": {
+            "settings_title": "Configurações",
+            "settings_account_section": "Conta",
+            "settings_profile": "Perfil",
+            "settings_notifications": "Notificações",
+            "settings_courses": "Cursos",
+            "settings_learning_controls": "Controles de Aprendizado",
+            "settings_subscription_section": "Assinatura",
+            "settings_plans": "Planos",
+            "settings_support_section": "Suporte",
+            "settings_privacy_policy": "Política de Privacidade",
+            "settings_terms_of_use": "Termos de Uso",
+            "settings_help_support": "Ajuda e Suporte",
+            "settings_danger_zone": "Zona de Perigo",
+            "settings_delete_account": "Excluir Conta",
+            "settings_logout": "Sair"
+        },
+        "notifications_page": {
+            "notifications_title": "Notificações",
+            "notifications_learning_style": "Estilo de Aprendizado",
+            "notifications_practice_reminders": "Lembretes de prática",
+            "notifications_leaderboard_updates": "Atualizações do ranking",
+            "notifications_reminder_time": "Horário do lembrete",
+            "notifications_friend_activity": "Atividade de amigos"
+        },
+        "learning_controls_page": {
+            "learning_controls_title": "Controles de Aprendizado",
+            "learning_controls_learning_style": "Estilo de Aprendizado",
+            "learning_controls_sound_effects": "Efeitos sonoros",
+            "learning_controls_listening_exercises": "Exercícios de escuta",
+            "learning_controls_speaking_exercises": "Exercícios de fala",
+            "learning_controls_daily_goal_section": "Meta Diária",
+            "learning_controls_daily_goal": "Meta diária",
+            "learning_controls_daily_goal_minutes": "min",
+            "learning_controls_language_settings": "Configurações de Idioma",
+            "learning_controls_display_mode": "Modo de Exibição",
+            "learning_controls_all_words": "Todas as palavras"
+        },
+        "courses_page": {
+            "courses_title": "Cursos",
+            "courses_try_again": "Tentar Novamente",
+            "courses_no_courses": "Você ainda não tem cursos ativos.",
+            "courses_delete_title": "Dizer Adeus a Este Curso?",
+            "courses_delete_message_prefix": "Você perderá todo o progresso de",
+            "courses_delete_confirm": "Remover",
+            "courses_delete_cancel": "Cancelar"
+        }
+    },
+    "profile_security_pages": {
+        "change_password_page": {
+            "change_password_title": "Alterar senha",
+            "change_password_current_label": "Senha Atual",
+            "change_password_current_hint": "digite a senha atual",
+            "change_password_new_label": "Nova Senha",
+            "change_password_new_hint": "digite a nova senha",
+            "change_password_confirm_label": "Confirmar senha",
+            "change_password_confirm_hint": "repita sua senha",
+            "change_password_save": "Salvar"
+        },
+        "phone_number_page": {
+            "phone_number_title": "Telefone",
+            "phone_number_question": "Qual é o seu telefone",
+            "phone_number_hint": "número de telefone",
+            "phone_number_warning": "Você receberá um SMS para verificar seu telefone. Taxas de SMS padrão podem ser aplicadas.",
+            "phone_number_save": "Salvar",
+            "phone_number_next": "Próximo",
+            "phone_number_error_invalid": "Número de telefone inválido.",
+            "phone_number_error_too_many": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+            "phone_number_error_network": "Verifique sua conexão com a internet.",
+            "phone_number_error_generic": "Erro ao enviar código. Tente novamente.",
+            "phone_number_validation_required": "Número de telefone é obrigatório.",
+            "phone_number_validation_invalid": "Número de telefone inválido."
+        },
+        "verify_phone_page": {
+            "verify_phone_title": "Telefone",
+            "verify_phone_otp_title": "OTP",
+            "verify_phone_description": "Enviamos um código de 6 dígitos para seu telefone. Digite abaixo para desbloquear sua próxima aventura!",
+            "verify_phone_verify": "Verificar"
+        },
+        "phone_linked_page": {
+            "phone_linked_title": "Seu Número Está Vinculado!",
+            "phone_linked_description": "Usaremos isso para enviar seus códigos mágicos e proteger suas gemas.",
+            "phone_linked_back_home": "Voltar para o início"
+        }
+    },
+    "profile_widgets": {
+        "change_avatar_modal": {
+            "change_avatar_title": "Trocar Avatar",
+            "change_avatar_save": "Salvar"
+        },
+        "complete_profile_card": {
+            "complete_profile_title": "Complete seu perfil!",
+            "complete_profile_step_singular": "passo restante",
+            "complete_profile_steps_plural": "passos restantes",
+            "complete_profile_button": "Completar agora"
+        },
+        "confirm_delete_modal": {
+            "confirm_delete_title": "Confirmação Final",
+            "confirm_delete_description": "Esta é sua última chance!\n\nSua conta será excluída permanentemente e não poderá ser recuperada.",
+            "confirm_delete_question": "Você tem certeza absoluta?",
+            "confirm_delete_cancel": "Cancelar",
+            "confirm_delete_confirm": "Confirmar Exclusão",
+            "confirm_delete_deleting": "Excluindo..."
+        },
+        "country_selector_modal": {
+            "country_selector_title": "Country/Region"
+        },
+        "course_item": {
+            "course_item_primary_badge": "Principal",
+            "course_item_set_primary": "Definir"
+        },
+        "delete_account_modal": {
+            "delete_account_title": "Excluir Conta",
+            "delete_account_question": "Tem certeza que deseja excluir sua conta?",
+            "delete_account_warning": "Esta ação é permanente e irá apagar:",
+            "delete_account_consequence_1": "Todo seu progresso de aprendizado",
+            "delete_account_consequence_2": "Sua sequência de dias consecutivos",
+            "delete_account_consequence_3": "Todas as suas gemas e recompensas",
+            "delete_account_consequence_4": "Seus cursos e estatísticas",
+            "delete_account_consequence_5": "Suas conexões sociais (seguidores/seguindo)",
+            "delete_account_cancel": "Cancelar",
+            "delete_account_continue": "Continuar"
+        },
+        "find_friends_card": {
+            "find_friends_title": "Encontrar amigos",
+            "find_friends_subtitle": "Busque por username ou nome"
+        },
+        "overview_section": {
+            "overview_title": "Visão Geral",
+            "overview_total_xp": "XP Total",
+            "overview_day_streak": "Dias de sequência",
+            "overview_longest_streak": "Maior sequência",
+            "overview_level_prefix": "Nível de",
+            "overview_level_fallback": "Idioma",
+            "overview_level_french": "Francês",
+            "overview_warrior_title": "Guerreiro das Palavras"
+        },
+        "reauthenticate_modal": {
+            "reauthenticate_title": "Confirme sua Identidade",
+            "reauthenticate_description": "Por segurança, precisamos confirmar sua senha antes de continuar.",
+            "reauthenticate_password_label": "Senha",
+            "reauthenticate_password_hint": "Digite sua senha",
+            "reauthenticate_password_required": "Senha é obrigatória.",
+            "reauthenticate_cancel": "Cancelar",
+            "reauthenticate_confirm": "Confirmar"
+        },
+        "reminder_time_modal": {
+            "reminder_time_title": "Reminder time",
+            "reminder_time_save": "Salvar"
+        },
+        "weekly_progress_chart": {
+            "weekly_progress_title": "Progresso semanal",
+            "weekly_progress_you": "Você",
+            "weekly_progress_other": "Este usuário"
+        }
+    }
+}

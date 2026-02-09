@@ -61,32 +61,32 @@ class _UserEmailPageState extends State<UserEmailPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Qual é o seu e-mail?',
+                'onboarding_user_email_question'.tr,
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 24),
               Text(
-                'E-mail',
+                'onboarding_user_email_label'.tr,
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 8),
               OnboardingTextField(
                 controller: _emailController,
                 focusNode: _focusNode,
-                hint: 'digite seu e-mail',
+                hint: 'onboarding_user_email_hint'.tr,
                 isFocused: _isFocused,
                 keyboardType: TextInputType.emailAddress,
               ),
               SizedBox(height: r.isKeyboardOpen ? 16 : 200),
               AppButton(
-                text: 'Continuar',
+                text: 'common_continue'.tr,
                 onPressed: () {
                   final email = _emailController.text.trim();
                   final error = ValidationHelper.validateEmail(email);
                   
                   if (error != null) {
                     Get.snackbar(
-                      'E-mail inválido',
+                      'onboarding_user_email_error_invalid'.tr,
                       error,
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: AppTheme.error,

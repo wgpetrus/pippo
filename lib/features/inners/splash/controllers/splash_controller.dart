@@ -97,13 +97,13 @@ class SplashController extends GetxController {
       }
     } on TimeoutException {
       // Timeout na verificação do Firestore
-      errorMessage.value = 'Verifique sua conexão com a internet';
+      errorMessage.value = 'error_network_check'.tr;
       showRetryButton.value = true;
       isLoading.value = false;
     } on FirebaseException catch (e) {
       // Detectar erro de rede especificamente
       if (_isNetworkError(e)) {
-        errorMessage.value = 'Verifique sua conexão com a internet';
+        errorMessage.value = 'error_network_check'.tr;
         showRetryButton.value = true;
       } else {
         errorMessage.value = _handleFirestoreError(e);
@@ -112,7 +112,7 @@ class SplashController extends GetxController {
       isLoading.value = false;
     } catch (e) {
       // Erro genérico
-      errorMessage.value = 'Erro ao inicializar. Tente novamente.';
+      errorMessage.value = 'error_initialization'.tr;
       showRetryButton.value = true;
       isLoading.value = false;
     }

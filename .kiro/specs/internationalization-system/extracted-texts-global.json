@@ -1,0 +1,43 @@
+{
+    "description": "Extracted texts from global widgets (lib/shared/widgets/)",
+    "total_keys": 3,
+    "widgets_analyzed": [
+        "app_appbar.dart - No hardcoded texts (title passed as parameter)",
+        "app_back_button.dart - No hardcoded texts (icon only)",
+        "app_button.dart - No hardcoded texts (text passed as parameter)",
+        "app_float_anim.dart - No hardcoded texts (animation only)",
+        "app_lesson_button.dart - No hardcoded texts (icon only)",
+        "app_list_item.dart - No hardcoded texts (label passed as parameter)",
+        "app_pinput.dart - No hardcoded texts (input only)",
+        "app_resend_code.dart - 3 hardcoded texts found",
+        "app_text_field.dart - No hardcoded texts (label and hint passed as parameters)"
+    ],
+    "keys": {
+        "common_didnt_receive": {
+            "pt_BR": "Não recebeu?",
+            "context": "app_resend_code.dart - Text before resend link/timer",
+            "usage": "Displayed when user hasn't received verification code",
+            "type": "question"
+        },
+        "common_tap_to_resend": {
+            "pt_BR": "Toque para reenviar.",
+            "context": "app_resend_code.dart - Clickable text to resend code",
+            "usage": "Displayed when timer is complete and user can resend",
+            "type": "action"
+        },
+        "common_resend_code_in": {
+            "pt_BR": "Reenviar código em",
+            "context": "app_resend_code.dart - Text before countdown timer",
+            "usage": "Displayed during countdown before user can resend code",
+            "type": "label",
+            "note": "Followed by seconds remaining (e.g., '55 s')"
+        }
+    },
+    "notes": [
+        "Most global widgets are parameter-driven and don't contain hardcoded texts",
+        "Only app_resend_code.dart contains hardcoded Portuguese texts",
+        "All other widgets receive text content through parameters (title, label, hint, text, etc.)",
+        "These 3 keys should be added to the 'common_' section since they're in global widgets",
+        "The 's' suffix for seconds is hardcoded but is a unit abbreviation that may not need translation"
+    ]
+}

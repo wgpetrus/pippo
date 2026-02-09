@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -229,7 +230,7 @@ class ProfileCard extends StatelessWidget {
                         onTap: onFollowingTap,
                         child: _buildStat(
                           '$following',
-                          'Seguindo',
+                          'profile_card_following',
                           FontAwesomeIcons.userGroup,
                         ),
                       ),
@@ -248,7 +249,7 @@ class ProfileCard extends StatelessWidget {
                         onTap: onFollowersTap,
                         child: _buildStat(
                           '$followers',
-                          'Seguidores',
+                          'profile_card_followers',
                           FontAwesomeIcons.users,
                         ),
                       ),
@@ -298,7 +299,7 @@ class ProfileCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Cursos',
+                            'profile_card_courses'.tr,
                             style: AppTheme.textSmRegular.copyWith(
                               color: AppTheme.white.withOpacity(0.7),
                             ),
@@ -313,7 +314,7 @@ class ProfileCard extends StatelessWidget {
                 if (showFollowButton) ...[
                   const SizedBox(height: 20),
                   AppButton(
-                    text: isFollowing ? 'Seguindo' : 'Seguir',
+                    text: isFollowing ? 'profile_card_following'.tr : 'profile_card_follow'.tr,
                     isPrimary: !isFollowing,
                     onPressed: onFollowTap,
                   ),
@@ -350,7 +351,7 @@ class ProfileCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          label,
+          label.tr,
           style: AppTheme.textSmRegular.copyWith(
             color: AppTheme.white.withOpacity(0.7),
           ),

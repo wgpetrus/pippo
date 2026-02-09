@@ -78,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                   TextButton(
                     onPressed: () => _dataController.loadOwnProfile(),
                     child: Text(
-                      'Tentar novamente',
+                      'profile_try_again'.tr,
                       style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
                     ),
                   ),
@@ -100,7 +100,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             slivers: [
               // Header com card azul
               Obx(() => ProfileHeader(
-                title: 'Perfil',
+                title: 'profile_title'.tr,
                 avatarAsset: _getAvatarAsset(_dataController.avatarId.value),
                 name: _dataController.userName.value,
                 username: _dataController.username.value,

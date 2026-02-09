@@ -63,13 +63,13 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                 child: Column(
                   children: [
                     Text(
-                      'Estava te esperando! Vamos nos divertir.',
+                      'onboarding_conclusion_title'.tr,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: r.spacing12),
                     Text(
-                      'Seu curso está pronto e esperando — a apenas um clique.',
+                      'onboarding_conclusion_subtitle'.tr,
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                       textAlign: TextAlign.center,
                     ),
@@ -118,7 +118,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                                 TextButton(
                                   onPressed: () => _dataController.cancelRetry(),
                                   child: Text(
-                                    'Cancelar',
+                                    'onboarding_conclusion_button_cancel'.tr,
                                     style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
                                   ),
                                 ),
@@ -128,7 +128,7 @@ class _ConclusionPageState extends State<ConclusionPage> with SingleTickerProvid
                         : const SizedBox.shrink()),
                     
                     Obx(() => AppButton(
-                      text: 'Vamos Aprender',
+                      text: 'onboarding_conclusion_button'.tr,
                       isLoading: _dataController.isLoading.value,
                       onPressed: _dataController.isLoading.value ? null : _onButtonPressed,
                     )),

@@ -146,7 +146,7 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
       child: TextButton(
         onPressed: () => _showExitDialog(context),
         child: Text(
-          'Sair',
+          'onboarding_header_exit_button'.tr,
           style: AppTheme.textMdBold.copyWith(color: AppTheme.error),
         ),
       ),
@@ -157,10 +157,10 @@ class OnboardingHeader extends StatelessWidget implements PreferredSizeWidget {
   Future<void> _showExitDialog(BuildContext context) async {
     final confirm = await AppDialog.confirm(
       context: context,
-      title: 'Sair do Cadastro?',
-      message: 'Você perderá todo o progresso do cadastro.',
-      confirmText: 'Sair',
-      cancelText: 'Continuar Cadastro',
+      title: 'onboarding_header_exit_dialog_title'.tr,
+      message: 'onboarding_header_exit_dialog_message'.tr,
+      confirmText: 'onboarding_header_exit_dialog_confirm'.tr,
+      cancelText: 'onboarding_header_exit_dialog_cancel'.tr,
       confirmColor: AppTheme.red,
     );
 

@@ -29,7 +29,7 @@ class ReauthenticateModal {
                 children: [
                   // Título
                   Text(
-                    'Confirme sua Identidade',
+                    'reauthenticate_title'.tr,
                     style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     textAlign: TextAlign.center,
                   ),
@@ -38,7 +38,7 @@ class ReauthenticateModal {
 
                   // Descrição
                   Text(
-                    'Por segurança, precisamos confirmar sua senha antes de continuar.',
+                    'reauthenticate_description'.tr,
                     style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
                     textAlign: TextAlign.center,
                   ),
@@ -48,12 +48,12 @@ class ReauthenticateModal {
                   // Campo de senha
                   AppTextField(
                     controller: passwordController,
-                    label: 'Senha',
-                    hint: 'Digite sua senha',
+                    label: 'reauthenticate_password_label'.tr,
+                    hint: 'reauthenticate_password_hint'.tr,
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Senha é obrigatória.';
+                        return 'reauthenticate_password_required'.tr;
                       }
                       return null;
                     },
@@ -63,7 +63,7 @@ class ReauthenticateModal {
 
                   // Botão Cancelar
                   AppButton(
-                    text: 'Cancelar',
+                    text: 'reauthenticate_cancel'.tr,
                     isPrimary: false,
                     onPressed: () {
                       result = null;
@@ -75,7 +75,7 @@ class ReauthenticateModal {
 
                   // Botão Confirmar
                   AppButton(
-                    text: 'Confirmar',
+                    text: 'reauthenticate_confirm'.tr,
                     onPressed: () {
                       if (formKey.currentState!.validate()) {
                         result = passwordController.text;

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,12 +7,17 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import local
+import 'package:pippo/shared/translations/app_translations.dart';
 import 'package:pippo/shared/utils/validation_helper.dart';
 
 void main() {
   setUp(() async {
     // Setup GetX
     Get.testMode = true;
+    
+    // Setup translations
+    Get.put(AppTranslations());
+    Get.updateLocale(const Locale('pt', 'BR'));
 
     // Setup SharedPreferences
     SharedPreferences.setMockInitialValues({});
@@ -98,41 +104,42 @@ void main() {
   group('Input Validation - Name', () {
     // Validadores extraídos do OnboardingController
     // IMPORTANTE: Manter sincronizado com lib/features/core/onboarding/controllers/onboarding_controller.dart
+    // NOTE: Returns translation keys (not translated messages) for testing
     String? validateName(String? value) {
       if (value == null || value.trim().isEmpty) {
-        return 'Nome é obrigatório.';
+        return 'error_name_required';
       }
       return null;
     }
 
     test('rejects null value', () {
       final result = validateName(null);
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('rejects empty string', () {
       final result = validateName('');
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('rejects whitespace-only string', () {
       final result = validateName('   ');
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('rejects tab-only string', () {
       final result = validateName('\t');
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('rejects newline-only string', () {
       final result = validateName('\n');
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('rejects mixed whitespace string', () {
       final result = validateName('  \t\n  ');
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('accepts valid name', () {
@@ -163,54 +170,55 @@ void main() {
 
   group('Input Validation - Email', () {
     // Validadores extraídos do OnboardingController
+    // NOTE: Returns translation keys (not translated messages) for testing
     String? validateEmail(String? value) {
       if (value == null || value.isEmpty) {
-        return 'E-mail é obrigatório.';
+        return 'error_email_required';
       }
       if (!GetUtils.isEmail(value)) {
-        return 'Por favor, insira um e-mail válido.';
+        return 'error_email_invalid';
       }
       return null;
     }
 
     test('rejects null value', () {
       final result = validateEmail(null);
-      expect(result, equals('E-mail é obrigatório.'));
+      expect(result, equals('error_email_required'));
     });
 
     test('rejects empty string', () {
       final result = validateEmail('');
-      expect(result, equals('E-mail é obrigatório.'));
+      expect(result, equals('error_email_required'));
     });
 
     test('rejects invalid format - no @', () {
       final result = validateEmail('invalid');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('rejects invalid format - no domain', () {
       final result = validateEmail('invalid@');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('rejects invalid format - no local part', () {
       final result = validateEmail('@invalid.com');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('rejects invalid format - missing TLD', () {
       final result = validateEmail('invalid@domain');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('rejects invalid format - space in email', () {
       final result = validateEmail('invalid domain@test.com');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('rejects invalid format - double dots', () {
       final result = validateEmail('invalid..email@test.com');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('accepts valid email', () {
@@ -251,39 +259,40 @@ void main() {
 
   group('Input Validation - Password', () {
     // Validadores extraídos do OnboardingController
+    // NOTE: Returns translation keys (not translated messages) for testing
     String? validatePassword(String? value) {
       if (value == null || value.isEmpty) {
-        return 'Senha é obrigatória.';
+        return 'error_password_required';
       }
       if (value.length < 6) {
-        return 'A senha deve ter pelo menos 6 caracteres.';
+        return 'error_password_min_length';
       }
       return null;
     }
 
     test('rejects null value', () {
       final result = validatePassword(null);
-      expect(result, equals('Senha é obrigatória.'));
+      expect(result, equals('error_password_required'));
     });
 
     test('rejects empty string', () {
       final result = validatePassword('');
-      expect(result, equals('Senha é obrigatória.'));
+      expect(result, equals('error_password_required'));
     });
 
     test('rejects password with 0 characters', () {
       final result = validatePassword('');
-      expect(result, equals('Senha é obrigatória.'));
+      expect(result, equals('error_password_required'));
     });
 
     test('rejects password with 1 character', () {
       final result = validatePassword('1');
-      expect(result, equals('A senha deve ter pelo menos 6 caracteres.'));
+      expect(result, equals('error_password_min_length'));
     });
 
     test('rejects password with 5 characters', () {
       final result = validatePassword('12345');
-      expect(result, equals('A senha deve ter pelo menos 6 caracteres.'));
+      expect(result, equals('error_password_min_length'));
     });
 
     test('accepts password with exactly 6 characters', () {
@@ -324,145 +333,145 @@ void main() {
 
   group('Error Messages', () {
     // Validadores extraídos do OnboardingController
+    // NOTE: Returns translation keys (not translated messages) for testing
     String? validateName(String? value) {
       if (value == null || value.trim().isEmpty) {
-        return 'Nome é obrigatório.';
+        return 'error_name_required';
       }
       return null;
     }
 
     String? validateEmail(String? value) {
       if (value == null || value.isEmpty) {
-        return 'E-mail é obrigatório.';
+        return 'error_email_required';
       }
       if (!GetUtils.isEmail(value)) {
-        return 'Por favor, insira um e-mail válido.';
+        return 'error_email_invalid';
       }
       return null;
     }
 
     String? validatePassword(String? value) {
       if (value == null || value.isEmpty) {
-        return 'Senha é obrigatória.';
+        return 'error_password_required';
       }
       if (value.length < 6) {
-        return 'A senha deve ter pelo menos 6 caracteres.';
+        return 'error_password_min_length';
       }
       return null;
     }
 
     test('name error message matches requirements', () {
       final result = validateName('');
-      expect(result, equals('Nome é obrigatório.'));
+      expect(result, equals('error_name_required'));
     });
 
     test('email empty error message matches requirements', () {
       final result = validateEmail('');
-      expect(result, equals('E-mail é obrigatório.'));
+      expect(result, equals('error_email_required'));
     });
 
     test('email invalid error message matches requirements', () {
       final result = validateEmail('invalid');
-      expect(result, equals('Por favor, insira um e-mail válido.'));
+      expect(result, equals('error_email_invalid'));
     });
 
     test('password empty error message matches requirements', () {
       final result = validatePassword('');
-      expect(result, equals('Senha é obrigatória.'));
+      expect(result, equals('error_password_required'));
     });
 
     test('password short error message matches requirements', () {
       final result = validatePassword('123');
-      expect(result, equals('A senha deve ter pelo menos 6 caracteres.'));
+      expect(result, equals('error_password_min_length'));
     });
 
-    test('all error messages are in Portuguese', () {
+    test('all error messages are translation keys', () {
       final nameError = validateName('');
       final emailEmptyError = validateEmail('');
       final emailInvalidError = validateEmail('invalid');
       final passwordEmptyError = validatePassword('');
       final passwordShortError = validatePassword('123');
 
-      // Check that all error messages contain Portuguese words
-      expect(nameError, contains('obrigatório'));
-      expect(emailEmptyError, contains('obrigatório'));
-      expect(emailInvalidError, contains('Por favor'));
-      expect(passwordEmptyError, contains('obrigatória'));
-      expect(passwordShortError, contains('pelo menos'));
+      // Check that all error messages are translation keys
+      expect(nameError, startsWith('error_'));
+      expect(emailEmptyError, startsWith('error_'));
+      expect(emailInvalidError, startsWith('error_'));
+      expect(passwordEmptyError, startsWith('error_'));
+      expect(passwordShortError, startsWith('error_'));
     });
 
-    test('error messages do not contain technical terms', () {
+    test('error messages follow naming convention', () {
       final nameError = validateName('');
       final emailInvalidError = validateEmail('invalid');
       final passwordShortError = validatePassword('123');
 
-      // Check that error messages don't contain technical terms
-      expect(nameError?.toLowerCase(), isNot(contains('null')));
-      expect(nameError?.toLowerCase(), isNot(contains('error')));
-      expect(emailInvalidError?.toLowerCase(), isNot(contains('invalid')));
-      expect(emailInvalidError?.toLowerCase(), isNot(contains('error')));
-      expect(passwordShortError?.toLowerCase(), isNot(contains('error')));
+      // Check that error messages follow snake_case convention
+      expect(nameError, matches(RegExp(r'^error_[a-z_]+$')));
+      expect(emailInvalidError, matches(RegExp(r'^error_[a-z_]+$')));
+      expect(passwordShortError, matches(RegExp(r'^error_[a-z_]+$')));
     });
   });
 
   group('Account Creation Flow', () {
     // Firebase Auth error handler extraído do OnboardingController
     // IMPORTANTE: Manter sincronizado com lib/features/core/onboarding/controllers/onboarding_controller.dart
+    // NOTE: Returns translation keys (not translated messages) for testing
     String handleFirebaseAuthError(String errorCode) {
       switch (errorCode) {
         case 'email-already-in-use':
-          return 'Este e-mail já está sendo usado por outra conta.';
+          return 'error_auth_email_in_use';
         case 'invalid-email':
-          return 'Por favor, insira um e-mail válido.';
+          return 'error_auth_invalid_email';
         case 'operation-not-allowed':
-          return 'Operação não permitida no momento.';
+          return 'error_auth_operation_not_allowed';
         case 'weak-password':
-          return 'A senha deve ter pelo menos 6 caracteres.';
+          return 'error_auth_weak_password';
         case 'network-request-failed':
-          return 'Verifique sua conexão com a internet.';
+          return 'error_auth_network_failed';
         case 'too-many-requests':
-          return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+          return 'error_auth_too_many_requests';
         default:
-          return 'Não foi possível criar sua conta. Tente novamente.';
+          return 'error_auth_register_default';
       }
     }
 
     test('email-already-in-use error returns correct message', () {
       final message = handleFirebaseAuthError('email-already-in-use');
-      expect(message, equals('Este e-mail já está sendo usado por outra conta.'));
+      expect(message, equals('error_auth_email_in_use'));
     });
 
     test('invalid-email error returns correct message', () {
       final message = handleFirebaseAuthError('invalid-email');
-      expect(message, equals('Por favor, insira um e-mail válido.'));
+      expect(message, equals('error_auth_invalid_email'));
     });
 
     test('weak-password error returns correct message', () {
       final message = handleFirebaseAuthError('weak-password');
-      expect(message, equals('A senha deve ter pelo menos 6 caracteres.'));
+      expect(message, equals('error_auth_weak_password'));
     });
 
     test('network-request-failed error returns correct message', () {
       final message = handleFirebaseAuthError('network-request-failed');
-      expect(message, equals('Verifique sua conexão com a internet.'));
+      expect(message, equals('error_auth_network_failed'));
     });
 
     test('too-many-requests error returns correct message', () {
       final message = handleFirebaseAuthError('too-many-requests');
-      expect(message, equals('Muitas tentativas. Aguarde alguns minutos e tente novamente.'));
+      expect(message, equals('error_auth_too_many_requests'));
     });
 
     test('operation-not-allowed error returns correct message', () {
       final message = handleFirebaseAuthError('operation-not-allowed');
-      expect(message, equals('Operação não permitida no momento.'));
+      expect(message, equals('error_auth_operation_not_allowed'));
     });
 
     test('unknown error returns default message', () {
       final message = handleFirebaseAuthError('unknown-error');
-      expect(message, equals('Não foi possível criar sua conta. Tente novamente.'));
+      expect(message, equals('error_auth_register_default'));
     });
 
-    test('all Firebase error messages are in Portuguese', () {
+    test('all Firebase error messages are translation keys', () {
       final errorCodes = [
         'email-already-in-use',
         'invalid-email',
@@ -479,17 +488,13 @@ void main() {
         expect(message.isNotEmpty, isTrue,
             reason: 'Error code "$code" must return non-empty message');
         
-        // Check message ends with period
-        expect(message.endsWith('.'), isTrue,
-            reason: 'Error code "$code" message must end with period');
-        
-        // Check message starts with capital letter
-        expect(message[0], equals(message[0].toUpperCase()),
-            reason: 'Error code "$code" message must start with capital letter');
+        // Check message is a translation key
+        expect(message, startsWith('error_auth_'),
+            reason: 'Error code "$code" message must be a translation key');
       }
     });
 
-    test('Firebase error messages do not contain technical terms', () {
+    test('Firebase error messages follow naming convention', () {
       final errorCodes = [
         'email-already-in-use',
         'invalid-email',
@@ -498,16 +503,12 @@ void main() {
         'too-many-requests',
       ];
 
-      final technicalTerms = ['exception', 'error', 'code', 'firebase', 'auth'];
-
       for (final code in errorCodes) {
         final message = handleFirebaseAuthError(code);
-        final lowerMessage = message.toLowerCase();
         
-        for (final term in technicalTerms) {
-          expect(lowerMessage, isNot(contains(term)),
-              reason: 'Error code "$code" message must not contain technical term "$term"');
-        }
+        // Check message follows snake_case convention
+        expect(message, matches(RegExp(r'^error_auth_[a-z_]+$')),
+            reason: 'Error code "$code" message must follow snake_case convention');
       }
     });
 
@@ -1740,32 +1741,32 @@ void main() {
 
       test('returns error for null value', () {
         final result = ValidationHelper.validateName(null);
-        expect(result, equals('Nome é obrigatório.'));
+        expect(result, equals('error_name_required'));
       });
 
       test('returns error for empty string', () {
         final result = ValidationHelper.validateName('');
-        expect(result, equals('Nome é obrigatório.'));
+        expect(result, equals('error_name_required'));
       });
 
       test('returns error for whitespace-only string', () {
         final result = ValidationHelper.validateName('   ');
-        expect(result, equals('Nome é obrigatório.'));
+        expect(result, equals('error_name_required'));
       });
 
       test('returns error for single character name', () {
         final result = ValidationHelper.validateName('A');
-        expect(result, equals('Nome deve ter pelo menos 2 caracteres.'));
+        expect(result, equals('error_name_min_length'));
       });
 
       test('returns error for name with numbers', () {
         final result = ValidationHelper.validateName('João123');
-        expect(result, equals('Nome deve conter apenas letras e espaços.'));
+        expect(result, equals('error_name_invalid'));
       });
 
       test('returns error for name with special characters', () {
         final result = ValidationHelper.validateName('João@Silva');
-        expect(result, equals('Nome deve conter apenas letras e espaços.'));
+        expect(result, equals('error_name_invalid'));
       });
 
       test('accepts name with exactly 2 characters', () {
@@ -1798,18 +1799,14 @@ void main() {
         expect(result2, equals(result3));
       });
 
-      test('error message is in Portuguese', () {
+      test('error message is a translation key', () {
         final result = ValidationHelper.validateName('');
-        expect(result, contains('obrigatório'));
+        expect(result, startsWith('error_'));
       });
 
-      test('error message does not contain technical terms', () {
+      test('error message follows naming convention', () {
         final result = ValidationHelper.validateName('');
-        final lowerResult = result?.toLowerCase() ?? '';
-        
-        expect(lowerResult, isNot(contains('null')));
-        expect(lowerResult, isNot(contains('error')));
-        expect(lowerResult, isNot(contains('exception')));
+        expect(result, matches(RegExp(r'^error_[a-z_]+$')));
       });
     });
 
@@ -1821,42 +1818,42 @@ void main() {
 
       test('returns error for null value', () {
         final result = ValidationHelper.validateEmail(null);
-        expect(result, equals('E-mail é obrigatório.'));
+        expect(result, equals('error_email_required'));
       });
 
       test('returns error for empty string', () {
         final result = ValidationHelper.validateEmail('');
-        expect(result, equals('E-mail é obrigatório.'));
+        expect(result, equals('error_email_required'));
       });
 
       test('returns error for whitespace-only string', () {
         final result = ValidationHelper.validateEmail('   ');
-        expect(result, equals('E-mail é obrigatório.'));
+        expect(result, equals('error_email_required'));
       });
 
       test('returns error for email without @', () {
         final result = ValidationHelper.validateEmail('userexample.com');
-        expect(result, equals('Por favor, insira um e-mail válido.'));
+        expect(result, equals('error_email_invalid'));
       });
 
       test('returns error for email without domain', () {
         final result = ValidationHelper.validateEmail('user@');
-        expect(result, equals('Por favor, insira um e-mail válido.'));
+        expect(result, equals('error_email_invalid'));
       });
 
       test('returns error for email without local part', () {
         final result = ValidationHelper.validateEmail('@example.com');
-        expect(result, equals('Por favor, insira um e-mail válido.'));
+        expect(result, equals('error_email_invalid'));
       });
 
       test('returns error for email without TLD', () {
         final result = ValidationHelper.validateEmail('user@example');
-        expect(result, equals('Por favor, insira um e-mail válido.'));
+        expect(result, equals('error_email_invalid'));
       });
 
       test('returns error for email with spaces', () {
         final result = ValidationHelper.validateEmail('user name@example.com');
-        expect(result, equals('Por favor, insira um e-mail válido.'));
+        expect(result, equals('error_email_invalid'));
       });
 
       test('accepts email with dots in local part', () {
@@ -1899,21 +1896,18 @@ void main() {
         expect(result2, equals(result3));
       });
 
-      test('error messages are in Portuguese', () {
+      test('error messages are translation keys', () {
         final result1 = ValidationHelper.validateEmail('');
         final result2 = ValidationHelper.validateEmail('invalid');
         
-        expect(result1, contains('obrigatório'));
-        expect(result2, contains('Por favor'));
+        expect(result1, startsWith('error_'));
+        expect(result2, startsWith('error_'));
       });
 
-      test('error messages do not contain technical terms', () {
+      test('error messages follow naming convention', () {
         final result = ValidationHelper.validateEmail('invalid');
-        final lowerResult = result?.toLowerCase() ?? '';
         
-        expect(lowerResult, isNot(contains('regex')));
-        expect(lowerResult, isNot(contains('pattern')));
-        expect(lowerResult, isNot(contains('error')));
+        expect(result, matches(RegExp(r'^error_[a-z_]+$')));
       });
     });
 
@@ -1925,22 +1919,22 @@ void main() {
 
       test('returns error for null value', () {
         final result = ValidationHelper.validatePassword(null);
-        expect(result, equals('Senha é obrigatória.'));
+        expect(result, equals('error_password_required'));
       });
 
       test('returns error for empty string', () {
         final result = ValidationHelper.validatePassword('');
-        expect(result, equals('Senha é obrigatória.'));
+        expect(result, equals('error_password_required'));
       });
 
       test('returns error for password with 1 character', () {
         final result = ValidationHelper.validatePassword('1');
-        expect(result, equals('Senha deve ter pelo menos 6 caracteres.'));
+        expect(result, equals('error_password_min_length'));
       });
 
       test('returns error for password with 5 characters', () {
         final result = ValidationHelper.validatePassword('12345');
-        expect(result, equals('Senha deve ter pelo menos 6 caracteres.'));
+        expect(result, equals('error_password_min_length'));
       });
 
       test('accepts password with exactly 6 characters', () {
@@ -1995,21 +1989,18 @@ void main() {
         expect(result2, equals(result3));
       });
 
-      test('error messages are in Portuguese', () {
+      test('error messages are translation keys', () {
         final result1 = ValidationHelper.validatePassword('');
         final result2 = ValidationHelper.validatePassword('123');
         
-        expect(result1, contains('obrigatória'));
-        expect(result2, contains('pelo menos'));
+        expect(result1, startsWith('error_'));
+        expect(result2, startsWith('error_'));
       });
 
-      test('error messages do not contain technical terms', () {
+      test('error messages follow naming convention', () {
         final result = ValidationHelper.validatePassword('123');
-        final lowerResult = result?.toLowerCase() ?? '';
         
-        expect(lowerResult, isNot(contains('length')));
-        expect(lowerResult, isNot(contains('error')));
-        expect(lowerResult, isNot(contains('invalid')));
+        expect(result, matches(RegExp(r'^error_[a-z_]+$')));
       });
     });
 
@@ -2075,44 +2066,43 @@ void main() {
         expect(ValidationHelper.validatePassword('   '), isNotNull);
       });
 
-      test('all error messages end with period', () {
+      test('all error messages are translation keys', () {
         final nameError = ValidationHelper.validateName('');
         final emailError = ValidationHelper.validateEmail('');
         final passwordError = ValidationHelper.validatePassword('');
         
-        expect(nameError?.endsWith('.'), isTrue);
-        expect(emailError?.endsWith('.'), isTrue);
-        expect(passwordError?.endsWith('.'), isTrue);
+        expect(nameError, startsWith('error_'));
+        expect(emailError, startsWith('error_'));
+        expect(passwordError, startsWith('error_'));
       });
 
-      test('all error messages start with capital letter', () {
+      test('all error messages follow naming convention', () {
         final nameError = ValidationHelper.validateName('');
         final emailError = ValidationHelper.validateEmail('');
         final passwordError = ValidationHelper.validatePassword('');
         
-        expect(nameError?[0], equals(nameError?[0].toUpperCase()));
-        expect(emailError?[0], equals(emailError?[0].toUpperCase()));
-        expect(passwordError?[0], equals(passwordError?[0].toUpperCase()));
+        expect(nameError, matches(RegExp(r'^error_[a-z_]+$')));
+        expect(emailError, matches(RegExp(r'^error_[a-z_]+$')));
+        expect(passwordError, matches(RegExp(r'^error_[a-z_]+$')));
       });
 
-      test('all error messages are user-friendly', () {
+      test('all error messages are consistent', () {
         final nameError = ValidationHelper.validateName('');
         final emailError = ValidationHelper.validateEmail('invalid');
         final passwordError = ValidationHelper.validatePassword('123');
         
-        // Check messages don't contain technical jargon
+        // Check all errors are translation keys
         final allErrors = [nameError, emailError, passwordError];
-        final technicalTerms = ['null', 'error', 'exception', 'invalid', 'regex'];
         
         for (final error in allErrors) {
           if (error != null) {
-            final lowerError = error.toLowerCase();
-            for (final term in technicalTerms) {
-              // 'invalid' is allowed in "e-mail válido" context
-              if (term == 'invalid' && error.contains('válido')) continue;
-              expect(lowerError, isNot(contains(term)),
-                  reason: 'Error "$error" should not contain technical term "$term"');
-            }
+            // All errors should be translation keys starting with 'error_'
+            expect(error, startsWith('error_'),
+                reason: 'Error "$error" should be a translation key starting with "error_"');
+            
+            // Translation keys should only contain lowercase letters and underscores
+            expect(error, matches(RegExp(r'^error_[a-z_]+$')),
+                reason: 'Error "$error" should match translation key pattern');
           }
         }
       });

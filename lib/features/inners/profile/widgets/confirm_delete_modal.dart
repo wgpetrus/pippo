@@ -25,7 +25,7 @@ class ConfirmDeleteModal {
               children: [
                 // Título
                 Text(
-                  'Confirmação Final',
+                  'confirm_delete_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.red),
                   textAlign: TextAlign.center,
                 ),
@@ -34,7 +34,7 @@ class ConfirmDeleteModal {
 
                 // Descrição
                 Text(
-                  'Esta é sua última chance!\n\nSua conta será excluída permanentemente e não poderá ser recuperada.',
+                  'confirm_delete_description'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -43,7 +43,7 @@ class ConfirmDeleteModal {
 
                 // Aviso adicional
                 Text(
-                  'Você tem certeza absoluta?',
+                  'confirm_delete_question'.tr,
                   style: AppTheme.textMdBold.copyWith(color: AppTheme.red),
                   textAlign: TextAlign.center,
                 ),
@@ -80,7 +80,7 @@ class ConfirmDeleteModal {
 
                 // Botão Confirmar Exclusão
                 Obx(() => AppButton(
-                  text: controller.isLoading.value ? 'Excluindo...' : 'Confirmar Exclusão',
+                  text: controller.isLoading.value ? 'confirm_delete_deleting'.tr : 'confirm_delete_confirm'.tr,
                   color: AppTheme.red,
                   isLoading: controller.isLoading.value,
                   onPressed: controller.isLoading.value
@@ -141,7 +141,7 @@ class _CancelButtonState extends State<_CancelButton> {
           ),
           child: Center(
             child: Text(
-              'Cancelar',
+              'confirm_delete_cancel'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.primary),
             ),
           ),

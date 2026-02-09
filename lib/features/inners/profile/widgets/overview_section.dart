@@ -39,7 +39,7 @@ class OverviewSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Visão Geral', style: AppTheme.textLgBold),
+          Text('overview_title'.tr, style: AppTheme.textLgBold),
           const SizedBox(height: 12),
           _buildStatsGrid(),
         ],
@@ -69,7 +69,7 @@ class OverviewSection extends StatelessWidget {
                 () => OverviewCard(
                   iconAsset: AppAssets.treasureXpCoin,
                   value: '${xpLevelController.totalXp.value}',
-                  label: 'XP Total',
+                  label: 'overview_total_xp'.tr,
                   iconSize: 45,
                   starColor: AppTheme.gold,
                 ),
@@ -81,7 +81,7 @@ class OverviewSection extends StatelessWidget {
                 () => OverviewCard(
                   iconAsset: AppAssets.appbarFire,
                   value: '${streakController.currentStreak.value}',
-                  label: 'Dias de sequência',
+                  label: 'overview_day_streak'.tr,
                   iconSize: 45,
                   starColor: AppTheme.orange,
                 ),
@@ -97,7 +97,7 @@ class OverviewSection extends StatelessWidget {
                 () => OverviewCard(
                   iconAsset: AppAssets.appbarFire,
                   value: '${streakController.longestStreak.value}',
-                  label: 'Maior sequência',
+                  label: 'overview_longest_streak'.tr,
                   iconSize: 45,
                   starColor: AppTheme.red,
                 ),
@@ -110,7 +110,7 @@ class OverviewSection extends StatelessWidget {
                   iconAsset: flagAsset,
                   value: '${xpLevelController.level.value}',
                   label:
-                      'Nível de ${homeStatsController.activeCourseName.value.isNotEmpty ? homeStatsController.activeCourseName.value : 'Idioma'}',
+                      '${'overview_level_prefix'.tr} ${homeStatsController.activeCourseName.value.isNotEmpty ? homeStatsController.activeCourseName.value : 'overview_level_fallback'.tr}',
                   iconSize: 30,
                   starColor: AppTheme.blue,
                 ),
@@ -125,7 +125,7 @@ class OverviewSection extends StatelessWidget {
               child: OverviewCard(
                 imageAsset: AppAssets.profileWarrior1,
                 value: '',
-                label: 'Guerreiro das Palavras',
+                label: 'overview_warrior_title'.tr,
                 iconSize: 90,
                 starColor: AppTheme.blue,
               ),
@@ -145,7 +145,7 @@ class OverviewSection extends StatelessWidget {
               child: OverviewCard(
                 iconAsset: AppAssets.treasureXpCoin,
                 value: '${totalXp ?? 0}',
-                label: 'XP Total',
+                label: 'overview_total_xp'.tr,
                 iconSize: 45,
                 starColor: AppTheme.gold,
               ),
@@ -155,7 +155,7 @@ class OverviewSection extends StatelessWidget {
               child: OverviewCard(
                 iconAsset: AppAssets.appbarFire,
                 value: '${currentStreak ?? 0}',
-                label: 'Dias de sequência',
+                label: 'overview_day_streak'.tr,
                 iconSize: 45,
                 starColor: AppTheme.orange,
               ),
@@ -169,7 +169,7 @@ class OverviewSection extends StatelessWidget {
               child: OverviewCard(
                 iconAsset: AppAssets.appbarFire,
                 value: '${longestStreak ?? 0}',
-                label: 'Maior sequência',
+                label: 'overview_longest_streak'.tr,
                 iconSize: 45,
                 starColor: AppTheme.red,
               ),
@@ -179,7 +179,7 @@ class OverviewSection extends StatelessWidget {
               child: OverviewCard(
                 iconAsset: flagAsset,
                 value: '${level ?? 1}',
-                label: 'Nível de Francês',
+                label: '${'overview_level_prefix'.tr} ${'overview_level_french'.tr}',
                 iconSize: 30,
                 starColor: AppTheme.blue,
               ),
@@ -193,7 +193,7 @@ class OverviewSection extends StatelessWidget {
               child: OverviewCard(
                 imageAsset: AppAssets.profileWarrior1,
                 value: '',
-                label: 'Guerreiro das Palavras',
+                label: 'overview_warrior_title'.tr,
                 iconSize: 90,
                 starColor: AppTheme.blue,
               ),

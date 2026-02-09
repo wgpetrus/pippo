@@ -8,18 +8,32 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Helper class para setup de Firebase em testes
 class FirebaseTestHelper {
+  static bool _firebaseInitialized = false;
+  
   /// Inicializa Firebase para testes
   static Future<void> setupFirebase() async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    
-    // Setup Firebase Core mock
-    setupFirebaseCoreMocks();
-    
-    // Inicializar Firebase (se ainda não foi inicializado)
-    try {
-      await Firebase.initializeApp();
-    } catch (e) {
-      // Já inicializado, ignorar
+    // Check if any binding is already initialized
+    // We use a static flag to track if we've already set up Firebase
+    if (!_firebaseInitialized) {
+      // Only initialize binding if not already done
+      // This check prevents the "Binding is already initialized" error
+      try {
+        TestWidgetsFlutterBinding.ensureInitialized();
+      } catch (e) {
+        // Binding already initialized by another test, that's fine
+      }
+      
+      // Setup Firebase Core mock
+      setupFirebaseCoreMocks();
+      
+      // Inicializar Firebase (se ainda não foi inicializado)
+      try {
+        await Firebase.initializeApp();
+      } catch (e) {
+        // Já inicializado, ignorar
+      }
+      
+      _firebaseInitialized = true;
     }
   }
 
@@ -194,35 +208,41 @@ class FirebaseTestHelper {
 
 /// Setup Firebase Core mocks
 void setupFirebaseCoreMocks() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
+  // Only set up mocks if not already done
+  // The method channel handler is global, so we only need to set it once
   const MethodChannel channel = MethodChannel(
     'plugins.flutter.io/firebase_core',
   );
 
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-    if (methodCall.method == 'Firebase#initializeCore') {
-      return [
-        {
-          'name': '[DEFAULT]',
-          'options': {
-            'apiKey': 'test-api-key',
-            'appId': 'test-app-id',
-            'messagingSenderId': 'test-sender-id',
-            'projectId': 'test-project-id',
-          },
+  // Check if handler is already set by trying to get the current handler
+  // If it's null, we need to set it
+  try {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+      if (methodCall.method == 'Firebase#initializeCore') {
+        return [
+          {
+            'name': '[DEFAULT]',
+            'options': {
+              'apiKey': 'test-api-key',
+              'appId': 'test-app-id',
+              'messagingSenderId': 'test-sender-id',
+              'projectId': 'test-project-id',
+            },
+            'pluginConstants': {},
+          }
+        ];
+      }
+      if (methodCall.method == 'Firebase#initializeApp') {
+        return {
+          'name': methodCall.arguments['appName'],
+          'options': methodCall.arguments['options'],
           'pluginConstants': {},
-        }
-      ];
-    }
-    if (methodCall.method == 'Firebase#initializeApp') {
-      return {
-        'name': methodCall.arguments['appName'],
-        'options': methodCall.arguments['options'],
-        'pluginConstants': {},
-      };
-    }
-    return null;
-  });
+        };
+      }
+      return null;
+    });
+  } catch (e) {
+    // Handler already set, ignore
+  }
 }

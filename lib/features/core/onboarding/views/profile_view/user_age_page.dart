@@ -60,19 +60,19 @@ class _UserAgePageState extends State<UserAgePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Quantos anos você tem?',
+                'onboarding_user_age_question'.tr,
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 24),
               Text(
-                'Idade',
+                'onboarding_user_age_label'.tr,
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 8),
               OnboardingTextField(
                 controller: _ageController,
                 focusNode: _focusNode,
-                hint: 'digite sua idade',
+                hint: 'onboarding_user_age_hint'.tr,
                 isFocused: _isFocused,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -82,7 +82,7 @@ class _UserAgePageState extends State<UserAgePage> {
               ),
               const Spacer(),
               AppButton(
-                text: 'Continuar',
+                text: 'common_continue'.tr,
                 onPressed: hasText
                     ? () {
                         _dataController.setUserAge(_ageController.text.trim());

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -35,7 +36,7 @@ class LowEnergyModal extends StatelessWidget {
 
             // Mensagem
             Text(
-              'Você tem $currentEnergy raios. Cada erro custa 1 raio. Você vai precisar de raios para terminar a lição — use-os com sabedoria!',
+              'lesson_low_energy_message'.trParams({'energy': currentEnergy.toString()}),
               textAlign: TextAlign.center,
               style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
             ),
@@ -43,7 +44,7 @@ class LowEnergyModal extends StatelessWidget {
 
             // Botão Entendi
             AppButton(
-              text: 'Entendi',
+              text: 'lesson_low_energy_button'.tr,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],

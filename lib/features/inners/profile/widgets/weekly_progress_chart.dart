@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -44,8 +45,8 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart>
     super.build(context); // Necessário para AutomaticKeepAliveClientMixin
 
     // Extrair nome do usuário da primeira palavra (ou usar username se não houver nome)
-    final userName = widget.userProgress.isNotEmpty ? 'Você' : 'Você';
-    final otherName = widget.showOther ? 'Este usuário' : '';
+    final userName = widget.userProgress.isNotEmpty ? 'weekly_progress_you'.tr : 'weekly_progress_you'.tr;
+    final otherName = widget.showOther ? 'weekly_progress_other'.tr : '';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -59,7 +60,7 @@ class _WeeklyProgressChartState extends State<WeeklyProgressChart>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Título
-          const Text('Progresso semanal', style: AppTheme.textLgBold),
+          Text('weekly_progress_title'.tr, style: AppTheme.textLgBold),
           const SizedBox(height: 12),
 
           // Legenda

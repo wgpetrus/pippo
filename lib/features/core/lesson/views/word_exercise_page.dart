@@ -58,8 +58,8 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
       // Obter exercício atual do controller
       if (_flowController.currentExerciseIndex.value >= _flowController.currentExercises.length) {
-        return const Scaffold(
-          body: Center(child: Text('Exercício não encontrado')),
+        return Scaffold(
+          body: Center(child: Text('lesson_word_exercise_not_found'.tr)),
         );
       }
       
@@ -96,7 +96,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: r.spacing16),
                     child: Text(
-                      currentExercise['question'] as String? ?? 'Organize as palavras',
+                      currentExercise['question'] as String? ?? 'lesson_word_exercise_default_question'.tr,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     ),
                   ),
@@ -140,7 +140,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
                   Padding(
                     padding: EdgeInsets.all(r.spacing16),
                     child: AppButton(
-                      text: 'Verificar',
+                      text: 'lesson_word_exercise_check_button'.tr,
                       isLoading: _exerciseController.isLoading.value,
                       onPressed: _selectedWords.isNotEmpty && !_exerciseController.isLoading.value && !_hasChecked
                           ? _onCheck
@@ -260,7 +260,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
                 // Título
                 Text(
-                  'Sair da lição?',
+                  'lesson_exit_confirmation_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -268,7 +268,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
                 // Mensagem
                 Text(
-                  'Se você sair agora, perderá o progresso desta lição e a energia gasta não será devolvida.',
+                  'lesson_exit_confirmation_message'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray600),
                   textAlign: TextAlign.center,
                 ),
@@ -276,12 +276,12 @@ class _WordExercisePageState extends State<WordExercisePage> {
 
                 // Botões
                 AppButton(
-                  text: 'Continuar Lição',
+                  text: 'lesson_exit_confirmation_continue_button'.tr,
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 const SizedBox(height: 12),
                 AppButton(
-                  text: 'Sair',
+                  text: 'lesson_exit_confirmation_exit_button'.tr,
                   isPrimary: false,
                   onPressed: () => Navigator.of(context).pop(true),
                 ),

@@ -63,7 +63,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
         surfaceTintColor: AppTheme.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Caça ao Tesouro', style: AppTheme.displaySmBold),
+        title: Text('treasure_title'.tr, style: AppTheme.displaySmBold),
         titleSpacing: r.spacing16,
       ),
       // Botões flutuantes para desenvolvimento
@@ -76,7 +76,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
             backgroundColor: AppTheme.error,
             foregroundColor: AppTheme.white,
             icon: const Icon(Icons.delete_forever),
-            label: const Text('Limpar Tudo'),
+            label: Text('treasure_delete_all'.tr),
             heroTag: 'delete',
           ),
           SizedBox(height: r.spacing12),
@@ -86,7 +86,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
             backgroundColor: AppTheme.primary,
             foregroundColor: AppTheme.white,
             icon: const Icon(Icons.add_task),
-            label: const Text('Gerar Desafios'),
+            label: Text('treasure_generate_challenges'.tr),
             heroTag: 'generate',
           ),
         ],
@@ -120,7 +120,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
                         backgroundColor: AppTheme.primary,
                         foregroundColor: AppTheme.white,
                       ),
-                      child: const Text('Tentar novamente'),
+                      child: Text('treasure_try_again'.tr),
                     ),
                   ],
                 ),
@@ -168,17 +168,17 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
     // Confirmar ação
     final confirm = await AppDialog.confirm(
       context: context,
-      title: 'Deletar Todos os Desafios?',
-      message: 'Esta ação não pode ser desfeita.',
-      confirmText: 'Deletar',
-      cancelText: 'Cancelar',
+      title: 'treasure_delete_confirm_title'.tr,
+      message: 'treasure_delete_confirm_message'.tr,
+      confirmText: 'treasure_delete_confirm_button'.tr,
+      cancelText: 'treasure_delete_cancel_button'.tr,
       confirmColor: AppTheme.red,
     );
 
     if (confirm != true) return;
 
     if (!mounted) return;
-    AppDialog.loading(context: context, message: 'Deletando...');
+    AppDialog.loading(context: context, message: 'treasure_deleting'.tr);
 
     try {
       // Deletar todos os desafios
@@ -190,8 +190,8 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       // Mostrar sucesso
       AppDialog.success(
         context: context,
-        title: 'Sucesso',
-        message: 'Todos os desafios foram deletados.',
+        title: 'treasure_delete_success_title'.tr,
+        message: 'treasure_delete_success_message'.tr,
       );
     } catch (e) {
       if (!mounted) return;
@@ -200,8 +200,8 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       // Mostrar erro
       AppDialog.error(
         context: context,
-        title: 'Erro',
-        message: 'Não foi possível deletar os desafios.',
+        title: 'treasure_delete_error_title'.tr,
+        message: 'treasure_delete_error_message'.tr,
       );
     }
   }
@@ -209,7 +209,7 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
   /// Gera desafios diários e semanais para desenvolvimento/testes
   Future<void> _generateChallenges(TreasureChallengesController challengesController) async {
     if (!mounted) return;
-    AppDialog.loading(context: context, message: 'Gerando desafios...');
+    AppDialog.loading(context: context, message: 'treasure_generating'.tr);
 
     try {
       // Gerar desafios
@@ -222,8 +222,8 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       // Mostrar sucesso
       AppDialog.success(
         context: context,
-        title: 'Sucesso',
-        message: 'Desafios diários e semanais foram gerados.',
+        title: 'treasure_generate_success_title'.tr,
+        message: 'treasure_generate_success_message'.tr,
       );
     } catch (e) {
       if (!mounted) return;
@@ -232,8 +232,8 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       // Mostrar erro
       AppDialog.error(
         context: context,
-        title: 'Erro',
-        message: 'Não foi possível gerar desafios. Tente novamente.',
+        title: 'treasure_generate_error_title'.tr,
+        message: 'treasure_generate_error_message'.tr,
       );
     }
   }
@@ -258,21 +258,21 @@ class _TreasurePageState extends State<TreasurePage> with AutomaticKeepAliveClie
       children: [
         // Daily Challenges
         if (dailyChallenges.isNotEmpty) ...[
-          _buildSectionTitle('Desafios Diários', r),
+          _buildSectionTitle('treasure_section_daily'.tr, r),
           _buildChallengesList(dailyChallenges, r),
           SizedBox(height: r.spacing8),
         ],
 
         // Weekly Challenges
         if (weeklyChallenges.isNotEmpty) ...[
-          _buildSectionTitle('Missões Semanais', r),
+          _buildSectionTitle('treasure_section_weekly'.tr, r),
           _buildChallengesList(weeklyChallenges, r),
           SizedBox(height: r.spacing8),
         ],
 
         // Special Challenges
         if (specialChallenges.isNotEmpty) ...[
-          _buildSectionTitle('Desafios Especiais', r),
+          _buildSectionTitle('treasure_section_special'.tr, r),
           _buildChallengesList(specialChallenges, r),
         ],
       ],

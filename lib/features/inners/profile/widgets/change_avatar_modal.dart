@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -47,7 +48,7 @@ class ChangeAvatarModal {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Título
-                const Text('Trocar Avatar', style: AppTheme.displaySmBold),
+                Text('change_avatar_title'.tr, style: AppTheme.displaySmBold),
                 const SizedBox(height: 24),
 
                 // Grid de avatares 5x2
@@ -63,7 +64,7 @@ class ChangeAvatarModal {
 
                 // Botão Save
                 AppButton(
-                  text: 'Salvar',
+                  text: 'change_avatar_save'.tr,
                   onPressed: () {
                     onAvatarSelected(selectedAvatar.value);
                     Navigator.of(context).pop();

@@ -53,8 +53,8 @@ class _SigninViewState extends State<SigninView> {
     
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(
-        title: 'Entrar',
+      appBar: AppAppbar(
+        title: 'auth_signin_title'.tr,
         showBack: true,
       ),
       body: SafeArea(
@@ -72,16 +72,16 @@ class _SigninViewState extends State<SigninView> {
               children: [
                 SizedBox(height: r.spacing8),
                 AppTextField(
-                  label: 'Usuário / e-mail',
-                  hint: 'digite seu usuário / e-mail',
+                  label: 'auth_email_label'.tr,
+                  hint: 'auth_email_hint'.tr,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: _credentialsController.validateEmail,
                 ),
                 SizedBox(height: r.spacing16),
                 AppTextField(
-                  label: 'Senha',
-                  hint: 'digite sua senha',
+                  label: 'auth_password_label'.tr,
+                  hint: 'auth_password_hint'.tr,
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   validator: _credentialsController.validatePassword,
@@ -118,7 +118,7 @@ class _SigninViewState extends State<SigninView> {
                         if (_providersController.showLoginButton.value) ...[
                           SizedBox(height: r.spacing12),
                           AppButton(
-                            text: 'Fazer login com e-mail',
+                            text: 'auth_login_with_email_button'.tr,
                             isPrimary: false,
                             onPressed: () {
                               // Limpar erro e focar no formulário
@@ -138,7 +138,7 @@ class _SigninViewState extends State<SigninView> {
                   final isLoading = _credentialsController.isLoading.value || 
                                    _providersController.isLoading.value;
                   return AppButton(
-                    text: 'Entrar',
+                    text: 'auth_signin_button'.tr,
                     isLoading: isLoading,
                     onPressed: isLoading
                         ? null
@@ -175,7 +175,7 @@ class _SigninViewState extends State<SigninView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Esqueceu sua senha',
+                'auth_forgot_password'.tr,
                 style: AppTheme.textMdSemibold.copyWith(
                   color: AppTheme.primary,
                   fontSize: r.fontSize14,
@@ -202,7 +202,7 @@ class _SigninViewState extends State<SigninView> {
         children: [
           Expanded(
             child: SocialButton(
-              text: 'Facebook',
+              text: 'auth_facebook_button'.tr,
               iconPath: AppAssets.logoFacebook,
               onPressed: isLoading ? null : _providersController.onFacebookTap,
             ),
@@ -210,7 +210,7 @@ class _SigninViewState extends State<SigninView> {
           SizedBox(width: r.spacing12),
           Expanded(
             child: SocialButton(
-              text: 'Gmail',
+              text: 'auth_gmail_button'.tr,
               iconPath: AppAssets.logoGoogle,
               onPressed: isLoading ? null : _providersController.signInWithGoogle,
             ),

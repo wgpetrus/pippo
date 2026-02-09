@@ -330,13 +330,13 @@ class ProfileDataController extends GetxController {
   /// Valida o nome do usuário
   String? validateName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Nome é obrigatório.';
+      return 'error_name_required'.tr;
     }
     if (value.length < 2) {
-      return 'O nome deve ter pelo menos 2 caracteres.';
+      return 'error_name_min_length'.tr;
     }
     if (value.length > 50) {
-      return 'O nome deve ter no máximo 50 caracteres.';
+      return 'error_name_max_length'.tr;
     }
     return null;
   }
@@ -344,22 +344,22 @@ class ProfileDataController extends GetxController {
   /// Valida o nome de usuário
   String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Nome de usuário é obrigatório.';
+      return 'error_username_required'.tr;
     }
     if (value.length < 3) {
-      return 'O nome de usuário deve ter pelo menos 3 caracteres.';
+      return 'error_username_min_length'.tr;
     }
     if (value.length > 20) {
-      return 'O nome de usuário deve ter no máximo 20 caracteres.';
+      return 'error_username_max_length'.tr;
     }
     // Verificar formato: apenas letras, números e underscore
     final usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
     if (!usernameRegex.hasMatch(value)) {
-      return 'Use apenas letras, números e underscore.';
+      return 'error_username_invalid'.tr;
     }
     // Verificar disponibilidade
     if (!isUsernameAvailable.value) {
-      return 'Este nome de usuário já está em uso.';
+      return 'error_username_taken'.tr;
     }
     return null;
   }
@@ -367,7 +367,7 @@ class ProfileDataController extends GetxController {
   /// Valida a bio do usuário
   String? validateBio(String? value) {
     if (value != null && value.length > 150) {
-      return 'A bio deve ter no máximo 150 caracteres.';
+      return 'error_bio_max_length'.tr;
     }
     return null;
   }

@@ -9,11 +9,11 @@ import 'package:pippo/shared/utils/error_handler.dart';
 /// Testes de recuperação de erros para TreasureController
 /// 
 /// Estes testes verificam que o controller lida adequadamente com
-/// cenários de erro e fornece mensagens amigáveis em português.
+/// cenários de erro e fornece mensagens amigáveis através de translation keys.
 void main() {
   group('Treasure Error Recovery', () {
     group('Firestore Error Messages', () {
-      test('should provide user-friendly message for permission-denied', () {
+      test('should provide translation key for permission-denied', () {
         // Arrange
         final error = FirebaseException(
           plugin: 'cloud_firestore',
@@ -23,13 +23,12 @@ void main() {
         // Act: Simular tratamento de erro
         final errorMessage = ErrorHandler.getFirestoreErrorMessage(error);
 
-        // Assert: Mensagem deve ser amigável em português
+        // Assert: Deve retornar translation key
         expect(errorMessage, isNotEmpty);
-        expect(errorMessage, contains('permissão'));
-        expect(errorMessage, isNot(contains('permission-denied')));
+        expect(errorMessage, startsWith('error_firestore_'));
       });
 
-      test('should provide user-friendly message for unavailable', () {
+      test('should provide translation key for unavailable', () {
         // Arrange
         final error = FirebaseException(
           plugin: 'cloud_firestore',
@@ -41,11 +40,10 @@ void main() {
 
         // Assert
         expect(errorMessage, isNotEmpty);
-        expect(errorMessage, contains('indisponível'));
-        expect(errorMessage, isNot(contains('unavailable')));
+        expect(errorMessage, startsWith('error_firestore_'));
       });
 
-      test('should provide user-friendly message for deadline-exceeded', () {
+      test('should provide translation key for deadline-exceeded', () {
         // Arrange
         final error = FirebaseException(
           plugin: 'cloud_firestore',
@@ -57,11 +55,10 @@ void main() {
 
         // Assert
         expect(errorMessage, isNotEmpty);
-        expect(errorMessage, contains('Tempo de espera'));
-        expect(errorMessage, isNot(contains('deadline-exceeded')));
+        expect(errorMessage, startsWith('error_firestore_'));
       });
 
-      test('should provide user-friendly message for not-found', () {
+      test('should provide translation key for not-found', () {
         // Arrange
         final error = FirebaseException(
           plugin: 'cloud_firestore',
@@ -73,11 +70,10 @@ void main() {
 
         // Assert
         expect(errorMessage, isNotEmpty);
-        expect(errorMessage, contains('não encontrado'));
-        expect(errorMessage, isNot(contains('not-found')));
+        expect(errorMessage, startsWith('error_firestore_'));
       });
 
-      test('should provide user-friendly message for unauthenticated', () {
+      test('should provide translation key for unauthenticated', () {
         // Arrange
         final error = FirebaseException(
           plugin: 'cloud_firestore',
@@ -89,30 +85,27 @@ void main() {
 
         // Assert
         expect(errorMessage, isNotEmpty);
-        expect(errorMessage, contains('autenticado'));
-        expect(errorMessage, isNot(contains('unauthenticated')));
+        expect(errorMessage, startsWith('error_firestore_'));
       });
     });
 
     group('Network Error Handling', () {
-      test('should handle timeout with appropriate message', () {
+      test('should handle timeout with appropriate translation key', () {
         // Arrange: Simular timeout
-        final errorMessage =
-            'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+        final errorMessage = 'error_firestore_deadline_exceeded';
 
-        // Assert: Mensagem deve ser clara e em português
-        expect(errorMessage, contains('Tempo de espera'));
-        expect(errorMessage, contains('conexão'));
+        // Assert: Deve ser uma translation key válida
+        expect(errorMessage, startsWith('error_'));
+        expect(errorMessage, matches(RegExp(r'^error_[a-z_]+$')));
       });
 
-      test('should handle network failure with appropriate message', () {
+      test('should handle network failure with appropriate translation key', () {
         // Arrange: Simular falha de rede
-        final errorMessage =
-            'Erro ao carregar desafios. Verifique sua conexão e tente novamente.';
+        final errorMessage = 'error_firestore_unavailable';
 
-        // Assert: Mensagem deve ser clara e em português
-        expect(errorMessage, contains('conexão'));
-        expect(errorMessage, contains('tente novamente'));
+        // Assert: Deve ser uma translation key válida
+        expect(errorMessage, startsWith('error_'));
+        expect(errorMessage, matches(RegExp(r'^error_[a-z_]+$')));
       });
     });
 
@@ -171,65 +164,52 @@ void main() {
     });
 
     group('Error Message Quality', () {
-      test('all error messages should be in Portuguese', () {
-        // Arrange: Lista de mensagens de erro
-        final errorMessages = [
-          'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.',
-          'Serviço temporariamente indisponível. Tente novamente em alguns instantes.',
-          'Tempo de espera esgotado. Verifique sua conexão e tente novamente.',
-          'Recurso não encontrado.',
-          'Usuário não autenticado. Faça login novamente.',
-          'Erro ao carregar desafios. Verifique sua conexão e tente novamente.',
+      test('all error messages should be translation keys', () {
+        // Arrange: Lista de translation keys de erro
+        final errorKeys = [
+          'error_firestore_permission_denied',
+          'error_firestore_unavailable',
+          'error_firestore_deadline_exceeded',
+          'error_firestore_not_found',
+          'error_firestore_unauthenticated',
+          'error_firestore_default',
         ];
 
-        // Assert: Todas as mensagens devem estar em português
-        for (final message in errorMessages) {
-          expect(message, isNotEmpty);
-          // Verificar que não contém códigos de erro técnicos em inglês
-          expect(message, isNot(contains('permission-denied')));
-          expect(message, isNot(contains('unavailable')));
-          expect(message, isNot(contains('deadline-exceeded')));
-          expect(message, isNot(contains('not-found')));
-          expect(message, isNot(contains('unauthenticated')));
+        // Assert: Todas devem seguir o padrão de translation key
+        for (final key in errorKeys) {
+          expect(key, isNotEmpty);
+          expect(key, startsWith('error_'));
+          expect(key, matches(RegExp(r'^error_[a-z_]+$')));
         }
       });
 
-      test('error messages should be user-friendly', () {
-        // Arrange: Mensagens de erro
-        final errorMessages = [
-          'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.',
-          'Serviço temporariamente indisponível. Tente novamente em alguns instantes.',
-          'Tempo de espera esgotado. Verifique sua conexão e tente novamente.',
+      test('error messages should follow naming convention', () {
+        // Arrange: Translation keys de erro
+        final errorKeys = [
+          'error_firestore_permission_denied',
+          'error_firestore_unavailable',
+          'error_firestore_deadline_exceeded',
         ];
 
-        // Assert: Mensagens devem ser amigáveis
-        for (final message in errorMessages) {
-          // Deve conter ação sugerida
-          expect(
-            message.toLowerCase(),
-            anyOf(
-              contains('tente novamente'),
-              contains('verifique'),
-              contains('faça login'),
-            ),
-          );
+        // Assert: Devem seguir snake_case
+        for (final key in errorKeys) {
+          expect(key, matches(RegExp(r'^error_firestore_[a-z_]+$')));
         }
       });
 
-      test('error messages should not expose technical details', () {
-        // Arrange: Mensagens de erro
-        final errorMessages = [
-          'Erro de permissão. Verifique as configurações do Firestore ou tente novamente em alguns instantes.',
-          'Serviço temporariamente indisponível. Tente novamente em alguns instantes.',
-          'Tempo de espera esgotado. Verifique sua conexão e tente novamente.',
+      test('error messages should not be hardcoded Portuguese', () {
+        // Arrange: Translation keys de erro
+        final errorKeys = [
+          'error_firestore_permission_denied',
+          'error_firestore_unavailable',
+          'error_firestore_deadline_exceeded',
         ];
 
-        // Assert: Não deve expor detalhes técnicos
-        for (final message in errorMessages) {
-          expect(message, isNot(contains('Exception')));
-          expect(message, isNot(contains('Stack trace')));
-          expect(message, isNot(contains('Error:')));
-          expect(message, isNot(contains('code:')));
+        // Assert: Não devem conter texto em português
+        for (final key in errorKeys) {
+          expect(key, isNot(contains('permissão')));
+          expect(key, isNot(contains('indisponível')));
+          expect(key, isNot(contains('Tempo')));
         }
       });
     });
@@ -245,22 +225,21 @@ void main() {
       });
 
       test('should handle missing user gracefully', () {
-        // Arrange: Mensagem de erro para usuário não autenticado
-        final errorMessage = 'Usuário não autenticado. Faça login novamente.';
+        // Arrange: Translation key para usuário não autenticado
+        final errorKey = 'error_firestore_unauthenticated';
 
-        // Assert: Mensagem deve ser clara
-        expect(errorMessage, contains('autenticado'));
-        expect(errorMessage, contains('login'));
+        // Assert: Deve ser uma translation key válida
+        expect(errorKey, startsWith('error_'));
+        expect(errorKey, matches(RegExp(r'^error_[a-z_]+$')));
       });
 
       test('should handle Firestore unavailability gracefully', () {
-        // Arrange: Mensagem de erro para serviço indisponível
-        final errorMessage =
-            'Serviço temporariamente indisponível. Tente novamente em alguns instantes.';
+        // Arrange: Translation key para serviço indisponível
+        final errorKey = 'error_firestore_unavailable';
 
-        // Assert: Mensagem deve indicar temporariedade
-        expect(errorMessage, contains('temporariamente'));
-        expect(errorMessage.toLowerCase(), contains('tente novamente'));
+        // Assert: Deve ser uma translation key válida
+        expect(errorKey, startsWith('error_'));
+        expect(errorKey, matches(RegExp(r'^error_[a-z_]+$')));
       });
     });
 

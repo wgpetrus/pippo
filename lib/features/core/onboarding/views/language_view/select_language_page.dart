@@ -14,15 +14,15 @@ class SelectLanguagePage extends StatelessWidget {
   const SelectLanguagePage({super.key});
 
   // Dados
-  static const _languages = [
-    {'code': 'en', 'flag': AppAssets.flagUsa, 'name': 'Inglês'},
-    {'code': 'de', 'flag': AppAssets.flagGermany, 'name': 'Alemão'},
-    {'code': 'es', 'flag': AppAssets.flagSpain, 'name': 'Espanhol'},
-    {'code': 'fr', 'flag': AppAssets.flagFrance, 'name': 'Francês'},
-    {'code': 'ar', 'flag': AppAssets.flagSaudi, 'name': 'Árabe'},
-    {'code': 'ja', 'flag': AppAssets.flagJapan, 'name': 'Japonês'},
-    {'code': 'zh', 'flag': AppAssets.flagChina, 'name': 'Chinês'},
-    {'code': 'pt', 'flag': AppAssets.flagBrazil, 'name': 'Português'},
+  static final _languages = [
+    {'code': 'en', 'flag': AppAssets.flagUsa, 'name': 'onboarding_select_language_english'.tr},
+    {'code': 'de', 'flag': AppAssets.flagGermany, 'name': 'onboarding_select_language_german'.tr},
+    {'code': 'es', 'flag': AppAssets.flagSpain, 'name': 'onboarding_select_language_spanish'.tr},
+    {'code': 'fr', 'flag': AppAssets.flagFrance, 'name': 'onboarding_select_language_french'.tr},
+    {'code': 'ar', 'flag': AppAssets.flagSaudi, 'name': 'onboarding_select_language_arabic'.tr},
+    {'code': 'ja', 'flag': AppAssets.flagJapan, 'name': 'onboarding_select_language_japanese'.tr},
+    {'code': 'zh', 'flag': AppAssets.flagChina, 'name': 'onboarding_select_language_chinese'.tr},
+    {'code': 'pt', 'flag': AppAssets.flagBrazil, 'name': 'onboarding_select_language_portuguese'.tr},
   ];
 
   // Build
@@ -35,9 +35,9 @@ class SelectLanguagePage extends StatelessWidget {
       backgroundColor: AppTheme.white,
       body: CustomScrollView(
         slivers: [
-          const OnboardingHeader(
-            title: 'Selecionar Idioma',
-            bubbleText: 'Qual idioma você quer aprender?',
+          OnboardingHeader(
+            title: 'onboarding_select_language_title'.tr,
+            bubbleText: 'onboarding_select_language_bubble'.tr,
             progress: 11,
           ),
           _buildLanguageList(dataController),
@@ -75,7 +75,7 @@ class SelectLanguagePage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continuar',
+        text: 'common_continue'.tr,
         onPressed: dataController.selectedLanguage.value.isNotEmpty
             ? flowController.nav.goToLanguageLevel
             : null,

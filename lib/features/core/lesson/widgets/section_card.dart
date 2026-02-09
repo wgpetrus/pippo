@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -180,7 +181,7 @@ class SectionCard extends StatelessWidget {
   Widget _buildSubtitle(ResponsiveUtils r) {
     if (status == SectionStatus.locked) {
       return Text(
-        'Complete o curso para\ndesbloquear.',
+        'lesson_section_locked_message'.tr,
         style: AppTheme.textSmRegular.copyWith(
           color: AppTheme.gray400,
           height: 1.3,
@@ -194,7 +195,7 @@ class SectionCard extends StatelessWidget {
         GestureDetector(
           onTap: onSeeDetails,
           child: Text(
-            'Ver detalhes',
+            'lesson_section_see_details'.tr,
             style: AppTheme.textSmSemibold.copyWith(
               color: AppTheme.primary,
             ),
@@ -207,7 +208,7 @@ class SectionCard extends StatelessWidget {
           GestureDetector(
             onTap: onTap,
             child: Text(
-              'COMEÇAR AGORA',
+              'lesson_section_start_now'.tr,
               style: AppTheme.textSmBold.copyWith(
                 color: AppTheme.primary,
               ),
@@ -248,7 +249,10 @@ class SectionCard extends StatelessWidget {
                 // Texto do progresso
                 Center(
                   child: Text(
-                    '$currentProgress/$totalProgress',
+                    'lesson_section_progress_format'.trParams({
+                      'current': currentProgress.toString(),
+                      'total': totalProgress.toString(),
+                    }),
                     style: AppTheme.textSmBold.copyWith(
                       color: AppTheme.white,
                     ),

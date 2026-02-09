@@ -329,7 +329,7 @@ class ProfileAuthController extends GetxController {
   /// Valida senha atual
   String? validateCurrentPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Senha atual é obrigatória.';
+      return 'error_current_password_required'.tr;
     }
     return null;
   }
@@ -337,10 +337,10 @@ class ProfileAuthController extends GetxController {
   /// Valida nova senha
   String? validateNewPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Nova senha é obrigatória.';
+      return 'error_new_password_required'.tr;
     }
     if (value.length < 6) {
-      return 'A senha deve ter pelo menos 6 caracteres.';
+      return 'error_new_password_min_length'.tr;
     }
     return null;
   }
@@ -348,10 +348,10 @@ class ProfileAuthController extends GetxController {
   /// Valida confirmação de senha
   String? validateConfirmPassword(String? value, String newPassword) {
     if (value == null || value.isEmpty) {
-      return 'Confirmação de senha é obrigatória.';
+      return 'error_confirm_password_required'.tr;
     }
     if (value != newPassword) {
-      return 'As senhas não coincidem.';
+      return 'error_passwords_dont_match'.tr;
     }
     return null;
   }
@@ -359,12 +359,12 @@ class ProfileAuthController extends GetxController {
   /// Valida número de telefone
   String? validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Número de telefone é obrigatório.';
+      return 'error_phone_required'.tr;
     }
     // Remove formatação
     final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
     if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-      return 'Número de telefone inválido.';
+      return 'error_phone_invalid'.tr;
     }
     return null;
   }

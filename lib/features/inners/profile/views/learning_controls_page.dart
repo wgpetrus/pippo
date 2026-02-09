@@ -38,7 +38,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
-        title: 'Controles de Aprendizado',
+        title: 'learning_controls_title'.tr,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -49,7 +49,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
 
             // Seção Learning Style
             Text(
-              'Estilo de Aprendizado',
+              'learning_controls_learning_style'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
             ),
 
@@ -58,7 +58,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             // Sound effect
             Obx(() => AppListItem(
               icon: FontAwesomeIcons.volumeHigh,
-              label: 'Efeitos sonoros',
+              label: 'learning_controls_sound_effects'.tr,
               trailing: Switch(
                 value: _controller.soundEffects.value,
                 onChanged: (value) => _controller.updateSetting('soundEffects', value),
@@ -72,7 +72,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             // Listening exercises
             Obx(() => AppListItem(
               icon: FontAwesomeIcons.solidComment,
-              label: 'Exercícios de escuta',
+              label: 'learning_controls_listening_exercises'.tr,
               trailing: Switch(
                 value: _controller.listeningExercises.value,
                 onChanged: (value) => _controller.updateSetting('listeningExercises', value),
@@ -86,7 +86,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             // Speaking exercises
             Obx(() => AppListItem(
               icon: FontAwesomeIcons.solidCommentDots,
-              label: 'Exercícios de fala',
+              label: 'learning_controls_speaking_exercises'.tr,
               trailing: Switch(
                 value: _controller.speakingExercises.value,
                 onChanged: (value) => _controller.updateSetting('speakingExercises', value),
@@ -101,7 +101,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
 
             // Seção Daily Goal
             Text(
-              'Meta Diária',
+              'learning_controls_daily_goal_section'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
             ),
 
@@ -110,9 +110,9 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             // Daily goal selector
             Obx(() => AppListItem(
               icon: FontAwesomeIcons.bullseye,
-              label: 'Meta diária',
+              label: 'learning_controls_daily_goal'.tr,
               trailing: Text(
-                '${_controller.dailyGoal.value} min',
+                '${_controller.dailyGoal.value} ${'learning_controls_daily_goal_minutes'.tr}',
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
               ),
               onTap: () => _showDailyGoalModal(),
@@ -122,7 +122,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
 
             // Seção Language-Specific Settings
             Text(
-              'Configurações de Idioma',
+              'learning_controls_language_settings'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
             ),
 
@@ -131,7 +131,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             // Word Display Mode
             AppListItem(
               icon: FontAwesomeIcons.solidUser,
-              label: 'Modo de Exibição',
+              label: 'learning_controls_display_mode'.tr,
               trailing: Switch(
                 value: _displayModeIndex == 0,
                 onChanged: (value) => setState(() => _displayModeIndex = value ? 0 : 1),
@@ -186,7 +186,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Meta Diária',
+                'learning_controls_daily_goal_section'.tr,
                 style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 16),
@@ -286,7 +286,7 @@ class _DisplayModeCard extends StatelessWidget {
 
             // Label
             Text(
-              'Todas as palavras',
+              'learning_controls_all_words'.tr,
               style: AppTheme.textSmMedium.copyWith(
                 color: isSelected ? AppTheme.primary : AppTheme.gray400,
               ),

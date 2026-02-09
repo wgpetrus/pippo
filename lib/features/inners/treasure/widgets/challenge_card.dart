@@ -41,7 +41,7 @@ class ChallengeCard extends StatelessWidget {
     final rewardsController = Get.find<TreasureRewardsController>();
 
     // Extrair dados do map (Requirement 11.4)
-    final title = challengeData['title'] as String? ?? 'Desafio';
+    final title = challengeData['title'] as String? ?? 'treasure_challenge_default_title'.tr;
     final description = challengeData['description'] as String? ?? '';
     final progress = challengeData['progress'] as int? ?? 0;
     final goal = challengeData['goal'] as int? ?? 1;
@@ -62,6 +62,9 @@ class ChallengeCard extends StatelessWidget {
     final rewardIcon = rewardType == 'gems'
         ? 'assets/images/icons/icons-appbar-home/gem_appbar.png'
         : 'assets/images/icons/icons-treasure-page/xp-coin.png';
+    
+    // Determinar label de recompensa
+    final rewardLabel = rewardType == 'gems' ? 'treasure_reward_gems'.tr : 'treasure_reward_xp'.tr;
 
     return Container(
       margin: EdgeInsets.only(bottom: r.spacing12),
@@ -176,7 +179,7 @@ class ChallengeCard extends StatelessWidget {
                     ),
                     // Label do tipo de recompensa
                     Text(
-                      rewardType == 'gems' ? 'Gems' : 'XP',
+                      rewardLabel,
                       style: AppTheme.textXsBold.copyWith(
                         color: rewardType == 'gems' 
                             ? AppTheme.gold.withOpacity(0.8)
@@ -317,7 +320,7 @@ class ChallengeCard extends StatelessWidget {
     final buttonColor = isCompleted ? AppTheme.green : null;
 
     return AppButton(
-      text: isCompleted ? 'Coletar Recompensa' : 'Em Progresso',
+      text: isCompleted ? 'treasure_claim_button'.tr : 'treasure_in_progress_button'.tr,
       color: buttonColor,
       isLoading: isLoading, // Requirement 11.7: Show loading spinner
       onPressed: isEnabled

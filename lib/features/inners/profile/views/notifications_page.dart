@@ -38,7 +38,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
-        title: 'Notificações',
+        title: 'notifications_title'.tr,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: r.spacing24),
@@ -49,7 +49,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
             // Seção Learning Style
             Text(
-              'Estilo de Aprendizado',
+              'notifications_learning_style'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
             ),
 
@@ -57,7 +57,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
             // Practice reminders
             Obx(() => AppListItem(
-              label: 'Lembretes de prática',
+              label: 'notifications_practice_reminders'.tr,
               showChevron: false,
               trailing: Switch(
                 value: _controller.practiceReminders.value,
@@ -71,7 +71,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
             // Leaderboard updates
             Obx(() => AppListItem(
-              label: 'Atualizações do ranking',
+              label: 'notifications_leaderboard_updates'.tr,
               showChevron: false,
               trailing: Switch(
                 value: _controller.leaderboardUpdates.value,
@@ -85,7 +85,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
             // Reminder time
             Obx(() => AppListItem(
-              label: 'Horário do lembrete',
+              label: 'notifications_reminder_time'.tr,
               enabled: _controller.practiceReminders.value,
               onTap: () => _showReminderTimePicker(),
               trailing: Text(
@@ -100,7 +100,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
             // Friend Activity
             Obx(() => AppListItem(
-              label: 'Atividade de amigos',
+              label: 'notifications_friend_activity'.tr,
               showChevron: false,
               trailing: Switch(
                 value: _controller.friendActivity.value,

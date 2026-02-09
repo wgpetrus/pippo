@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 
@@ -40,7 +41,7 @@ class LeagueInfo extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '$daysLeft Dias restantes',
+                    'leaderboard_days_remaining'.tr.replaceAll('{count}', daysLeft.toString()),
                     style: AppTheme.textSmSemibold.copyWith(
                       color: AppTheme.orange,
                     ),

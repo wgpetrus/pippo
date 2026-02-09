@@ -48,8 +48,8 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
     
     // Obter exercício atual do controller
     if (_flowController.currentExerciseIndex.value >= _flowController.currentExercises.length) {
-      return const Scaffold(
-        body: Center(child: Text('Exercício não encontrado')),
+      return Scaffold(
+        body: Center(child: Text('lesson_match_exercise_not_found'.tr)),
       );
     }
     
@@ -86,7 +86,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: r.spacing16),
                   child: Text(
-                    currentExercise['question'] as String? ?? 'Toque nos pares correspondentes',
+                    currentExercise['question'] as String? ?? 'lesson_match_exercise_default_question'.tr,
                     style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   ),
                 ),
@@ -115,7 +115,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
                       // TODO: [etapa 8] implementar skip de exercício de áudio
                     },
                     child: Text(
-                      "Não posso ouvir agora",
+                      'lesson_match_exercise_cant_listen'.tr,
                       style: AppTheme.textMdSemibold.copyWith(
                         color: AppTheme.primary,
                         decoration: TextDecoration.underline,
@@ -130,7 +130,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
                 Padding(
                   padding: EdgeInsets.all(r.spacing16),
                   child: Obx(() => AppButton(
-                        text: 'Verificar',
+                        text: 'lesson_match_exercise_check_button'.tr,
                         isLoading: _exerciseController.isLoading.value,
                         onPressed: _matchedPairs.length == pairs.length && !_exerciseController.isLoading.value && !_hasChecked
                             ? _onCheck
@@ -305,7 +305,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
                 // Título
                 Text(
-                  'Sair da lição?',
+                  'lesson_exit_confirmation_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -313,7 +313,7 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
                 // Mensagem
                 Text(
-                  'Se você sair agora, perderá o progresso desta lição e a energia gasta não será devolvida.',
+                  'lesson_exit_confirmation_message'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray600),
                   textAlign: TextAlign.center,
                 ),
@@ -321,12 +321,12 @@ class _MatchExercisePageState extends State<MatchExercisePage> {
 
                 // Botões
                 AppButton(
-                  text: 'Continuar Lição',
+                  text: 'lesson_exit_confirmation_continue_button'.tr,
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 const SizedBox(height: 12),
                 AppButton(
-                  text: 'Sair',
+                  text: 'lesson_exit_confirmation_exit_button'.tr,
                   isPrimary: false,
                   onPressed: () => Navigator.of(context).pop(true),
                 ),

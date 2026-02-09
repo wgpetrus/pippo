@@ -13,13 +13,13 @@ class StudyTimePage extends StatelessWidget {
   const StudyTimePage({super.key});
 
   // Dados
-  static const _times = [
-    '5 min / dia',
-    '10 min / dia',
-    '15 min / dia',
-    '20 min / dia',
-    '30 min / dia',
-    '40 min / dia',
+  static final _times = [
+    'onboarding_study_time_5min'.tr,
+    'onboarding_study_time_10min'.tr,
+    'onboarding_study_time_15min'.tr,
+    'onboarding_study_time_20min'.tr,
+    'onboarding_study_time_30min'.tr,
+    'onboarding_study_time_40min'.tr,
   ];
 
   // Build
@@ -32,9 +32,9 @@ class StudyTimePage extends StatelessWidget {
       backgroundColor: AppTheme.white,
       body: CustomScrollView(
         slivers: [
-          const OnboardingHeader(
-            title: 'Tempo de Estudo',
-            bubbleText: 'Escolha sua meta diária de aprendizado',
+          OnboardingHeader(
+            title: 'onboarding_study_time_title'.tr,
+            bubbleText: 'onboarding_study_time_bubble'.tr,
             progress: 44,
           ),
           _buildTimeList(dataController),
@@ -130,7 +130,7 @@ class StudyTimePage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continuar',
+        text: 'common_continue'.tr,
         onPressed: dataController.studyTime.value.isNotEmpty
             ? () => _onContinue(dataController, flowController)
             : null,

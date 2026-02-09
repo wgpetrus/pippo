@@ -34,7 +34,7 @@ class _CoursesPageState extends State<CoursesPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Cursos'),
+      appBar: AppAppbar(title: 'courses_title'.tr),
       body: SafeArea(
         child: Obx(() {
           // Mostrar loading
@@ -59,7 +59,7 @@ class _CoursesPageState extends State<CoursesPage> {
                     ),
                     SizedBox(height: r.spacing16),
                     AppButton(
-                      text: 'Tentar Novamente',
+                      text: 'courses_try_again'.tr,
                       onPressed: () => _controller.loadUserCourses(),
                     ),
                   ],
@@ -74,7 +74,7 @@ class _CoursesPageState extends State<CoursesPage> {
               child: Padding(
                 padding: EdgeInsets.all(r.spacing24),
                 child: Text(
-                  'Você ainda não tem cursos ativos.',
+                  'courses_no_courses'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray700),
                   textAlign: TextAlign.center,
                 ),
@@ -121,10 +121,10 @@ class _CoursesPageState extends State<CoursesPage> {
   Future<void> _deleteCourse(String courseId, String courseName) async {
     final confirm = await AppDialog.confirm(
       context: context,
-      title: 'Dizer Adeus a Este Curso?',
-      message: 'Você perderá todo o progresso de $courseName.',
-      confirmText: 'Remover',
-      cancelText: 'Cancelar',
+      title: 'courses_delete_title'.tr,
+      message: '${'courses_delete_message_prefix'.tr} $courseName.',
+      confirmText: 'courses_delete_confirm'.tr,
+      cancelText: 'courses_delete_cancel'.tr,
       confirmColor: AppTheme.red,
     );
 

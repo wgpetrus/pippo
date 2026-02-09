@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
@@ -94,7 +95,7 @@ class FriendTile extends StatelessWidget {
                   Text(name, style: AppTheme.textMdBold),
                   SizedBox(height: spacing4),
                   Text(
-                    '$xp XP',
+                    'friends_xp_label'.tr.replaceAll('{xp}', xp.toString()),
                     style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray400),
                   ),
                 ],

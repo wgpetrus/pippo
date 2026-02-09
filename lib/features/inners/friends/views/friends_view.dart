@@ -61,7 +61,7 @@ class _FriendsViewState extends State<FriendsView> {
     
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Amigos'),
+      appBar: AppAppbar(title: 'friends_title'.tr),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -87,9 +87,11 @@ class _FriendsViewState extends State<FriendsView> {
               final count = _isFollowing
                   ? _controller.following.length
                   : _controller.followers.length;
-              final label = _isFollowing ? 'Seguindo' : 'Seguidores';
+              final label = _isFollowing 
+                  ? 'friends_following_count'.tr.replaceAll('{count}', count.toString())
+                  : 'friends_followers_count'.tr.replaceAll('{count}', count.toString());
               return Text(
-                '$count $label',
+                label,
                 style: AppTheme.textLgBold,
               );
             }),
@@ -123,7 +125,7 @@ class _FriendsViewState extends State<FriendsView> {
                         TextButton(
                           onPressed: _loadData,
                           child: Text(
-                            'Tentar novamente',
+                            'friends_retry_button'.tr,
                             style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
                           ),
                         ),
@@ -144,8 +146,8 @@ class _FriendsViewState extends State<FriendsView> {
                     padding: EdgeInsets.all(r.spacing16),
                     child: Text(
                       _isFollowing
-                          ? 'Você ainda não está seguindo ninguém.'
-                          : 'Você ainda não tem seguidores.',
+                          ? 'friends_empty_following'.tr
+                          : 'friends_empty_followers'.tr,
                       style: AppTheme.textMd.copyWith(color: AppTheme.gray500),
                       textAlign: TextAlign.center,
                     ),
@@ -160,7 +162,7 @@ class _FriendsViewState extends State<FriendsView> {
                 itemBuilder: (context, index) {
                   final friend = friends[index];
                   return FriendTile(
-                    name: friend['name'] ?? 'Usuário',
+                    name: friend['name'] ?? 'friends_default_user_name'.tr,
                     xp: friend['totalXp'] ?? 0,
                     avatar: friend['avatarId'] ?? 'avatar_01',
                     isFollowed: _controller.isUserFollowed(friend['userId'] as String),

@@ -79,7 +79,7 @@ class _CompletePageState extends State<CompletePage> {
     } else {
       // Mostra erro se houver
       Get.snackbar(
-        'Erro',
+        'common_error'.tr,
         _rewardsController.errorMessage.value,
         backgroundColor: AppTheme.red,
         colorText: AppTheme.white,
@@ -108,7 +108,7 @@ class _CompletePageState extends State<CompletePage> {
 
               // Título
               Text(
-                'Lição Completa!',
+                'lesson_complete_title'.tr,
                 style: AppTheme.displayMdBold.copyWith(color: AppTheme.primary),
               ),
 
@@ -169,7 +169,7 @@ class _CompletePageState extends State<CompletePage> {
                             r: r,
                             icon: AppAssets.treasureXpCoin,
                             value: currentTotalXp.toString(),
-                            label: 'XP Total',
+                            label: 'lesson_complete_stat_xp_label'.tr,
                             color: AppTheme.gold,
                           ),
                         ),
@@ -189,7 +189,7 @@ class _CompletePageState extends State<CompletePage> {
                             r: r,
                             icon: AppAssets.lessonClock,
                             value: currentTimeString,
-                            label: 'Tempo',
+                            label: 'lesson_complete_stat_time_label'.tr,
                             color: AppTheme.orange,
                           ),
                         ),
@@ -199,7 +199,7 @@ class _CompletePageState extends State<CompletePage> {
                             r: r,
                             icon: AppAssets.appbarGem,
                             value: currentTotalGems.toString(),
-                            label: 'Gemas',
+                            label: 'lesson_complete_stat_gems_label'.tr,
                             color: AppTheme.red,
                           ),
                         ),
@@ -214,7 +214,7 @@ class _CompletePageState extends State<CompletePage> {
                                 r: r,
                                 icon: AppAssets.treasureXpCoin,
                                 value: currentTotalXp.toString(),
-                                label: 'XP Total',
+                                label: 'lesson_complete_stat_xp_label'.tr,
                                 color: AppTheme.gold,
                               ),
                             ),
@@ -238,7 +238,7 @@ class _CompletePageState extends State<CompletePage> {
                                 r: r,
                                 icon: AppAssets.lessonClock,
                                 value: currentTimeString,
-                                label: 'Tempo',
+                                label: 'lesson_complete_stat_time_label'.tr,
                                 color: AppTheme.orange,
                               ),
                             ),
@@ -248,7 +248,7 @@ class _CompletePageState extends State<CompletePage> {
                                 r: r,
                                 icon: AppAssets.appbarGem,
                                 value: currentTotalGems.toString(),
-                                label: 'Gemas',
+                                label: 'lesson_complete_stat_gems_label'.tr,
                                 color: AppTheme.red,
                               ),
                             ),
@@ -262,7 +262,7 @@ class _CompletePageState extends State<CompletePage> {
 
               // Botão resgatar recompensa
               Obx(() => AppButton(
-                    text: 'Resgatar Recompensa',
+                    text: 'lesson_complete_claim_button'.tr,
                     isLoading: _rewardsController.isLoading.value,
                     onPressed: _rewardsController.isLoading.value || _rewardsClaimed
                         ? null

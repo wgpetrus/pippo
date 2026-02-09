@@ -16,13 +16,13 @@ class LearningReasonPage extends StatelessWidget {
   const LearningReasonPage({super.key});
 
   // Dados
-  static const _reasons = [
-    {'icon': AppAssets.motivIcon1, 'label': 'Quero explorar o mundo.'},
-    {'icon': AppAssets.motivIcon2, 'label': 'Preciso para trabalho ou estudo.'},
-    {'icon': AppAssets.motivIcon3, 'label': 'Quero me conectar com pessoas.'},
-    {'icon': AppAssets.motivIcon4, 'label': 'Adoro aprender coisas novas.'},
-    {'icon': AppAssets.motivIcon5, 'label': 'Quero curtir filmes, músicas e livros.'},
-    {'icon': AppAssets.motivIcon6, 'label': 'Quero falar sem medo.'},
+  static final _reasons = [
+    {'icon': AppAssets.motivIcon1, 'label': 'onboarding_learning_reason_explore_world'},
+    {'icon': AppAssets.motivIcon2, 'label': 'onboarding_learning_reason_work_study'},
+    {'icon': AppAssets.motivIcon3, 'label': 'onboarding_learning_reason_connect_people'},
+    {'icon': AppAssets.motivIcon4, 'label': 'onboarding_learning_reason_love_learning'},
+    {'icon': AppAssets.motivIcon5, 'label': 'onboarding_learning_reason_enjoy_media'},
+    {'icon': AppAssets.motivIcon6, 'label': 'onboarding_learning_reason_speak_confidently'},
   ];
 
   // Build
@@ -41,8 +41,8 @@ class LearningReasonPage extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           OnboardingHeader(
-            title: 'Motivo para Aprender',
-            bubbleText: 'Por que você quer aprender $languageName?',
+            title: 'onboarding_learning_reason_title'.tr,
+            bubbleText: 'onboarding_learning_reason_bubble'.tr.replaceAll('{lang}', languageName),
             progress: 33,
           ),
           _buildReasonList(context, dataController),
@@ -76,7 +76,7 @@ class LearningReasonPage extends StatelessWidget {
                 ),
                 label: dataController.learningReason.value.startsWith('Outro:')
                     ? dataController.learningReason.value.replaceFirst('Outro: ', '')
-                    : 'Outro',
+                    : 'onboarding_learning_reason_other'.tr,
                 isSelected: dataController.learningReason.value.startsWith('Outro'),
                 onTap: () => _showOtherModal(context, dataController),
               )),
@@ -90,7 +90,7 @@ class LearningReasonPage extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(24, index == 0 ? 8 : 0, 24, 12),
             child: Obx(() => OptionCard(
               iconAsset: reason['icon']!,
-              label: reason['label']!,
+              label: reason['label']!.tr,
               isSelected: dataController.learningReason.value == reason['label'],
               onTap: () => dataController.setLearningReason(reason['label']!),
               isCircularIcon: false,
@@ -107,7 +107,7 @@ class LearningReasonPage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continuar',
+        text: 'common_continue'.tr,
         onPressed: dataController.learningReason.value.isNotEmpty
             ? flowController.nav.goToPauseOne
             : null,
@@ -129,21 +129,21 @@ class LearningReasonPage extends StatelessWidget {
         WoltModalSheetPage(
           backgroundColor: AppTheme.white,
           hasTopBarLayer: true,
-          topBarTitle: Text('Outro Motivo', style: AppTheme.textLgBold.copyWith(color: AppTheme.black)),
+          topBarTitle: Text('onboarding_learning_reason_other_modal_title'.tr, style: AppTheme.textLgBold.copyWith(color: AppTheme.black)),
           isTopBarLayerAlwaysVisible: true,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Conte-nos seu motivo', style: AppTheme.textMdSemibold.copyWith(color: AppTheme.black)),
+                Text('onboarding_learning_reason_other_modal_label'.tr, style: AppTheme.textMdSemibold.copyWith(color: AppTheme.black)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: textController,
                   maxLines: 3,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
                   decoration: InputDecoration(
-                    hintText: 'Escreva seu motivo aqui...',
+                    hintText: 'onboarding_learning_reason_other_modal_hint'.tr,
                     hintStyle: AppTheme.textMdRegular.copyWith(color: AppTheme.gray400),
                     filled: true,
                     fillColor: AppTheme.white,
@@ -164,7 +164,7 @@ class LearningReasonPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 AppButton(
-                  text: 'Confirmar',
+                  text: 'onboarding_learning_reason_other_modal_confirm'.tr,
                   onPressed: () {
                     final text = textController.text.trim();
                     if (text.isNotEmpty) {
@@ -185,15 +185,15 @@ class LearningReasonPage extends StatelessWidget {
   
   // Helper para obter nome do idioma
   String _getLanguageName(String code) {
-    const languageNames = {
-      'en': 'Inglês',
-      'es': 'Espanhol',
-      'de': 'Alemão',
-      'fr': 'Francês',
-      'ar': 'Árabe',
-      'ja': 'Japonês',
-      'zh': 'Chinês',
-      'pt': 'Português',
+    final languageNames = {
+      'en': 'onboarding_select_language_english'.tr,
+      'es': 'onboarding_select_language_spanish'.tr,
+      'de': 'onboarding_select_language_german'.tr,
+      'fr': 'onboarding_select_language_french'.tr,
+      'ar': 'onboarding_select_language_arabic'.tr,
+      'ja': 'onboarding_select_language_japanese'.tr,
+      'zh': 'onboarding_select_language_chinese'.tr,
+      'pt': 'onboarding_select_language_portuguese'.tr,
     };
     return languageNames[code] ?? code;
   }

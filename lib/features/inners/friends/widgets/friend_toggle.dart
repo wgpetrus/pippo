@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -19,7 +20,7 @@ class FriendToggle extends StatelessWidget {
     return ToggleSwitch(
       initialLabelIndex: isFollowing ? 0 : 1,
       totalSwitches: 2,
-      labels: const ['Seguindo', 'Seguidores'],
+      labels: ['friends_following_label'.tr, 'friends_followers_label'.tr],
       activeBgColor: const [AppTheme.primary],
       activeFgColor: AppTheme.white,
       inactiveBgColor: AppTheme.white,

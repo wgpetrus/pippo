@@ -68,7 +68,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
       if (_confirmController.text.isEmpty) {
         _confirmError = null;
       } else if (_confirmController.text != _passwordController.text) {
-        _confirmError = 'As senhas não coincidem.';
+        _confirmError = 'onboarding_user_password_error_mismatch'.tr;
       } else {
         _confirmError = null;
       }
@@ -111,7 +111,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Crie sua senha mágica',
+                'onboarding_user_password_title'.tr,
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               SizedBox(height: r.spacing24),
@@ -158,7 +158,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                             child: TextButton(
                               onPressed: () => _dataController.cancelRetry(),
                               child: Text(
-                                'Cancelar',
+                                'onboarding_user_password_button_cancel'.tr,
                                 style: AppTheme.textSmBold.copyWith(color: AppTheme.error),
                               ),
                             ),
@@ -169,14 +169,14 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                   : const SizedBox.shrink()),
               
               Text(
-                'Senha',
+                'onboarding_user_password_label'.tr,
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               SizedBox(height: r.spacing8),
               OnboardingTextField(
                 controller: _passwordController,
                 focusNode: _passwordFocus,
-                hint: 'digite sua senha',
+                hint: 'onboarding_user_password_hint'.tr,
                 isFocused: _passwordFocused,
                 obscureText: _obscurePassword,
                 errorText: _passwordError,
@@ -191,14 +191,14 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
               ),
               SizedBox(height: r.spacing16),
               Text(
-                'Confirmar Senha',
+                'onboarding_user_password_confirm_label'.tr,
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               SizedBox(height: r.spacing8),
               OnboardingTextField(
                 controller: _confirmController,
                 focusNode: _confirmFocus,
-                hint: 'repita sua senha',
+                hint: 'onboarding_user_password_confirm_hint'.tr,
                 isFocused: _confirmFocused,
                 obscureText: _obscureConfirm,
                 errorText: _confirmError,
@@ -213,7 +213,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
               ),
               SizedBox(height: r.keyboardHeight > 0 ? r.spacing16 : r.spacing48),
               Obx(() => AppButton(
-                text: 'Continuar',
+                text: 'common_continue'.tr,
                 isLoading: _validationController.isLoading.value,
                 onPressed: (_canContinue && !_validationController.isLoading.value)
                     ? () {
@@ -235,7 +235,7 @@ class _UserPasswordPageState extends State<UserPasswordPage> {
                   ? Padding(
                       padding: EdgeInsets.only(top: r.spacing12),
                       child: AppButton(
-                        text: 'Já tenho uma conta',
+                        text: 'onboarding_user_password_button_have_account'.tr,
                         isPrimary: false,
                         onPressed: () => _flowController.nav.goToAuth(),
                       ),

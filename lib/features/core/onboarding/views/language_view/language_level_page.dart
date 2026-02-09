@@ -14,12 +14,12 @@ class LanguageLevelPage extends StatelessWidget {
   const LanguageLevelPage({super.key});
 
   // Dados
-  static const _levels = [
-    {'icon': AppAssets.levelIcon1, 'label': "Sou novo em {lang}"},
-    {'icon': AppAssets.levelIcon2, 'label': 'Sei algumas palavras'},
-    {'icon': AppAssets.levelIcon3, 'label': 'Consigo ter conversas básicas'},
-    {'icon': AppAssets.levelIcon4, 'label': 'Entendo gramática e leio confortavelmente'},
-    {'icon': AppAssets.levelIcon5, 'label': 'Falo, leio e escrevo com facilidade'},
+  static final _levels = [
+    {'icon': AppAssets.levelIcon1, 'label': "onboarding_language_level_new"},
+    {'icon': AppAssets.levelIcon2, 'label': 'onboarding_language_level_some_words'},
+    {'icon': AppAssets.levelIcon3, 'label': 'onboarding_language_level_basic_conversations'},
+    {'icon': AppAssets.levelIcon4, 'label': 'onboarding_language_level_grammar_reading'},
+    {'icon': AppAssets.levelIcon5, 'label': 'onboarding_language_level_fluent'},
   ];
 
   // Build
@@ -32,9 +32,9 @@ class LanguageLevelPage extends StatelessWidget {
       backgroundColor: AppTheme.white,
       body: CustomScrollView(
         slivers: [
-          const OnboardingHeader(
-            title: 'Nível do Idioma',
-            bubbleText: 'Como você avalia seu nível?',
+          OnboardingHeader(
+            title: 'onboarding_language_level_title'.tr,
+            bubbleText: 'onboarding_language_level_bubble'.tr,
             progress: 22,
           ),
           _buildLevelList(dataController),
@@ -54,7 +54,7 @@ class LanguageLevelPage extends StatelessWidget {
           final languageName = dataController.selectedLanguage.value.isNotEmpty
               ? _getLanguageName(dataController.selectedLanguage.value)
               : '';
-          final label = level['label']!.replaceAll('{lang}', languageName);
+          final label = level['label']!.tr.replaceAll('{lang}', languageName);
 
           return Container(
             color: AppTheme.white,
@@ -75,15 +75,15 @@ class LanguageLevelPage extends StatelessWidget {
 
   // Helper para obter nome do idioma
   String _getLanguageName(String code) {
-    const languageNames = {
-      'en': 'Inglês',
-      'es': 'Espanhol',
-      'de': 'Alemão',
-      'fr': 'Francês',
-      'ar': 'Árabe',
-      'ja': 'Japonês',
-      'zh': 'Chinês',
-      'pt': 'Português',
+    final languageNames = {
+      'en': 'onboarding_select_language_english'.tr,
+      'es': 'onboarding_select_language_spanish'.tr,
+      'de': 'onboarding_select_language_german'.tr,
+      'fr': 'onboarding_select_language_french'.tr,
+      'ar': 'onboarding_select_language_arabic'.tr,
+      'ja': 'onboarding_select_language_japanese'.tr,
+      'zh': 'onboarding_select_language_chinese'.tr,
+      'pt': 'onboarding_select_language_portuguese'.tr,
     };
     return languageNames[code] ?? code;
   }
@@ -93,7 +93,7 @@ class LanguageLevelPage extends StatelessWidget {
       color: AppTheme.white,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Obx(() => AppButton(
-        text: 'Continuar',
+        text: 'common_continue'.tr,
         onPressed: dataController.languageLevel.value.isNotEmpty
             ? flowController.nav.goToLearningReason
             : null,

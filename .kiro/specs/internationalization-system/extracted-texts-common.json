@@ -1,0 +1,690 @@
+{
+    "description": "Common texts used across 3+ features in the Pippo app",
+    "total_keys": 34,
+    "categories": {
+        "action_buttons": 9,
+        "error_handling": 4,
+        "form_fields": 8,
+        "validation_errors": 6,
+        "global_widget_texts": 3,
+        "navigation_titles": 2,
+        "utility": 2
+    },
+    "keys": {
+        "action_buttons": {
+            "common_continue": {
+                "pt_BR": "Continuar",
+                "usage_count": 10,
+                "locations": [
+                    "onboarding (multiple pages)",
+                    "lesson feedback",
+                    "exit dialogs"
+                ]
+            },
+            "common_cancel": {
+                "pt_BR": "Cancelar",
+                "usage_count": 12,
+                "locations": [
+                    "auth (verify code, new password)",
+                    "onboarding (multiple pages)",
+                    "shop confirmation",
+                    "treasure delete",
+                    "profile (courses, delete account, reauthenticate)"
+                ]
+            },
+            "common_save": {
+                "pt_BR": "Salvar",
+                "usage_count": 5,
+                "locations": [
+                    "profile edit",
+                    "change avatar",
+                    "change password",
+                    "phone number",
+                    "reminder time"
+                ]
+            },
+            "common_verify": {
+                "pt_BR": "Verificar",
+                "usage_count": 8,
+                "locations": [
+                    "auth verify code",
+                    "onboarding verify code",
+                    "verify phone",
+                    "lesson exercises (4 types)"
+                ]
+            },
+            "common_next": {
+                "pt_BR": "Próximo",
+                "usage_count": 3,
+                "locations": [
+                    "onboarding pause one",
+                    "phone number",
+                    "navigation flows"
+                ]
+            },
+            "common_back": {
+                "pt_BR": "Voltar",
+                "usage_count": 3,
+                "locations": [
+                    "navigation",
+                    "app appbar",
+                    "back buttons"
+                ]
+            },
+            "common_done": {
+                "pt_BR": "Pronto",
+                "usage_count": 3,
+                "locations": [
+                    "leaderboard status modal",
+                    "completion flows",
+                    "confirmation dialogs"
+                ]
+            },
+            "common_confirm": {
+                "pt_BR": "Confirmar",
+                "usage_count": 5,
+                "locations": [
+                    "onboarding other reason modal",
+                    "shop confirmation",
+                    "delete confirmations",
+                    "reauthenticate modal"
+                ]
+            },
+            "common_delete": {
+                "pt_BR": "Excluir",
+                "usage_count": 4,
+                "locations": [
+                    "profile edit",
+                    "delete account",
+                    "treasure challenges",
+                    "courses"
+                ]
+            }
+        },
+        "error_handling": {
+            "common_try_again": {
+                "pt_BR": "Tentar novamente",
+                "usage_count": 8,
+                "locations": [
+                    "profile (2x)",
+                    "leaderboard",
+                    "treasure",
+                    "courses",
+                    "friends",
+                    "splash"
+                ]
+            },
+            "common_error": {
+                "pt_BR": "Erro",
+                "usage_count": 10,
+                "locations": [
+                    "lesson sections",
+                    "home energy modal",
+                    "treasure (delete, generate)",
+                    "phone number",
+                    "error dialogs"
+                ]
+            },
+            "common_success": {
+                "pt_BR": "Sucesso",
+                "usage_count": 3,
+                "locations": [
+                    "home energy modal",
+                    "treasure (delete, generate)",
+                    "success dialogs"
+                ]
+            },
+            "common_loading": {
+                "pt_BR": "Carregando...",
+                "usage_count": 5,
+                "locations": [
+                    "treasure (deleting, generating)",
+                    "confirm delete",
+                    "loading states"
+                ]
+            }
+        },
+        "form_fields": {
+            "common_email_label": {
+                "pt_BR": "E-mail",
+                "usage_count": 5,
+                "locations": [
+                    "auth (signin, forgot password)",
+                    "onboarding user email",
+                    "profile edit"
+                ]
+            },
+            "common_email_hint": {
+                "pt_BR": "digite seu e-mail",
+                "usage_count": 5,
+                "locations": [
+                    "auth forgot password",
+                    "onboarding user email",
+                    "profile edit"
+                ]
+            },
+            "common_password_label": {
+                "pt_BR": "Senha",
+                "usage_count": 8,
+                "locations": [
+                    "auth (signin, new password)",
+                    "onboarding user password",
+                    "change password",
+                    "reauthenticate"
+                ]
+            },
+            "common_password_hint": {
+                "pt_BR": "digite sua senha",
+                "usage_count": 8,
+                "locations": [
+                    "auth signin",
+                    "onboarding user password",
+                    "change password",
+                    "reauthenticate"
+                ]
+            },
+            "common_new_password_label": {
+                "pt_BR": "Nova senha",
+                "usage_count": 3,
+                "locations": [
+                    "auth new password",
+                    "change password"
+                ]
+            },
+            "common_confirm_password_label": {
+                "pt_BR": "Confirmar senha",
+                "usage_count": 4,
+                "locations": [
+                    "auth new password",
+                    "onboarding user password",
+                    "change password"
+                ]
+            },
+            "common_confirm_password_hint": {
+                "pt_BR": "repita sua senha",
+                "usage_count": 3,
+                "locations": [
+                    "onboarding user password",
+                    "change password"
+                ]
+            },
+            "common_name_label": {
+                "pt_BR": "Nome",
+                "usage_count": 3,
+                "locations": [
+                    "onboarding user name",
+                    "profile edit"
+                ]
+            },
+            "common_name_hint": {
+                "pt_BR": "digite seu nome",
+                "usage_count": 3,
+                "locations": [
+                    "onboarding user name",
+                    "profile edit"
+                ]
+            }
+        },
+        "validation_errors": {
+            "error_email_required": {
+                "pt_BR": "E-mail é obrigatório.",
+                "usage_count": 3,
+                "locations": [
+                    "auth forgot password",
+                    "form validations"
+                ]
+            },
+            "error_email_invalid": {
+                "pt_BR": "Por favor, insira um e-mail válido.",
+                "usage_count": 3,
+                "locations": [
+                    "auth forgot password",
+                    "onboarding user email",
+                    "form validations"
+                ]
+            },
+            "error_password_required": {
+                "pt_BR": "Senha é obrigatória.",
+                "usage_count": 5,
+                "locations": [
+                    "auth new password",
+                    "reauthenticate",
+                    "form validations"
+                ]
+            },
+            "error_password_min_length": {
+                "pt_BR": "A senha deve ter pelo menos 6 caracteres.",
+                "usage_count": 3,
+                "locations": [
+                    "auth new password",
+                    "form validations"
+                ]
+            },
+            "error_confirm_password_required": {
+                "pt_BR": "Confirmação de senha é obrigatória.",
+                "usage_count": 3,
+                "locations": [
+                    "auth new password",
+                    "form validations"
+                ]
+            },
+            "error_passwords_dont_match": {
+                "pt_BR": "As senhas não coincidem.",
+                "usage_count": 3,
+                "locations": [
+                    "auth new password",
+                    "onboarding user password",
+                    "form validations"
+                ]
+            }
+        },
+        "global_widget_texts": {
+            "common_didnt_receive": {
+                "pt_BR": "Não recebeu?",
+                "usage_count": 3,
+                "locations": [
+                    "app_resend_code widget",
+                    "auth verify code",
+                    "onboarding verify code",
+                    "verify phone"
+                ]
+            },
+            "common_tap_to_resend": {
+                "pt_BR": "Toque para reenviar.",
+                "usage_count": 3,
+                "locations": [
+                    "app_resend_code widget",
+                    "auth verify code",
+                    "onboarding verify code",
+                    "verify phone"
+                ]
+            },
+            "common_resend_code_in": {
+                "pt_BR": "Reenviar código em",
+                "usage_count": 3,
+                "locations": [
+                    "app_resend_code widget",
+                    "auth verify code",
+                    "onboarding verify code",
+                    "verify phone"
+                ]
+            }
+        },
+        "navigation_titles": {
+            "common_profile": {
+                "pt_BR": "Perfil",
+                "usage_count": 4,
+                "locations": [
+                    "profile page",
+                    "user profile page",
+                    "edit profile page",
+                    "settings menu",
+                    "home tab"
+                ]
+            },
+            "common_settings": {
+                "pt_BR": "Configurações",
+                "usage_count": 2,
+                "locations": [
+                    "settings page",
+                    "navigation menu"
+                ]
+            }
+        },
+        "utility": {
+            "common_not_found": {
+                "pt_BR": "não encontrado",
+                "usage_count": 6,
+                "locations": [
+                    "lesson exercises (5 types)",
+                    "profile user not found"
+                ],
+                "note": "Lowercase for composition with other words"
+            },
+            "common_or": {
+                "pt_BR": "Ou",
+                "usage_count": 3,
+                "locations": [
+                    "auth signin (divider)",
+                    "option separators"
+                ]
+            }
+        }
+    },
+    "replacement_mapping": {
+        "note": "This section maps old keys to new common keys for consolidation",
+        "replacements": [
+            {
+                "old_key": "auth_cancel_button",
+                "new_key": "common_cancel",
+                "files": [
+                    "auth"
+                ]
+            },
+            {
+                "old_key": "onboarding_user_password_button_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "onboarding"
+                ]
+            },
+            {
+                "old_key": "onboarding_verify_code_button_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "onboarding"
+                ]
+            },
+            {
+                "old_key": "onboarding_conclusion_button_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "onboarding"
+                ]
+            },
+            {
+                "old_key": "shop_confirmation_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "treasure_delete_cancel_button",
+                "new_key": "common_cancel",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "courses_delete_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "confirm_delete_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "delete_account_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "reauthenticate_cancel",
+                "new_key": "common_cancel",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "lesson_feedback_correct_button",
+                "new_key": "common_continue",
+                "files": [
+                    "lesson"
+                ]
+            },
+            {
+                "old_key": "profile_try_again",
+                "new_key": "common_try_again",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "leaderboard_try_again",
+                "new_key": "common_try_again",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "treasure_try_again",
+                "new_key": "common_try_again",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "courses_try_again",
+                "new_key": "common_try_again",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "friends_retry_button",
+                "new_key": "common_try_again",
+                "files": [
+                    "friends"
+                ]
+            },
+            {
+                "old_key": "splash_retry_button",
+                "new_key": "common_try_again",
+                "files": [
+                    "splash"
+                ]
+            },
+            {
+                "old_key": "profile_edit_save",
+                "new_key": "common_save",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "change_avatar_save",
+                "new_key": "common_save",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "change_password_save",
+                "new_key": "common_save",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "phone_number_save",
+                "new_key": "common_save",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "reminder_time_save",
+                "new_key": "common_save",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "auth_verify_button",
+                "new_key": "common_verify",
+                "files": [
+                    "auth"
+                ]
+            },
+            {
+                "old_key": "onboarding_verify_code_button_verify",
+                "new_key": "common_verify",
+                "files": [
+                    "onboarding"
+                ]
+            },
+            {
+                "old_key": "verify_phone_verify",
+                "new_key": "common_verify",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "lesson_image_exercise_check_button",
+                "new_key": "common_verify",
+                "files": [
+                    "lesson"
+                ]
+            },
+            {
+                "old_key": "lesson_translation_exercise_check_button",
+                "new_key": "common_verify",
+                "files": [
+                    "lesson"
+                ]
+            },
+            {
+                "old_key": "lesson_word_exercise_check_button",
+                "new_key": "common_verify",
+                "files": [
+                    "lesson"
+                ]
+            },
+            {
+                "old_key": "lesson_match_exercise_check_button",
+                "new_key": "common_verify",
+                "files": [
+                    "lesson"
+                ]
+            },
+            {
+                "old_key": "onboarding_pause_one_button",
+                "new_key": "common_next",
+                "files": [
+                    "onboarding"
+                ]
+            },
+            {
+                "old_key": "phone_number_next",
+                "new_key": "common_next",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "leaderboard_status_modal_done",
+                "new_key": "common_done",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "onboarding_learning_reason_other_modal_confirm",
+                "new_key": "common_confirm",
+                "files": [
+                    "onboarding"
+                ]
+            },
+            {
+                "old_key": "shop_confirmation_confirm",
+                "new_key": "common_confirm",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "reauthenticate_confirm",
+                "new_key": "common_confirm",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "lesson_sections_error_snackbar_title",
+                "new_key": "common_error",
+                "files": [
+                    "lesson"
+                ]
+            },
+            {
+                "old_key": "home_energy_modal_error_title",
+                "new_key": "common_error",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "treasure_delete_error_title",
+                "new_key": "common_error",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "treasure_generate_error_title",
+                "new_key": "common_error",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "home_energy_modal_success_title",
+                "new_key": "common_success",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "treasure_delete_success_title",
+                "new_key": "common_success",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "treasure_generate_success_title",
+                "new_key": "common_success",
+                "files": [
+                    "home"
+                ]
+            },
+            {
+                "old_key": "profile_title",
+                "new_key": "common_profile",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "profile_edit_title",
+                "new_key": "common_profile",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "settings_profile",
+                "new_key": "common_profile",
+                "files": [
+                    "profile"
+                ]
+            },
+            {
+                "old_key": "home_profile_tab",
+                "new_key": "common_profile",
+                "files": [
+                    "home"
+                ]
+            }
+        ]
+    },
+    "notes": [
+        "All common keys follow the 'common_' prefix convention",
+        "Keys are organized by category for better maintainability",
+        "Each key includes usage count and locations for reference",
+        "Replacement mapping provided for consolidation task",
+        "Some keys like 'common_continue' already exist in onboarding.json and should be moved to common",
+        "Error keys maintain 'error_' prefix as per requirements",
+        "All keys follow snake_case naming convention"
+    ]
+}

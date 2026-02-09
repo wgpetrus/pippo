@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -51,7 +52,7 @@ class CoursesModal extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Seus cursos', style: AppTheme.textLgBold),
+          Text('home_courses_modal_title'.tr, style: AppTheme.textLgBold),
           const SizedBox(height: 16),
           _buildCoursesList(),
           const SizedBox(height: 24),
@@ -131,7 +132,7 @@ class CoursesModal extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Adicionar curso',
+            'home_courses_modal_add_course'.tr,
             style: AppTheme.textSmMedium.copyWith(color: AppTheme.gray400),
           ),
         ],
@@ -146,7 +147,7 @@ class CoursesModal extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Seu nível de $selectedCourseName',
+          'home_courses_modal_level_label'.tr.replaceAll('{language}', selectedCourseName),
           style: AppTheme.textMdBold,
         ),
         const SizedBox(height: 12),

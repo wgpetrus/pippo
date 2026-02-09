@@ -189,7 +189,7 @@ class LeaderboardController extends GetxController {
   // Métodos privados - Helpers de data
 
   /// Calcula dias restantes até segunda-feira 00:00 (reset semanal)
-  /// CORREÇÃO: Lógica simplificada e correta para calcular dias até próxima segunda
+  /// Retorna 0-6 dias (0 = hoje é segunda e falta menos de 24h para reset)
   int _calculateDaysRemaining() {
     final now = DateTime.now();
     
@@ -200,19 +200,19 @@ class LeaderboardController extends GetxController {
     final daysUntilMonday = (DateTime.monday - now.weekday + 7) % 7;
     
     // Se daysUntilMonday == 0, significa que hoje é segunda-feira
-    // Neste caso, próxima segunda é em 7 dias
-    final daysToAdd = daysUntilMonday == 0 ? 7 : daysUntilMonday;
+    // Retornar 0 se ainda não passou da meia-noite, senão 7
+    if (daysUntilMonday == 0) {
+      // Verificar se já passou da meia-noite de hoje
+      final todayMidnight = DateTime(now.year, now.month, now.day);
+      if (now.isAfter(todayMidnight)) {
+        // Já é segunda-feira, próximo reset é em 7 dias
+        return 6; // Retorna 6 porque ainda faltam 6 dias completos + hoje
+      }
+      return 0;
+    }
     
-    // Calcular a próxima segunda-feira às 00:00
-    final nextMonday = now.add(Duration(days: daysToAdd));
-    final nextMondayMidnight = DateTime(nextMonday.year, nextMonday.month, nextMonday.day);
-    
-    // Calcular diferença em dias (arredondado para cima)
-    final difference = nextMondayMidnight.difference(now);
-    final daysRemaining = (difference.inHours / 24).ceil();
-    
-    // Garantir que sempre retorna pelo menos 1 dia
-    return daysRemaining.clamp(1, 7);
+    // Retornar dias até segunda (0-6)
+    return daysUntilMonday - 1;
   }
 
   /// Retorna a data de início da semana (segunda-feira 00:00 mais recente)

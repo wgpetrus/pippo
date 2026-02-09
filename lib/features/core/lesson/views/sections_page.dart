@@ -200,8 +200,8 @@ class _SectionsPageState extends State<SectionsPage> {
     if (lessonId == null) {
       debugPrint('❌ Não foi possível determinar qual lição iniciar');
       Get.snackbar(
-        'Erro',
-        'Não foi possível determinar qual lição iniciar.',
+        'lesson_sections_error_snackbar_title'.tr,
+        'lesson_sections_error_snackbar_message'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppTheme.error,
         colorText: AppTheme.white,
@@ -225,7 +225,7 @@ class _SectionsPageState extends State<SectionsPage> {
     } else {
       debugPrint('❌ Erro ao iniciar lição: ${flowController.errorMessage.value}');
       Get.snackbar(
-        'Erro',
+        'lesson_sections_error_snackbar_title'.tr,
         flowController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppTheme.error,
@@ -242,8 +242,11 @@ class _SectionsPageState extends State<SectionsPage> {
       return Scaffold(
         backgroundColor: AppTheme.white,
         appBar: AppAppbar(title: widget.courseName),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
+        body: Center(
+          child: Text(
+            'lesson_sections_loading'.tr,
+            style: AppTheme.textMdRegular,
+          ),
         ),
       );
     }

@@ -11,6 +11,7 @@ import 'features/inners/gamification/controllers/xp_level_controller.dart';
 import 'firebase_options.dart';
 import 'shared/routes/app_routes.dart';
 import 'shared/theme/theme.dart';
+import 'shared/translations/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,8 +41,17 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
+      
+      // Translation Configuration
+      translations: AppTranslations(),
+      locale: Get.deviceLocale,
+      fallbackLocale: const Locale('pt', 'BR'),
+      
+      // Routes Configuration
       initialRoute: AppRoutes.splash,
       getPages: AppRoutes.routes,
+      
+      // Theme Configuration
       theme: ThemeData(fontFamily: AppTheme.fontFamily),
     );
   }

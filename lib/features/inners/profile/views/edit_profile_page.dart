@@ -78,12 +78,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
-        title: 'Perfil',
+        title: 'profile_edit_title'.tr,
         actions: [
           Obx(() => TextButton(
             onPressed: _controller.isLoading.value ? null : _saveProfile,
             child: Text(
-              'Salvar',
+              'profile_edit_save'.tr,
               style: AppTheme.textMdBold.copyWith(
                 color: _controller.isLoading.value 
                     ? AppTheme.gray 
@@ -132,7 +132,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   GestureDetector(
                     onTap: _changeAvatar,
                     child: Text(
-                      'Trocar avatar',
+                      'profile_edit_change_avatar'.tr,
                       style: AppTheme.textMdBold.copyWith(color: AppTheme.primary),
                     ),
                   ),
@@ -143,8 +143,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
               // Name
               AppTextField(
-                label: 'Nome',
-                hint: 'digite seu nome',
+                label: 'profile_edit_name_label'.tr,
+                hint: 'profile_edit_name_hint'.tr,
                 controller: _nameController,
                 validator: _controller.validateName,
               ),
@@ -153,8 +153,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
               // Username com indicador de disponibilidade
               Obx(() => AppTextField(
-                label: 'Nome de usuário',
-                hint: 'digite seu nome de usuário',
+                label: 'profile_edit_username_label'.tr,
+                hint: 'profile_edit_username_hint'.tr,
                 controller: _usernameController,
                 validator: _controller.validateUsername,
                 suffixIcon: _controller.isCheckingUsername.value
@@ -186,8 +186,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
               // Bio
               AppTextField(
-                label: 'Bio',
-                hint: 'conte um pouco sobre você',
+                label: 'profile_edit_bio_label'.tr,
+                hint: 'profile_edit_bio_hint'.tr,
                 controller: _bioController,
                 validator: _controller.validateBio,
                 maxLines: 3,
@@ -201,8 +201,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 onTap: _selectCountry,
                 child: AbsorbPointer(
                   child: AppTextField(
-                    label: 'País',
-                    hint: 'selecione seu país',
+                    label: 'profile_edit_country_label'.tr,
+                    hint: 'profile_edit_country_hint'.tr,
                     controller: TextEditingController(
                       text: _getCountryName(_currentCountry),
                     ),
@@ -215,8 +215,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
               // Email (read-only)
               Obx(() => AppTextField(
-                label: 'E-mail',
-                hint: 'seu e-mail',
+                label: 'profile_edit_email_label'.tr,
+                hint: 'profile_edit_email_hint'.tr,
                 controller: TextEditingController(text: _controller.email.value),
                 enabled: false,
               )),
@@ -228,10 +228,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 onTap: () => Get.to(() => const PhoneNumberPage()),
                 child: AbsorbPointer(
                   child: Obx(() => AppTextField(
-                    label: 'Telefone',
+                    label: 'profile_edit_phone_label'.tr,
                     hint: _authController.phoneVerified.value
                         ? _authController.phone.value
-                        : 'adicione seu telefone',
+                        : 'profile_edit_phone_hint'.tr,
                     controller: TextEditingController(),
                     keyboardType: TextInputType.phone,
                     suffixIcon: _authController.phoneVerified.value
@@ -260,7 +260,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
               // Change password
               AppButton(
-                text: 'Alterar senha',
+                text: 'profile_edit_change_password'.tr,
                 isPrimary: false,
                 onPressed: () {
                   Get.to(() => const ChangePasswordPage());
@@ -271,7 +271,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
               // Delete profile
               AppButton(
-                text: 'Excluir perfil',
+                text: 'profile_edit_delete_profile'.tr,
                 isPrimary: false,
                 color: AppTheme.red,
                 onPressed: () {
@@ -393,23 +393,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String _getCountryName(String countryCode) {
     switch (countryCode) {
       case 'BR':
-        return 'Brasil';
+        return 'profile_edit_country_brazil'.tr;
       case 'US':
-        return 'Estados Unidos';
+        return 'profile_edit_country_usa'.tr;
       case 'FR':
-        return 'França';
+        return 'profile_edit_country_france'.tr;
       case 'ES':
-        return 'Espanha';
+        return 'profile_edit_country_spain'.tr;
       case 'DE':
-        return 'Alemanha';
+        return 'profile_edit_country_germany'.tr;
       case 'CN':
-        return 'China';
+        return 'profile_edit_country_china'.tr;
       case 'JP':
-        return 'Japão';
+        return 'profile_edit_country_japan'.tr;
       case 'SA':
-        return 'Arábia Saudita';
+        return 'profile_edit_country_saudi'.tr;
       default:
-        return 'Brasil';
+        return 'profile_edit_country_brazil'.tr;
     }
   }
 }

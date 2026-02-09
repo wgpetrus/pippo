@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../../../shared/utils/responsive_utils.dart';
@@ -32,7 +34,7 @@ class EmptyState extends StatelessWidget {
             
             // Título
             Text(
-              'Nenhum desafio disponível',
+              'treasure_empty_title'.tr,
               style: AppTheme.displayXsBold.copyWith(
                 color: AppTheme.black,
               ),
@@ -43,7 +45,7 @@ class EmptyState extends StatelessWidget {
             
             // Mensagem
             Text(
-              'Novos desafios aparecerão em breve.\nVolte mais tarde para ganhar recompensas!',
+              'treasure_empty_message'.tr,
               style: AppTheme.textMdRegular.copyWith(
                 color: AppTheme.gray300,
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../theme/theme.dart';
 
@@ -21,7 +22,7 @@ class AppResendCode extends StatelessWidget {
       return Row(
         children: [
           Text(
-            'Não recebeu?  ',
+            '${'common_didnt_receive'.tr}  ',
             style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
           ),
           GestureDetector(
@@ -30,7 +31,7 @@ class AppResendCode extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Toque para reenviar.',
+                  'common_tap_to_resend'.tr,
                   style: AppTheme.textMdSemibold.copyWith(color: AppTheme.primary),
                 ),
                 Container(height: 1.5, width: 130, color: AppTheme.primary),
@@ -44,7 +45,7 @@ class AppResendCode extends StatelessWidget {
     return Row(
       children: [
         Text(
-          'Não recebeu?  Reenviar código em   ',
+          '${'common_didnt_receive'.tr}  ${'common_resend_code_in'.tr}   ',
           style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
         ),
         Text(

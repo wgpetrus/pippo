@@ -50,7 +50,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Alterar senha'),
+      appBar: AppAppbar(title: 'change_password_title'.tr),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
@@ -63,8 +63,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                   // Old Password
                   AppTextField(
-                    label: 'Senha Atual',
-                    hint: 'digite a senha atual',
+                    label: 'change_password_current_label'.tr,
+                    hint: 'change_password_current_hint'.tr,
                     controller: _oldPasswordController,
                     obscureText: _obscureOldPassword,
                     validator: _controller.validateCurrentPassword,
@@ -84,8 +84,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                   // New Password
                   AppTextField(
-                    label: 'Nova Senha',
-                    hint: 'digite a nova senha',
+                    label: 'change_password_new_label'.tr,
+                    hint: 'change_password_new_hint'.tr,
                     controller: _newPasswordController,
                     obscureText: _obscureNewPassword,
                     validator: _controller.validateNewPassword,
@@ -105,8 +105,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                   // Confirm Password
                   AppTextField(
-                    label: 'Confirmar senha',
-                    hint: 'repita sua senha',
+                    label: 'change_password_confirm_label'.tr,
+                    hint: 'change_password_confirm_hint'.tr,
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     validator: (value) => _controller.validateConfirmPassword(
@@ -146,7 +146,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                   // Save Button
                   Obx(() => AppButton(
-                    text: 'Salvar',
+                    text: 'change_password_save'.tr,
                     isPrimary: false,
                     isLoading: _controller.isLoading.value,
                     onPressed: _controller.isLoading.value

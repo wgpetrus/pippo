@@ -61,7 +61,7 @@ class GemsModal extends StatelessWidget {
         gems: 500,
         price: 'R\$ 19,99',
         oldPrice: 'R\$ 24,99',
-        badge: 'Mais popular',
+        badge: 'home_gems_modal_pack_most_popular'.tr,
         isHighlighted: true,
         iconSize: r.value(mobile: 56, tablet: 64, desktop: 72),
       ),
@@ -70,7 +70,7 @@ class GemsModal extends StatelessWidget {
         gems: 1000,
         price: 'R\$ 34,99',
         oldPrice: 'R\$ 49,99',
-        badge: 'Melhor valor',
+        badge: 'home_gems_modal_pack_best_value'.tr,
         isHighlighted: true,
         iconSize: r.value(mobile: 64, tablet: 72, desktop: 80),
       ),
@@ -100,14 +100,14 @@ class GemsModal extends StatelessWidget {
 
                 // Total earned
                 Text(
-                  'Total ganho: $totalGemsEarned gemas',
+                  'home_gems_modal_total_earned'.tr.replaceAll('{count}', totalGemsEarned.toString()),
                   style: AppTheme.textSmMedium.copyWith(color: AppTheme.gray400),
                 ),
                 SizedBox(height: r.spacing4),
 
                 // Subtítulo
                 Text(
-                  'Invista em gemas, invista na diversão do aprendizado.',
+                  'home_gems_modal_subtitle'.tr,
                   style: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
                 ),
                 SizedBox(height: r.spacing16),
@@ -120,8 +120,8 @@ class GemsModal extends StatelessWidget {
                     onTap: () {
                       // TODO: Implementar IAP (In-App Purchase)
                       Get.snackbar(
-                        'Em breve',
-                        'Compras in-app serão implementadas em breve!',
+                        'home_gems_modal_coming_soon'.tr,
+                        'home_gems_modal_iap_message'.tr,
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: AppTheme.primary,
                         colorText: AppTheme.white,
@@ -134,7 +134,7 @@ class GemsModal extends StatelessWidget {
 
                 // Botão Go to shop
                 AppButton(
-                  text: 'Ir para a loja',
+                  text: 'home_gems_modal_go_to_shop'.tr,
                   isPrimary: false,
                   onPressed: onGoToShop,
                 ),
@@ -151,7 +151,7 @@ class GemsModal extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Gems', style: AppTheme.displayXsBold),
+        Text('home_gems_modal_title'.tr, style: AppTheme.displayXsBold),
         Row(
           children: [
             Image.asset(AppAssets.appbarGem, width: r.value(mobile: 28, tablet: 32, desktop: 36), height: r.value(mobile: 28, tablet: 32, desktop: 36)),

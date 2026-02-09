@@ -46,7 +46,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
         backgroundColor: AppTheme.white,
         body: Center(
           child: Text(
-            'Exercício não encontrado',
+            'lesson_translation_exercise_not_found'.tr,
             style: AppTheme.textMdRegular.copyWith(color: AppTheme.black),
           ),
         ),
@@ -86,7 +86,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: r.spacing16),
                   child: Text(
-                    currentExercise['question'] as String? ?? 'Qual é a tradução correta?',
+                    currentExercise['question'] as String? ?? 'lesson_translation_exercise_default_question'.tr,
                     style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   ),
                 ),
@@ -129,7 +129,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
                 Padding(
                   padding: EdgeInsets.all(r.spacing16),
                   child: Obx(() => AppButton(
-                        text: 'Verificar',
+                        text: 'lesson_translation_exercise_check_button'.tr,
                         isLoading: _exerciseController.isLoading.value,
                         onPressed: _selectedIndex != null && !_exerciseController.isLoading.value && !_hasChecked
                             ? _onCheck
@@ -250,7 +250,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
 
                 // Título
                 Text(
-                  'Sair da lição?',
+                  'lesson_exit_confirmation_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -258,7 +258,7 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
 
                 // Mensagem
                 Text(
-                  'Se você sair agora, perderá o progresso desta lição e a energia gasta não será devolvida.',
+                  'lesson_exit_confirmation_message'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray600),
                   textAlign: TextAlign.center,
                 ),
@@ -266,12 +266,12 @@ class _TranslationExercisePageState extends State<TranslationExercisePage> {
 
                 // Botões
                 AppButton(
-                  text: 'Continuar Lição',
+                  text: 'lesson_exit_confirmation_continue_button'.tr,
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 const SizedBox(height: 12),
                 AppButton(
-                  text: 'Sair',
+                  text: 'lesson_exit_confirmation_exit_button'.tr,
                   isPrimary: false,
                   onPressed: () => Navigator.of(context).pop(true),
                 ),

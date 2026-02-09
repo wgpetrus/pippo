@@ -81,25 +81,25 @@ class _UserNamePageState extends State<UserNamePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Qual é o seu nome?',
+                'onboarding_user_name_question'.tr,
                 style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
               ),
               SizedBox(height: r.spacing24),
               Text(
-                'Nome',
+                'onboarding_user_name_label'.tr,
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               SizedBox(height: r.spacing8),
               OnboardingTextField(
                 controller: _nameController,
                 focusNode: _focusNode,
-                hint: 'digite seu nome',
+                hint: 'onboarding_user_name_hint'.tr,
                 isFocused: _isFocused,
                 errorText: _errorMessage,
               ),
               SizedBox(height: r.hp(40)),
               AppButton(
-                text: 'Continuar',
+                text: 'common_continue'.tr,
                 onPressed: isValid
                     ? () {
                         _dataController.setUserName(_nameController.text.trim());

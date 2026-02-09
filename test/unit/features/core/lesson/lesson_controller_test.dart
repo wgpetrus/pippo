@@ -1,4 +1,6 @@
 // Packages externos
+import 'dart:ui';
+
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +12,7 @@ import 'package:pippo/features/core/lesson/controllers/lesson_exercise_controlle
 import 'package:pippo/features/core/lesson/controllers/lesson_progress_controller.dart';
 import 'package:pippo/features/core/lesson/controllers/lesson_rewards_controller.dart';
 import 'package:pippo/features/inners/gamification/controllers/energy_controller.dart';
+import 'package:pippo/shared/translations/app_translations.dart';
 
 import '../../../../helpers/firebase_test_helper.dart';
 
@@ -28,6 +31,12 @@ void main() {
   late FakeFirebaseFirestore mockFirestore;
 
   setUpAll(() async {
+    // Setup translations
+    Get.testMode = true;
+    Get.put(AppTranslations());
+    Get.updateLocale(const Locale('pt', 'BR'));
+    
+    // Initialize Firebase (helper handles idempotency)
     await FirebaseTestHelper.setupFirebase();
   });
 
@@ -37,7 +46,10 @@ void main() {
     mockAuth = FirebaseTestHelper.createMockAuth();
     mockFirestore = FirebaseTestHelper.createMockFirestore();
 
-    energyController = _TestEnergyController();
+    energyController = _TestEnergyController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
     energyController.currentEnergy.value = 0;
     energyController.unlimitedEnergy = false;
     Get.put<EnergyController>(energyController);
@@ -50,13 +62,19 @@ void main() {
     );
 
     // Criar controllers na ordem de dependência
-    progressController = LessonProgressController();
+    progressController = LessonProgressController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
     Get.put<LessonProgressController>(progressController);
     
     exerciseController = LessonExerciseController();
     Get.put<LessonExerciseController>(exerciseController);
     
-    rewardsController = LessonRewardsController();
+    rewardsController = LessonRewardsController(
+      firestore: mockFirestore,
+      auth: mockAuth,
+    );
     Get.put<LessonRewardsController>(rewardsController);
     
     flowController = LessonFlowController(auth: mockAuth, firestore: mockFirestore);
@@ -214,6 +232,11 @@ void main() {
 }
 
 class _TestEnergyController extends EnergyController {
+  _TestEnergyController({
+    required super.firestore,
+    required super.auth,
+  });
+
   bool unlimitedEnergy = false;
   bool energyConsumed = false;
 

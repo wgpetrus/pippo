@@ -58,7 +58,7 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Verificar código'),
+      appBar: AppAppbar(title: 'auth_verify_code_title'.tr),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -73,7 +73,7 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
                     
                     // Texto com email mascarado
                     Text(
-                      'Digite o código de 5 dígitos que enviamos para seu e-mail.',
+                      'auth_verify_code_description'.tr,
                       style: AppTheme.textMd.copyWith(
                         color: AppTheme.textSecondary,
                       ),
@@ -132,7 +132,7 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
               child: Column(
                 children: [
                   Obx(() => AppButton(
-                    text: 'Verificar',
+                    text: 'auth_verify_button'.tr,
                     isLoading: _controller.isLoading.value,
                     onPressed: _controller.isLoading.value
                         ? null
@@ -140,7 +140,7 @@ class _VerifyCodeViewState extends State<VerifyCodeView> {
                   )),
                   const SizedBox(height: 12),
                   AppButton(
-                    text: 'Cancelar',
+                    text: 'auth_cancel_button'.tr,
                     isPrimary: false,
                     onPressed: _controller.isLoading.value
                         ? null

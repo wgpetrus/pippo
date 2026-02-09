@@ -151,7 +151,7 @@ class StreakModal extends StatelessWidget {
                 children: [
                   // Título
                   Text(
-                    'Sequência de Fogo',
+                    'home_streak_modal_title'.tr,
                     style: AppTheme.textXlBold.copyWith(color: titleColor),
                   ),
                   const SizedBox(height: 12),
@@ -206,14 +206,14 @@ class StreakModal extends StatelessWidget {
 
         // Texto
         Text(
-          'Dias de sequência',
+          'home_streak_modal_days_label'.tr,
           style: AppTheme.textMdMedium.copyWith(color: textColor),
         ),
         const SizedBox(height: 4),
 
         // Longest streak
         Text(
-          'Recorde: $longestStreak dias',
+          'home_streak_modal_record_label'.tr.replaceAll('{count}', longestStreak.toString()),
           style: AppTheme.textSmMedium.copyWith(color: textColor),
         ),
         const SizedBox(height: 12),
@@ -236,7 +236,7 @@ class StreakModal extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Proteção 200',
+                    'home_streak_modal_protection_button'.tr,
                     style: AppTheme.textSmBold.copyWith(color: textColor),
                   ),
                   const SizedBox(width: 4),
@@ -254,7 +254,7 @@ class StreakModal extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '🛡️ Proteção ativa',
+              'home_streak_modal_protection_active'.tr,
               style: AppTheme.textSmBold.copyWith(color: textColor),
             ),
           ),
@@ -268,7 +268,7 @@ class StreakModal extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ver mais',
+                'home_streak_modal_see_more'.tr,
                 style: AppTheme.textMdBold.copyWith(color: textColor),
               ),
               const SizedBox(height: 2),

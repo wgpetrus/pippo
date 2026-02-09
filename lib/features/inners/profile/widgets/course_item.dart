@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 
@@ -64,7 +65,7 @@ class CourseItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'Principal',
+                      'course_item_primary_badge'.tr,
                       style: AppTheme.textXsRegular.copyWith(
                         color: AppTheme.primary,
                         fontWeight: FontWeight.w600,
@@ -88,7 +89,7 @@ class CourseItem extends StatelessWidget {
                   border: Border.all(color: AppTheme.primary, width: 1),
                 ),
                 child: Text(
-                  'Definir',
+                  'course_item_set_primary'.tr,
                   style: AppTheme.textXsRegular.copyWith(
                     color: AppTheme.primary,
                     fontWeight: FontWeight.w600,

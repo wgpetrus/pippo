@@ -40,7 +40,7 @@ class CountrySelectorModal {
               children: [
                 // Título
                 Text(
-                  'Country/Region',
+                  'country_selector_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                 ),
 

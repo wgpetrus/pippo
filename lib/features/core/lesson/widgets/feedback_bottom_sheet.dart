@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import '../../../../shared/theme/theme.dart';
@@ -76,21 +77,21 @@ class _FeedbackContent extends StatelessWidget {
       children: [
         // Título
         Text(
-          'Correto!',
+          'lesson_feedback_correct_title'.tr,
           style: AppTheme.displayXsBold.copyWith(color: AppTheme.green),
         ),
         const SizedBox(height: 8),
 
         // Subtítulo
         Text(
-          "Isso mesmo!",
+          'lesson_feedback_correct_subtitle'.tr,
           style: AppTheme.textLgRegular.copyWith(color: AppTheme.green),
         ),
         const SizedBox(height: 24),
 
         // Botão Continuar
         AppButton(
-          text: 'Continuar',
+          text: 'lesson_feedback_correct_button'.tr,
           color: AppTheme.green,
           onPressed: onContinue,
         ),
@@ -129,7 +130,7 @@ class _FeedbackContent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                'Ops! Boa tentativa, mas não é isso.',
+                'lesson_feedback_wrong_message'.tr,
                 style: AppTheme.textMdSemibold.copyWith(color: AppTheme.red),
               ),
             ),
@@ -138,7 +139,7 @@ class _FeedbackContent extends StatelessWidget {
             // Resposta correta (se fornecida)
             if (correctAnswer != null) ...[
               Text(
-                'Resposta correta:',
+                'lesson_feedback_wrong_correct_answer_label'.tr,
                 style: AppTheme.textMdBold.copyWith(color: AppTheme.black),
               ),
               const SizedBox(height: 4),
@@ -154,7 +155,7 @@ class _FeedbackContent extends StatelessWidget {
 
             // Botão Entendi
             AppButton(
-              text: 'Entendi',
+              text: 'lesson_feedback_wrong_button'.tr,
               color: AppTheme.red,
               onPressed: onContinue,
             ),

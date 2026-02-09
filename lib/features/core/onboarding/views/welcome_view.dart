@@ -77,18 +77,18 @@ class _WelcomeViewState extends State<WelcomeView> {
                 ),
                 SizedBox(height: r.spacing12),
                 Text(
-                  'Pronto para Começar sua Aventura?',
+                  'onboarding_welcome_title'.tr,
                   style: AppTheme.textLgRegular.copyWith(color: AppTheme.gray300),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: r.spacing32),
                 AppButton(
-                  text: 'Começar',
+                  text: 'onboarding_welcome_button_start'.tr,
                   onPressed: _flowController.nav.goToIntro,
                 ),
                 SizedBox(height: r.spacing16),
                 AppButton(
-                  text: 'Já tenho uma conta',
+                  text: 'onboarding_welcome_button_have_account'.tr,
                   isPrimary: false,
                   onPressed: _flowController.nav.goToAuth,
                 ),

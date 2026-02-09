@@ -31,7 +31,7 @@ class ShopPage extends StatelessWidget {
         surfaceTintColor: AppTheme.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Loja', style: AppTheme.displaySmBold),
+        title: Text('shop_title'.tr, style: AppTheme.displaySmBold),
         titleSpacing: 20,
         centerTitle: false,
         actions: [
@@ -100,7 +100,7 @@ class ShopPage extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: r.spacing16),
-          child: const Text('Seus pacotes', style: AppTheme.textLgBold),
+          child: Text('shop_your_packs'.tr, style: AppTheme.textLgBold),
         ),
         SizedBox(height: r.spacing12),
 
@@ -130,7 +130,7 @@ class ShopPage extends StatelessWidget {
                     SizedBox(width: r.spacing12),
                     Expanded(
                       child: Text(
-                        'Você ainda não possui pacotes. Adquira nas ofertas especiais!',
+                        'shop_no_packs_message'.tr,
                         style: AppTheme.textSmRegular.copyWith(
                           color: AppTheme.gray300,
                         ),
@@ -151,14 +151,14 @@ class ShopPage extends StatelessWidget {
                 if (xpBoostQty > 0) ...[
                   ShopItemCard(
                     iconAsset: AppAssets.shopElixirXp,
-                    label: 'Boost de XP x$xpBoostQty',
+                    label: 'shop_xp_boost_label'.tr.replaceAll('{count}', xpBoostQty.toString()),
                   ),
                   SizedBox(width: r.spacing12),
                 ],
                 if (skipLessonQty > 0) ...[
                   ShopItemCard(
                     iconAsset: AppAssets.shopChest,
-                    label: 'Pular Lição x$skipLessonQty',
+                    label: 'shop_skip_lesson_label'.tr.replaceAll('{count}', skipLessonQty.toString()),
                   ),
                 ],
               ],
@@ -177,7 +177,7 @@ class ShopPage extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: r.spacing16),
-          child: const Text('Oferta especial', style: AppTheme.textLgBold),
+          child: Text('shop_special_offer'.tr, style: AppTheme.textLgBold),
         ),
         SizedBox(height: r.spacing16),
 
@@ -195,7 +195,7 @@ class ShopPage extends StatelessWidget {
                 backgroundColor: AppTheme.primary100,
                 borderColor: AppTheme.primary,
                 priceColor: AppTheme.primary,
-                badge: 'NEW',
+                badge: 'shop_badge_new'.tr,
                 badgeColor: AppTheme.primary,
                 onTap: () => controller.purchaseGemPack(
                   Get.context!,
@@ -213,7 +213,7 @@ class ShopPage extends StatelessWidget {
                 return ShopItemCard(
                   iconAsset: AppAssets.shopChest,
                   label: '100',
-                  price: isClaimed ? 'RESGATADO' : '\$ GRÁTIS',
+                  price: isClaimed ? 'shop_claimed'.tr : 'shop_free'.tr,
                   backgroundColor: isClaimed ? AppTheme.white : AppTheme.green100,
                   borderColor: isClaimed ? AppTheme.gray300 : AppTheme.green,
                   priceColor: isClaimed ? AppTheme.gray300 : AppTheme.green,
@@ -245,7 +245,7 @@ class ShopPage extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: r.spacing16),
-          child: const SectionTitle(emoji: '🚀', title: 'Boosts de Aprendizado'),
+          child: SectionTitle(emoji: '🚀', title: 'shop_section_boosts'.tr),
         ),
         SizedBox(height: r.spacing12),
 
@@ -265,15 +265,15 @@ class ShopPage extends StatelessWidget {
                     final currentEnergy = energyController.currentEnergy.value;
                     final isEnergyFull = currentEnergy >= 5;
                     final description = isEnergyFull
-                        ? 'Energia completa! ($currentEnergy/5)'
-                        : 'Recarregue 5 energias instantaneamente!';
+                        ? 'shop_energy_full'.tr.replaceAll('{current}', currentEnergy.toString())
+                        : 'shop_energy_refill_description'.tr;
                     
                     return BoostItem(
                       iconAsset: AppAssets.appbarRay,
-                      title: 'Recarga de Energia',
+                      title: 'shop_energy_refill_title'.tr,
                       description: description,
                       price: 100,
-                      badge: isEnergyFull ? 'COMPLETA' : null,
+                      badge: isEnergyFull ? 'shop_badge_full'.tr : null,
                       badgeColor: isEnergyFull ? AppTheme.green : null,
                       isLoading: isEnergyLoading,
                       onTap: (isEnergyFull || isEnergyLoading) ? null : controller.purchaseEnergyRefill,
@@ -288,15 +288,15 @@ class ShopPage extends StatelessWidget {
                     final isActive = xpLevelController.hasXpBooster;
                     final timeRemaining = xpLevelController.getXpBoosterTimeRemaining();
                     final description = timeRemaining.isNotEmpty
-                        ? 'Ativo! $timeRemaining'
-                        : 'Ganhe 2× XP nas lições por 1 hora!';
+                        ? 'shop_xp_booster_active'.tr.replaceAll('{time}', timeRemaining)
+                        : 'shop_xp_booster_description'.tr;
                     
                     return BoostItem(
                       iconAsset: AppAssets.shopElixirXp,
-                      title: 'Boost de XP',
+                      title: 'shop_xp_booster_title'.tr,
                       description: description,
                       price: 150,
-                      badge: isActive ? 'ATIVO' : null,
+                      badge: isActive ? 'shop_badge_active'.tr : null,
                       badgeColor: isActive ? AppTheme.green : null,
                       isLoading: isXpLoading,
                       onTap: (isActive || isXpLoading) ? null : controller.purchaseXpBooster,
@@ -311,15 +311,15 @@ class ShopPage extends StatelessWidget {
                     final isActive = gemsController.hasGemMultiplier;
                     final timeRemaining = gemsController.getGemMultiplierTimeRemaining();
                     final description = timeRemaining.isNotEmpty
-                      ? 'Ativo! $timeRemaining'
-                      : 'Ganhe 2× gemas nas lições por 1 hora!';
+                      ? 'shop_gem_multiplier_active'.tr.replaceAll('{time}', timeRemaining)
+                      : 'shop_gem_multiplier_description'.tr;
                   
                   return BoostItem(
                     iconAsset: AppAssets.shopElixir2x,
-                    title: 'Multiplicador de Gemas',
+                    title: 'shop_gem_multiplier_title'.tr,
                     description: description,
                     price: 200,
-                    badge: isActive ? 'ATIVO' : 'POPULAR',
+                    badge: isActive ? 'shop_badge_active'.tr : 'shop_badge_popular'.tr,
                     badgeColor: isActive ? AppTheme.green : AppTheme.orange,
                     isLoading: isGemsLoading,
                     onTap: (isActive || isGemsLoading) ? null : () => controller.purchaseGemMultiplier(Get.context!),
@@ -334,10 +334,10 @@ class ShopPage extends StatelessWidget {
                     
                     return BoostItem(
                       iconAsset: AppAssets.appbarFire,
-                      title: 'Proteção de Streak',
-                      description: 'Proteja seu streak por 1 dia!',
+                      title: 'shop_streak_freeze_title'.tr,
+                      description: 'shop_streak_freeze_description'.tr,
                       price: 200,
-                      badge: isActive ? 'ATIVO' : null,
+                      badge: isActive ? 'shop_badge_active'.tr : null,
                       badgeColor: isActive ? AppTheme.green : null,
                       isLoading: isStreakLoading,
                       onTap: (isActive || isStreakLoading) ? null : () => controller.purchaseStreakFreeze(Get.context!),
@@ -360,7 +360,7 @@ class ShopPage extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: r.spacing16),
-          child: const SectionTitle(emoji: '🎨', title: 'Personalização e Colecionáveis'),
+          child: SectionTitle(emoji: '🎨', title: 'shop_section_customization'.tr),
         ),
         SizedBox(height: r.spacing12),
 
@@ -370,10 +370,10 @@ class ShopPage extends StatelessWidget {
             children: [
               CollectibleItem(
                 iconAsset: AppAssets.shopGemPot,
-                title: 'Skins do Mascote',
+                title: 'shop_mascot_skins'.tr,
                 price: '\$ 4.99',
                 oldPrice: '20',
-                badge: 'NOVO',
+                badge: 'shop_badge_new'.tr,
                 badgeColor: AppTheme.primary,
                 onTap: () => controller.purchaseCollectible(
                   Get.context!,
@@ -384,7 +384,7 @@ class ShopPage extends StatelessWidget {
               SizedBox(height: r.spacing12),
               CollectibleItem(
                 iconAsset: AppAssets.shopChest,
-                title: 'Pacotes de Emblemas',
+                title: 'shop_badge_packs'.tr,
                 price: '\$ 8',
                 oldPrice: '20',
                 onTap: () => controller.purchaseCollectible(

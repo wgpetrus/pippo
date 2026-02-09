@@ -32,7 +32,7 @@ class ReminderTimeModal {
                   children: [
                     // Título
                     Text(
-                      'Reminder time',
+                      'reminder_time_title'.tr,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                     ),
 
@@ -55,7 +55,7 @@ class ReminderTimeModal {
 
                     // Botão Save
                     AppButton(
-                      text: 'Salvar',
+                      text: 'reminder_time_save'.tr,
                       onPressed: () {
                         Get.back();
                         onSave(selectedTime);

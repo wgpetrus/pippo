@@ -107,13 +107,13 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-phone-number':
-        return 'Número de telefone inválido.';
+        return 'phone_number_error_invalid'.tr;
       case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+        return 'phone_number_error_too_many'.tr;
       case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
+        return 'phone_number_error_network'.tr;
       default:
-        return 'Erro ao enviar código. Tente novamente.';
+        return 'phone_number_error_generic'.tr;
     }
   }
 
@@ -124,7 +124,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Telefone'),
+      appBar: AppAppbar(title: 'phone_number_title'.tr),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -135,7 +135,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
               children: [
                 // Título
                 Text(
-                  "Qual é o seu telefone",
+                  'phone_number_question'.tr,
                   style: AppTheme.textLgBold.copyWith(color: AppTheme.black),
                 ),
 
@@ -199,7 +199,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
                           validator: _validatePhoneNumber,
                           style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
                           decoration: InputDecoration(
-                            hintText: 'número de telefone',
+                            hintText: 'phone_number_hint'.tr,
                             hintStyle: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
                             border: InputBorder.none,
                             isDense: true,
@@ -215,7 +215,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
 
                 // Aviso
                 Text(
-                  'Você receberá um SMS para verificar seu telefone. Taxas de SMS padrão podem ser aplicadas.',
+                  'phone_number_warning'.tr,
                   style: AppTheme.textSmRegular.copyWith(color: AppTheme.gray400),
                 ),
 
@@ -232,7 +232,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
 
                 // Botão Save/Next
                 AppButton(
-                  text: _phoneController.text.isEmpty ? 'Salvar' : 'Próximo',
+                  text: _phoneController.text.isEmpty ? 'phone_number_save'.tr : 'phone_number_next'.tr,
                   isLoading: _isSendingCode,
                   onPressed: (_phoneController.text.isEmpty || _isSendingCode)
                       ? null
@@ -251,11 +251,11 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
   // Validadores
   String? _validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Número de telefone é obrigatório.';
+      return 'phone_number_validation_required'.tr;
     }
     final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
     if (digitsOnly.length < 10) {
-      return 'Número de telefone inválido.';
+      return 'phone_number_validation_invalid'.tr;
     }
     return null;
   }

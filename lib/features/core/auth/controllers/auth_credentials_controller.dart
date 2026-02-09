@@ -30,15 +30,15 @@ class AuthCredentialsController extends GetxController {
 
   /// Valida email (retorna mensagem de erro ou null se válido)
   String? validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return 'E-mail é obrigatório.';
-    if (!GetUtils.isEmail(value)) return 'Por favor, insira um e-mail válido.';
+    if (value == null || value.trim().isEmpty) return 'error_email_required'.tr;
+    if (!GetUtils.isEmail(value)) return 'error_email_invalid'.tr;
     return null;
   }
 
   /// Valida senha (retorna mensagem de erro ou null se válido)
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Senha é obrigatória.';
-    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres.';
+    if (value == null || value.isEmpty) return 'error_password_required'.tr;
+    if (value.length < 6) return 'error_password_min_length'.tr;
     return null;
   }
 

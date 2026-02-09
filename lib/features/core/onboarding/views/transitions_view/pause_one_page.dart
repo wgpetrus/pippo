@@ -79,19 +79,19 @@ class _PauseOnePageState extends State<PauseOnePage> with TickerProviderStateMix
                     _buildMascotWithFlags(),
                     const SizedBox(height: 32),
                     Text(
-                      "Vamos criar sua jornada de aprendizado!",
+                      'onboarding_pause_one_title'.tr,
                       style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Escolha seu ritmo, trace seu caminho e desbloqueie um mundo de palavras. Cada escolha que você faz constrói sua missão pessoal—pronto para começar?",
+                      'onboarding_pause_one_subtitle'.tr,
                       style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray300),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
                     AppButton(
-                      text: 'Próximo',
+                      text: 'onboarding_pause_one_button'.tr,
                       onPressed: () => Get.find<OnboardingFlowController>().nav.goToStudyTime(),
                       suffixIcon: const FaIcon(FontAwesomeIcons.arrowRight, color: AppTheme.white, size: 18),
                     ),

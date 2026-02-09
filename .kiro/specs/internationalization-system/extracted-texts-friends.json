@@ -1,0 +1,12 @@
+{
+    "friends_title": "Amigos",
+    "friends_following_label": "Seguindo",
+    "friends_followers_label": "Seguidores",
+    "friends_following_count": "{count} Seguindo",
+    "friends_followers_count": "{count} Seguidores",
+    "friends_retry_button": "Tentar novamente",
+    "friends_empty_following": "Você ainda não está seguindo ninguém.",
+    "friends_empty_followers": "Você ainda não tem seguidores.",
+    "friends_default_user_name": "Usuário",
+    "friends_xp_label": "{xp} XP"
+}

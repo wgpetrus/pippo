@@ -52,7 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: AppTheme.white,
       appBar: AppAppbar(
-        title: 'Configurações',
+        title: 'settings_title'.tr,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: r.spacing16),
@@ -64,26 +64,26 @@ class _SettingsPageState extends State<SettingsPage> {
             // Account Section
             _buildSection(
               r: r,
-              title: 'Conta',
+              title: 'settings_account_section'.tr,
               children: [
                 AppListItem(
                   icon: FontAwesomeIcons.solidUser,
-                  label: 'Perfil',
+                  label: 'settings_profile'.tr,
                   onTap: () => Get.to(() => const EditProfilePage()),
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.solidBell,
-                  label: 'Notificações',
+                  label: 'settings_notifications'.tr,
                   onTap: () => Get.to(() => const NotificationsPage()),
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.graduationCap,
-                  label: 'Cursos',
+                  label: 'settings_courses'.tr,
                   onTap: () => Get.to(() => const CoursesPage()),
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.sliders,
-                  label: 'Controles de Aprendizado',
+                  label: 'settings_learning_controls'.tr,
                   onTap: () => Get.to(() => const LearningControlsPage()),
                 ),
               ],
@@ -94,11 +94,11 @@ class _SettingsPageState extends State<SettingsPage> {
             // Subscription Section
             _buildSection(
               r: r,
-              title: 'Assinatura',
+              title: 'settings_subscription_section'.tr,
               children: [
                 AppListItem(
                   icon: FontAwesomeIcons.solidCreditCard,
-                  label: 'Planos',
+                  label: 'settings_plans'.tr,
                   onTap: () {
                     // TODO: Navegar para Plans
                   },
@@ -111,25 +111,25 @@ class _SettingsPageState extends State<SettingsPage> {
             // Support Section
             _buildSection(
               r: r,
-              title: 'Suporte',
+              title: 'settings_support_section'.tr,
               children: [
                 AppListItem(
                   icon: FontAwesomeIcons.shieldHalved,
-                  label: 'Política de Privacidade',
+                  label: 'settings_privacy_policy'.tr,
                   onTap: () {
                     // TODO: Navegar para Privacy Policy
                   },
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.fileLines,
-                  label: 'Termos de Uso',
+                  label: 'settings_terms_of_use'.tr,
                   onTap: () {
                     // TODO: Navegar para Terms of Use
                   },
                 ),
                 AppListItem(
                   icon: FontAwesomeIcons.solidCircleQuestion,
-                  label: 'Ajuda e Suporte',
+                  label: 'settings_help_support'.tr,
                   onTap: () {
                     // TODO: Navegar para Help & Support
                   },
@@ -142,7 +142,7 @@ class _SettingsPageState extends State<SettingsPage> {
             // Danger Zone Section
             _buildSection(
               r: r,
-              title: 'Zona de Perigo',
+              title: 'settings_danger_zone'.tr,
               children: [
                 _buildDeleteAccountItem(context),
               ],
@@ -152,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
             // Logout Button
             AppButton(
-              text: 'Sair',
+              text: 'settings_logout'.tr,
               isPrimary: false,
               suffixIcon: FaIcon(
                 FontAwesomeIcons.rightFromBracket,
@@ -217,7 +217,7 @@ class _SettingsPageState extends State<SettingsPage> {
             // Label
             Expanded(
               child: Text(
-                'Excluir Conta',
+                'settings_delete_account'.tr,
                 style: AppTheme.textMdSemibold.copyWith(
                   color: AppTheme.red,
                 ),
