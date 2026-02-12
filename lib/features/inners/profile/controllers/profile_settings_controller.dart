@@ -33,6 +33,16 @@ class ProfileSettingsController extends GetxController {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
+  // Lifecycle
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Carrega configurações do usuário do Firestore
@@ -43,7 +53,7 @@ class ProfileSettingsController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -72,9 +82,9 @@ class ProfileSettingsController extends GetxController {
         dailyGoal.value = data['dailyGoal'] ?? 10;
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao carregar configurações. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -85,7 +95,7 @@ class ProfileSettingsController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -124,16 +134,9 @@ class ProfileSettingsController extends GetxController {
           break;
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao atualizar configuração. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     }
-  }
-
-  // Error Handlers
-
-  /// Trata erros do Firestore com mensagens amigáveis em português
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

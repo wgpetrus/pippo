@@ -128,6 +128,8 @@ class PtBR {
     'lesson_exit_confirmation_exit_button': 'Sair',
     'lesson_exit_confirmation_message': 'Se você sair agora, perderá o progresso desta lição e a energia gasta não será devolvida.',
     'lesson_exit_confirmation_title': 'Sair da lição?',
+    'lesson_error_no_exercises': 'Nenhum exercício encontrado',
+    'lesson_error_unknown_type': 'Tipo de exercício desconhecido: {type}',
     'lesson_feedback_correct_button': 'Continuar',
     'lesson_feedback_correct_subtitle': 'Isso mesmo!',
     'lesson_feedback_correct_title': 'Correto!',
@@ -144,7 +146,7 @@ class PtBR {
     'lesson_match_exercise_default_question': 'Toque nos pares correspondentes',
     'lesson_match_exercise_not_found': 'Exercício não encontrado',
     'lesson_section_locked_message': 'Complete o curso para\ndesbloquear.',
-    'lesson_section_progress_format': '{current}/{total}',
+    'lesson_section_progress_format': '@current/@total',
     'lesson_section_see_details': 'Ver detalhes',
     'lesson_section_start_now': 'COMEÇAR AGORA',
     'lesson_sections_error_snackbar_message': 'Não foi possível determinar qual lição iniciar.',
@@ -277,6 +279,9 @@ class PtBR {
     'treasure_in_progress_button': 'Em Progresso',
     'treasure_reward_gems': 'Gems',
     'treasure_reward_xp': 'XP',
+    'treasure_reward_animation_title': 'Recompensa!',
+    'treasure_reward_animation_gems': 'Gems',
+    'treasure_reward_animation_xp': 'XP',
     'treasure_section_daily': 'Desafios Diários',
     'treasure_section_special': 'Desafios Especiais',
     'treasure_section_weekly': 'Missões Semanais',
@@ -546,6 +551,8 @@ class PtBR {
     'error_insufficient_gems': 'Você não tem gemas suficientes.',
     'error_reward_already_claimed_free': 'Você já reivindicou esta recompensa.',
     'error_no_active_course': 'Nenhum curso ativo encontrado.',
+    'error_last_course_cannot_remove':
+        'Você precisa ter pelo menos um curso ativo.',
     'error_progress_negative': 'O progresso não pode ser negativo.',
     'error_controller_unavailable': 'Controller de desafios não disponível.',
     'error_network_check': 'Verifique sua conexão com a internet',
@@ -560,5 +567,73 @@ class PtBR {
     'error_purchase_gem_multiplier': 'Erro ao comprar multiplicador de gemas. Tente novamente.',
     'error_purchase_streak_protection': 'Erro ao comprar proteção de streak. Tente novamente.',
     'error_claim_free_reward': 'Erro ao reivindicar recompensa. Tente novamente.',
+    'error_cannot_follow_self': 'Você não pode seguir a si mesmo.',
+    'error_no_users_found': 'Nenhum usuário encontrado.',
+    
+    // Profile messages
+    'profile_updated_success': 'Perfil atualizado com sucesso!',
+    'profile_following_success': 'Você está seguindo este usuário!',
+    'profile_unfollowed_success': 'Você deixou de seguir este usuário.',
+    'password_changed_success': 'Senha alterada com sucesso!',
+    'phone_linked_success': 'Telefone vinculado com sucesso!',
+    'account_deleted_title': 'Conta Deletada',
+    'account_deleted_message': 'Sua conta foi deletada com sucesso.',
+    'reauth_required_delete_account': 'Por segurança, faça login novamente para concluir a exclusão da conta.',
+    'primary_course_updated': 'Curso primário atualizado!',
+    'course_removed_success': 'Curso removido!',
+    
+    // Home messages
+    'course_switched_success': 'Curso alterado para @course!',
+    
+    // Auth messages
+    'coming_soon_title': 'Em breve',
+    'facebook_login_coming_soon': 'O login com Facebook estará disponível em breve.',
+    'reset_link_sent_title': 'Link Enviado',
+    'reset_link_sent_message': 'Um link para redefinir sua senha foi enviado para @email',
+    'reset_link_sent_email': 'Um link para redefinir sua senha foi enviado para seu e-mail.',
+    'code_resent_title': 'Código reenviado',
+    'code_resent_message': 'Um novo código foi enviado para seu e-mail.',
+    'error_switch_course': 'Erro ao trocar curso. Tente novamente.',
+    'error_reload_data': 'Erro ao recarregar dados. Tente novamente.',
+    'error_load_courses': 'Erro ao carregar cursos. Tente novamente.',
+    'error_load_leaderboard': 'Erro ao carregar ranking. Verifique sua conexão e tente novamente.',
+    'error_update_status': 'Erro ao atualizar status. Tente novamente.',
+    
+    // Learning Controls
+    'learning_controls_minutes_format': '{minutes} minutos',
+    
+    // Lesson Errors
+    'lesson_no_exercises_found': 'Nenhum exercício encontrado',
+    'lesson_unknown_exercise_type': 'Tipo de exercício desconhecido: {type}',
+    
+    // Weekdays
+    'common_weekday_mon': 'Seg',
+    'common_weekday_tue': 'Ter',
+    'common_weekday_wed': 'Qua',
+    'common_weekday_thu': 'Qui',
+    'common_weekday_fri': 'Sex',
+    'common_weekday_sat': 'Sáb',
+    'common_weekday_sun': 'Dom',
+    
+    // Time formats
+    'common_time_minutes_remaining': '{minutes}min restantes',
+    'common_time_hours_remaining': '{hours}h restantes',
+    
+    // Home Stats Controller
+    'home_lesson_button_continue': 'Continuar',
+    'home_lesson_button_start': 'Começar',
+    
+    // Profile Search
+    'profile_search_title': 'Buscar usuários',
+    'profile_search_hint': 'Digite username ou nome',
+    'profile_search_empty_state': 'Busque por username ou nome',
+    'profile_search_no_results': 'Nenhum usuário encontrado',
+    
+    // Treasure Challenge Validation
+    'error_validation_required_fields': 'Todos os campos obrigatórios devem ser preenchidos.',
+    'error_validation_goal_positive': 'O objetivo deve ser um número positivo.',
+    'error_validation_reward_positive': 'A recompensa deve ser um valor positivo.',
+    'error_validation_reward_type': 'Tipo de recompensa inválido.',
+    'error_validation_progress_zero': 'O progresso inicial deve ser zero.',
   };
 }

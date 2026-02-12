@@ -38,6 +38,16 @@ class SplashController extends GetxController {
     _navigate();
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    showRetryButton.value = false;
+    
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Método público para retry
@@ -59,9 +69,9 @@ class SplashController extends GetxController {
 
       // Ordem crítica de verificação (NUNCA inverter)
       // 1. Verificar se usuário está autenticado
-      final isAuthenticated = _isAuthenticated();
-
-      if (!isAuthenticated) {
+      final user = _auth.currentUser;
+      
+      if (user == null) {
         // 2. Se não autenticado, verificar primeiro acesso
         final isFirstAccess = await _isFirstAccess();
 
@@ -74,7 +84,7 @@ class SplashController extends GetxController {
       }
 
       // 3. Se autenticado, verificar onboarding completo
-      final userId = _auth.currentUser!.uid;
+      final userId = user.uid;
       final onboardingCompleted = await _isOnboardingCompleted(userId);
 
       if (!onboardingCompleted) {
@@ -106,7 +116,7 @@ class SplashController extends GetxController {
         errorMessage.value = 'error_network_check'.tr;
         showRetryButton.value = true;
       } else {
-        errorMessage.value = _handleFirestoreError(e);
+        errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
         _navigateToAuth();
       }
       isLoading.value = false;
@@ -119,11 +129,6 @@ class SplashController extends GetxController {
   }
 
   // Verificações
-
-  /// Verifica se há um usuário autenticado no Firebase Auth
-  bool _isAuthenticated() {
-    return _auth.currentUser != null;
-  }
 
   /// Verifica se é o primeiro acesso do usuário no dispositivo
   Future<bool> _isFirstAccess() async {
@@ -182,10 +187,5 @@ class SplashController extends GetxController {
     return e.code == 'unavailable' || 
            e.code == 'deadline-exceeded' ||
            e.message?.toLowerCase().contains('network') == true;
-  }
-  
-  /// Handler de erros do Firestore (padronizado)
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

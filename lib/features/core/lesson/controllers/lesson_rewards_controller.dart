@@ -45,6 +45,17 @@ class LessonRewardsController extends GetxController {
     }
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    calculatedXp.value = 0;
+    calculatedGems.value = 0;
+
+    super.onClose();
+  }
+
   Future<void> calculateRewards() async {
     final totalXp = await _calculateTotalXP();
     final totalGems = _calculateTotalGems();

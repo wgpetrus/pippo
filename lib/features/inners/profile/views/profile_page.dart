@@ -5,6 +5,7 @@ import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
 import '../../friends/views/friends_view.dart';
 import '../../home/controllers/home_stats_controller.dart';
+import '../controllers/profile_auth_controller.dart';
 import '../controllers/profile_data_controller.dart';
 import '../controllers/profile_social_controller.dart';
 import '../controllers/profile_courses_controller.dart';
@@ -135,6 +136,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                     CompleteProfileCard(
                       stepsLeft: _dataController.missingFields.length,
                       onTap: () {
+                        // Garantir que ProfileAuthController está disponível
+                        if (!Get.isRegistered<ProfileAuthController>()) {
+                          Get.put(ProfileAuthController());
+                        }
                         Get.to(() => const EditProfilePage());
                       },
                     ),

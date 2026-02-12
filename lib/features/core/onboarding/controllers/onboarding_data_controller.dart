@@ -53,6 +53,30 @@ class OnboardingDataController extends GetxController {
 
   String? get tempPassword => _tempPassword;
 
+  // Lifecycle
+
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    isAddingCourse.value = false;
+    skipWelcome.value = false;
+    authProvider.value = '';
+    showLoginOption.value = false;
+    retryAttempt.value = 0;
+    retryMessage.value = '';
+    selectedLanguage.value = '';
+    languageLevel.value = '';
+    learningReason.value = '';
+    studyTime.value = '';
+    userName.value = '';
+    userAge.value = '';
+    userEmail.value = '';
+
+    super.onClose();
+  }
+
   // Setters
   void setLanguage(String language) => selectedLanguage.value = language;
   void setLanguageLevel(String level) => languageLevel.value = level;
@@ -232,8 +256,8 @@ class OnboardingDataController extends GetxController {
             'lastDailyResetDate': '',
           },
           'gems': {
-            'gems': 0,
-            'totalGemsEarned': 0,
+            'gems': 100, // Recompensa de boas-vindas no primeiro curso
+            'totalGemsEarned': 100,
             'totalGemsSpent': 0,
             'gemMultiplierUntil': null,
           },
@@ -250,7 +274,7 @@ class OnboardingDataController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -325,6 +349,19 @@ class OnboardingDataController extends GetxController {
 
       final statsRef = courseRef.collection('stats').doc('gamification');
 
+      // Verificar se é o primeiro curso do usuário para conceder recompensa
+      // IMPORTANTE: Verificar ANTES de adicionar o novo curso ao batch
+      final allCoursesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('courses')
+          .get();
+      
+      // Se não há cursos ainda, este será o primeiro (recompensa de 100 gems)
+      final isFirstCourse = allCoursesSnapshot.docs.isEmpty;
+      final initialGems = isFirstCourse ? 100 : 0;
+      final initialGemsEarned = isFirstCourse ? 100 : 0;
+
       batch.set(statsRef, {
         'streak': {
           'currentStreak': 0,
@@ -351,8 +388,8 @@ class OnboardingDataController extends GetxController {
           'lastDailyResetDate': '',
         },
         'gems': {
-          'gems': 0,
-          'totalGemsEarned': 0,
+          'gems': initialGems,
+          'totalGemsEarned': initialGemsEarned,
           'totalGemsSpent': 0,
           'gemMultiplierUntil': null,
         },
@@ -365,7 +402,7 @@ class OnboardingDataController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao adicionar curso. Tente novamente.';
     } finally {
@@ -477,9 +514,5 @@ class OnboardingDataController extends GetxController {
 
   String? _validateEmail(String? value) {
     return ValidationHelper.validateEmail(value);
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

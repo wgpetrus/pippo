@@ -42,6 +42,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void initState() {
     super.initState();
     _controller = Get.find<ProfileDataController>();
+    // Garantir que ProfileAuthController está disponível
+    if (!Get.isRegistered<ProfileAuthController>()) {
+      Get.put(ProfileAuthController());
+    }
     _authController = Get.find<ProfileAuthController>();
     
     // Inicializar campos com dados do controller
@@ -105,26 +109,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
               // Avatar e Change avatar
               Row(
                 children: [
-                  // Avatar
-                  Builder(
-                    builder: (context) {
-                      final avatarSize = ResponsiveUtils.width(80, min: 60, max: 96);
-                      return Container(
-                        width: avatarSize,
-                        height: avatarSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.primary, width: 3),
+                  // Avatar - Obx para reagir a mudanças
+                  Obx(() {
+                    final avatarSize = ResponsiveUtils.width(80, min: 60, max: 96);
+                    return Container(
+                      width: avatarSize,
+                      height: avatarSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primary, width: 3),
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          _getAvatarAsset(_currentAvatar),
+                          fit: BoxFit.cover,
                         ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            _getAvatarAsset(_currentAvatar),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  }),
 
                   const Spacer(),
 

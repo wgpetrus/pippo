@@ -47,6 +47,19 @@ class ShopController extends GetxController {
     loadClaimedRewards();
   }
 
+  @override
+  void onClose() {
+    // Limpar listas
+    ownedPacks.clear();
+    claimedRewards.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
+
   int get gems => _gemsController.gems.value;
   bool get isGamificationLoading => _gemsController.isLoading.value;
 
@@ -67,7 +80,7 @@ class ShopController extends GetxController {
         ownedPacks.value = Map<String, int>.from(data);
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     }
   }
 
@@ -87,12 +100,8 @@ class ShopController extends GetxController {
         claimedRewards.value = List<String>.from(doc.data()?['rewards'] ?? []);
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     }
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   int getPackQuantity(String packId) {
@@ -109,7 +118,7 @@ class ShopController extends GetxController {
 
     try {
       if (_gemsController.gems.value < 100) {
-        errorMessage.value = 'Você não tem gemas suficientes.';
+        errorMessage.value = 'error_insufficient_gems'.tr;
         _showErrorSnackbar(errorMessage.value);
         return;
       }
@@ -130,7 +139,7 @@ class ShopController extends GetxController {
         );
       }
     } catch (e) {
-      errorMessage.value = 'Erro ao comprar recarga de energia. Tente novamente.';
+      errorMessage.value = 'error_purchase_energy'.tr;
       _showErrorSnackbar(errorMessage.value);
     } finally {
       isLoading.value = false;
@@ -143,7 +152,7 @@ class ShopController extends GetxController {
 
     try {
       if (_gemsController.gems.value < 150) {
-        errorMessage.value = 'Você não tem gemas suficientes.';
+        errorMessage.value = 'error_insufficient_gems'.tr;
         _showErrorSnackbar(errorMessage.value);
         return;
       }
@@ -159,7 +168,7 @@ class ShopController extends GetxController {
         _showSuccessSnackbar('XP Booster ativado! Ganhe 2× XP por 1 hora.');
       }
     } catch (e) {
-      errorMessage.value = 'Erro ao comprar XP booster. Tente novamente.';
+      errorMessage.value = 'error_purchase_xp_booster'.tr;
       _showErrorSnackbar(errorMessage.value);
     } finally {
       isLoading.value = false;
@@ -178,7 +187,7 @@ class ShopController extends GetxController {
 
         try {
           if (_gemsController.gems.value < 200) {
-            errorMessage.value = 'Você não tem gemas suficientes.';
+            errorMessage.value = 'error_insufficient_gems'.tr;
             _showErrorSnackbar(errorMessage.value);
             return;
           }
@@ -196,7 +205,7 @@ class ShopController extends GetxController {
             );
           }
         } catch (e) {
-          errorMessage.value = 'Erro ao comprar multiplicador de gemas. Tente novamente.';
+          errorMessage.value = 'error_purchase_gem_multiplier'.tr;
           _showErrorSnackbar(errorMessage.value);
         } finally {
           isLoading.value = false;
@@ -217,7 +226,7 @@ class ShopController extends GetxController {
 
         try {
           if (_gemsController.gems.value < 200) {
-            errorMessage.value = 'Você não tem gemas suficientes.';
+            errorMessage.value = 'error_insufficient_gems'.tr;
             _showErrorSnackbar(errorMessage.value);
             return;
           }
@@ -235,7 +244,7 @@ class ShopController extends GetxController {
             );
           }
         } catch (e) {
-          errorMessage.value = 'Erro ao comprar proteção de streak. Tente novamente.';
+          errorMessage.value = 'error_purchase_streak_protection'.tr;
           _showErrorSnackbar(errorMessage.value);
         } finally {
           isLoading.value = false;
@@ -251,12 +260,12 @@ class ShopController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_user_not_authenticated'.tr;
         return;
       }
 
       if (claimedRewards.contains(rewardId)) {
-        errorMessage.value = 'Você já reivindicou esta recompensa.';
+        errorMessage.value = 'error_reward_already_claimed'.tr;
         _showErrorSnackbar(errorMessage.value);
         return;
       }
@@ -271,7 +280,7 @@ class ShopController extends GetxController {
           .get();
 
       if (coursesSnapshot.docs.isEmpty) {
-        errorMessage.value = 'Nenhum curso ativo encontrado.';
+        errorMessage.value = 'error_no_active_course'.tr;
         _showErrorSnackbar(errorMessage.value);
         return;
       }
@@ -311,11 +320,11 @@ class ShopController extends GetxController {
         _gemsController.totalGemsEarned.value = originalTotalGems;
         claimedRewards.remove(rewardId);
 
-        errorMessage.value = 'Erro ao reivindicar recompensa. Tente novamente.';
+        errorMessage.value = 'error_claim_free_reward'.tr;
         _showErrorSnackbar(errorMessage.value);
       }
     } catch (e) {
-      errorMessage.value = 'Erro ao reivindicar recompensa. Tente novamente.';
+      errorMessage.value = 'error_claim_free_reward'.tr;
       _showErrorSnackbar(errorMessage.value);
     } finally {
       isLoading.value = false;
@@ -344,7 +353,7 @@ class ShopController extends GetxController {
 
   void _showSuccessSnackbar(String message) {
     Get.snackbar(
-      'Sucesso!',
+      'common_success'.tr,
       message,
       backgroundColor: AppTheme.green,
       colorText: AppTheme.white,
@@ -356,7 +365,7 @@ class ShopController extends GetxController {
 
   void _showErrorSnackbar(String message) {
     Get.snackbar(
-      'Erro',
+      'common_error'.tr,
       message,
       backgroundColor: AppTheme.red,
       colorText: AppTheme.white,

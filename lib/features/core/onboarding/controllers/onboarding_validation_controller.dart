@@ -129,7 +129,7 @@ class OnboardingValidationController extends GetxController {
             'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
         return;
       } on FirebaseException catch (e) {
-        errorMessage.value = _handleFirestoreError(e);
+        errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
         return;
       }
 
@@ -218,7 +218,7 @@ class OnboardingValidationController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível enviar o código. Tente novamente.';
     } finally {
@@ -255,8 +255,8 @@ class OnboardingValidationController extends GetxController {
       _startResendTimer();
 
       Get.snackbar(
-        'Código reenviado',
-        'Um novo código foi enviado para seu e-mail.',
+        'code_resent_title'.tr,
+        'code_resent_message'.tr,
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
       );
@@ -264,7 +264,7 @@ class OnboardingValidationController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível reenviar o código. Tente novamente.';
     } finally {
@@ -336,7 +336,7 @@ class OnboardingValidationController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao verificar código. Tente novamente.';
     } finally {
@@ -384,9 +384,5 @@ class OnboardingValidationController extends GetxController {
 
   String _handleFirebaseAuthError(FirebaseAuthException e) {
     return ErrorHandler.getRegisterErrorMessage(e);
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

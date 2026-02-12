@@ -77,7 +77,7 @@ void main() {
       await controller.loadUserProfile('nonexistent');
 
       // Assert
-      expect(controller.errorMessage.value, contains('não encontrado'));
+      expect(controller.errorMessage.value, contains('error_user_not_found'));
     });
   });
 
@@ -104,7 +104,7 @@ void main() {
       await controller.followUser(user.uid);
 
       // Assert
-      expect(controller.errorMessage.value, contains('não pode seguir a si mesmo'));
+      expect(controller.errorMessage.value, 'error_cannot_follow_self'.tr);
     });
   });
 
@@ -167,6 +167,118 @@ void main() {
 
       // Assert - Verifica que não há erro
       expect(controller.errorMessage.value, isEmpty);
+    });
+  });
+
+  group('ProfileSocialController - Weekday Translations', () {
+    test('usa translation keys para dias da semana no progresso semanal', () async {
+      // Arrange - Criar curso ativo
+      await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('courses')
+          .doc('course1')
+          .set({
+        'language': 'en',
+        'isActive': true,
+      });
+
+      // Act
+      await controller.loadWeeklyProgress();
+
+      // Assert - Verifica que os dias da semana estão presentes
+      expect(controller.weeklyProgress.length, 7);
+      
+      // Verifica que cada dia tem a estrutura correta
+      for (final dayData in controller.weeklyProgress) {
+        expect(dayData.containsKey('day'), true);
+        expect(dayData.containsKey('xp'), true);
+        expect(dayData.containsKey('date'), true);
+        
+        // Verifica que o dia não é uma string hardcoded em português
+        final day = dayData['day'] as String;
+        expect(day, isNotEmpty);
+        
+        // Verifica que não são as strings antigas hardcoded
+        expect(day, isNot(equals('Segunda')));
+        expect(day, isNot(equals('Terça')));
+        expect(day, isNot(equals('Quarta')));
+        expect(day, isNot(equals('Quinta')));
+        expect(day, isNot(equals('Sexta')));
+        expect(day, isNot(equals('Sábado')));
+        expect(day, isNot(equals('Domingo')));
+      }
+    });
+
+    test('progresso semanal de outro usuário usa translation keys', () async {
+      // Arrange - Criar usuário alvo com curso ativo
+      const targetUserId = 'user123';
+      
+      await firestore.collection('users').doc(targetUserId).set({
+        'name': 'João Silva',
+        'username': 'joaosilva',
+      });
+
+      await firestore
+          .collection('users')
+          .doc(targetUserId)
+          .collection('courses')
+          .doc('course1')
+          .set({
+        'language': 'en',
+        'isActive': true,
+      });
+
+      // Act
+      await controller.loadUserWeeklyProgress(targetUserId);
+
+      // Assert - Verifica que os dias da semana estão presentes
+      expect(controller.viewedUserWeeklyProgress.length, 7);
+      
+      // Verifica que cada dia tem a estrutura correta
+      for (final dayData in controller.viewedUserWeeklyProgress) {
+        expect(dayData.containsKey('day'), true);
+        expect(dayData.containsKey('xp'), true);
+        expect(dayData.containsKey('date'), true);
+        
+        // Verifica que o dia não é uma string hardcoded em português
+        final day = dayData['day'] as String;
+        expect(day, isNotEmpty);
+        
+        // Verifica que não são as strings antigas hardcoded
+        expect(day, isNot(equals('Segunda')));
+        expect(day, isNot(equals('Terça')));
+        expect(day, isNot(equals('Quarta')));
+        expect(day, isNot(equals('Quinta')));
+        expect(day, isNot(equals('Sexta')));
+        expect(day, isNot(equals('Sábado')));
+        expect(day, isNot(equals('Domingo')));
+      }
+    });
+
+    test('progresso semanal vazio usa translation keys', () async {
+      // Act - Carregar progresso sem curso ativo
+      await controller.loadWeeklyProgress();
+
+      // Assert - Verifica que retorna 7 dias com 0 XP
+      expect(controller.weeklyProgress.length, 7);
+      
+      // Verifica que todos os dias têm XP = 0 e usam translation keys
+      for (final dayData in controller.weeklyProgress) {
+        expect(dayData['xp'], 0);
+        
+        final day = dayData['day'] as String;
+        expect(day, isNotEmpty);
+        
+        // Verifica que não são as strings antigas hardcoded
+        expect(day, isNot(equals('Segunda')));
+        expect(day, isNot(equals('Terça')));
+        expect(day, isNot(equals('Quarta')));
+        expect(day, isNot(equals('Quinta')));
+        expect(day, isNot(equals('Sexta')));
+        expect(day, isNot(equals('Sábado')));
+        expect(day, isNot(equals('Domingo')));
+      }
     });
   });
 }

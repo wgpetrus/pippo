@@ -33,6 +33,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   void initState() {
     super.initState();
+    // Garantir que ProfileAuthController está disponível
+    if (!Get.isRegistered<ProfileAuthController>()) {
+      Get.put(ProfileAuthController());
+    }
     _controller = Get.find<ProfileAuthController>();
   }
 

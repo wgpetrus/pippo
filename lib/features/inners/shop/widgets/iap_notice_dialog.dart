@@ -53,7 +53,7 @@ class IapNoticeDialog {
 
                 // Título
                 Text(
-                  'Aviso Importante',
+                  'shop_iap_notice_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -62,7 +62,7 @@ class IapNoticeDialog {
 
                 // Mensagem
                 Text(
-                  'Compras in-app com dinheiro real serão implementadas em uma versão futura do aplicativo.',
+                  'shop_iap_notice_message'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.gray200),
                   textAlign: TextAlign.center,
                 ),
@@ -70,7 +70,7 @@ class IapNoticeDialog {
                 SizedBox(height: r.spacing8),
 
                 Text(
-                  'Por enquanto, você pode adquirir gemas completando lições e desafios!',
+                  'shop_iap_notice_alternative'.tr,
                   style: AppTheme.textMdRegular.copyWith(color: AppTheme.primary),
                   textAlign: TextAlign.center,
                 ),
@@ -79,7 +79,7 @@ class IapNoticeDialog {
 
                 // Botão Entendi
                 AppButton(
-                  text: 'Entendi',
+                  text: 'shop_iap_notice_button'.tr,
                   onPressed: () {
                     Get.back();
                     onContinue();

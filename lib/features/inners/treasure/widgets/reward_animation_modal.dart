@@ -86,7 +86,7 @@ class _RewardAnimationModalState extends State<RewardAnimationModal>
                 
                 // Texto "Recompensa!"
                 Text(
-                  'Recompensa!',
+                  'treasure_reward_animation_title',
                   style: AppTheme.displayXsBold.copyWith(
                     color: AppTheme.primary,
                   ),
@@ -108,7 +108,9 @@ class _RewardAnimationModalState extends State<RewardAnimationModal>
                 
                 // Tipo
                 Text(
-                  widget.rewardType == 'gems' ? 'Gems' : 'XP',
+                  widget.rewardType == 'gems' 
+                      ? 'treasure_reward_animation_gems' 
+                      : 'treasure_reward_animation_xp',
                   style: AppTheme.textLgMedium.copyWith(
                     color: AppTheme.gray300,
                   ),

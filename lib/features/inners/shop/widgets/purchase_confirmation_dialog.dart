@@ -37,7 +37,7 @@ class PurchaseConfirmationDialog {
               children: [
                 // Título
                 Text(
-                  'Confirmar Compra',
+                  'shop_confirmation_title'.tr,
                   style: AppTheme.displayXsBold.copyWith(color: AppTheme.black),
                   textAlign: TextAlign.center,
                 ),
@@ -88,7 +88,7 @@ class PurchaseConfirmationDialog {
 
                 // Botão Confirmar
                 AppButton(
-                  text: 'Confirmar',
+                  text: 'shop_confirmation_confirm'.tr,
                   onPressed: () {
                     Get.back();
                     onConfirm();
@@ -143,7 +143,7 @@ class _CancelButtonState extends State<_CancelButton> {
           ),
           child: Center(
             child: Text(
-              'Cancelar',
+              'shop_confirmation_cancel'.tr,
               style: AppTheme.textLgBold.copyWith(color: AppTheme.green),
             ),
           ),

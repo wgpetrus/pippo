@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/utils/error_handler.dart';
+
 /// ProfileAuthController - Manages authentication actions
 ///
 /// Responsibility: Manage authentication actions (password, phone, delete account)
@@ -27,6 +29,16 @@ class ProfileAuthController extends GetxController {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
+  // Lifecycle
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Altera senha do usuário
@@ -40,7 +52,7 @@ class ProfileAuthController extends GetxController {
     try {
       final user = _auth.currentUser;
       if (user == null || user.email == null) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -56,8 +68,8 @@ class ProfileAuthController extends GetxController {
       await user.updatePassword(newPassword);
 
       Get.snackbar(
-        'Sucesso',
-        'Senha alterada com sucesso!',
+        'common_success'.tr,
+        'password_changed_success'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
 
@@ -65,7 +77,7 @@ class ProfileAuthController extends GetxController {
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseAuthError(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao alterar senha. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -82,7 +94,7 @@ class ProfileAuthController extends GetxController {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -105,14 +117,16 @@ class ProfileAuthController extends GetxController {
       phoneVerified.value = true;
 
       Get.snackbar(
-        'Sucesso',
-        'Telefone vinculado com sucesso!',
+        'common_success'.tr,
+        'phone_linked_success'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseAuthError(e);
+    } on FirebaseException catch (e) {
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao vincular telefone. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -126,7 +140,7 @@ class ProfileAuthController extends GetxController {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -145,8 +159,8 @@ class ProfileAuthController extends GetxController {
       Get.offAllNamed('/auth');
 
       Get.snackbar(
-        'Conta Deletada',
-        'Sua conta foi deletada com sucesso.',
+        'account_deleted_title'.tr,
+        'account_deleted_message'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseAuthException catch (e) {
@@ -161,8 +175,8 @@ class ProfileAuthController extends GetxController {
           Get.offAllNamed('/auth');
           
           Get.snackbar(
-            'Atenção',
-            'Por segurança, faça login novamente para concluir a exclusão da conta.',
+            'common_attention'.tr,
+            'reauth_required_delete_account'.tr,
             snackPosition: SnackPosition.BOTTOM,
             duration: const Duration(seconds: 4),
           );
@@ -173,8 +187,10 @@ class ProfileAuthController extends GetxController {
       } else {
         errorMessage.value = _handleFirebaseAuthError(e);
       }
+    } on FirebaseException catch (e) {
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao deletar conta. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }

@@ -39,8 +39,8 @@ class LessonExerciseContainer extends StatelessWidget {
         
         // Se não há exercícios ou índice inválido
         if (flowController.currentExercises.isEmpty) {
-          return const Scaffold(
-            body: Center(child: Text('Nenhum exercício encontrado')),
+          return Scaffold(
+            body: Center(child: Text('lesson_error_no_exercises'.tr)),
           );
         }
         
@@ -65,7 +65,7 @@ class LessonExerciseContainer extends StatelessWidget {
             return MatchExercisePage(key: ValueKey(flowController.currentExerciseIndex.value));
           default:
             return Scaffold(
-              body: Center(child: Text('Tipo de exercício desconhecido: $exerciseType')),
+              body: Center(child: Text('lesson_error_unknown_type'.trParams({'type': exerciseType}))),
             );
         }
       }),

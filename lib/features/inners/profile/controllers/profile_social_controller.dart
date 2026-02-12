@@ -36,6 +36,24 @@ class ProfileSocialController extends GetxController {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
+  // Lifecycle
+  @override
+  void onClose() {
+    // Limpar listas
+    following.clear();
+    followers.clear();
+    weeklyProgress.clear();
+    viewedUserWeeklyProgress.clear();
+    viewedUserData.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    isLoadingProgress.value = false;
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Carrega o perfil de outro usuário
@@ -47,7 +65,7 @@ class ProfileSocialController extends GetxController {
     try {
       final currentUserId = _auth.currentUser?.uid;
       if (currentUserId == null || currentUserId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -55,7 +73,7 @@ class ProfileSocialController extends GetxController {
       final userDoc = await _firestore.collection('users').doc(userId).get();
 
       if (!userDoc.exists) {
-        errorMessage.value = 'Usuário não encontrado.';
+        errorMessage.value = 'error_user_not_found'.tr;
         return;
       }
 
@@ -161,9 +179,9 @@ class ProfileSocialController extends GetxController {
       // Verificar se o usuário atual segue este usuário
       await _checkIfFollowing(currentUserId, userId);
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao carregar perfil. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -177,12 +195,12 @@ class ProfileSocialController extends GetxController {
     try {
       final currentUserId = _auth.currentUser?.uid;
       if (currentUserId == null || currentUserId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
       if (currentUserId == targetUserId) {
-        errorMessage.value = 'Você não pode seguir a si mesmo.';
+        errorMessage.value = 'error_cannot_follow_self'.tr;
         return;
       }
 
@@ -223,14 +241,14 @@ class ProfileSocialController extends GetxController {
       }
 
       Get.snackbar(
-        'Sucesso',
-        'Você está seguindo este usuário!',
+        'common_success'.tr,
+        'profile_following_success'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao seguir usuário. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -244,7 +262,7 @@ class ProfileSocialController extends GetxController {
     try {
       final currentUserId = _auth.currentUser?.uid;
       if (currentUserId == null || currentUserId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -281,14 +299,14 @@ class ProfileSocialController extends GetxController {
       }
 
       Get.snackbar(
-        'Sucesso',
-        'Você deixou de seguir este usuário.',
+        'common_success'.tr,
+        'profile_unfollowed_success'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao deixar de seguir. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -298,7 +316,7 @@ class ProfileSocialController extends GetxController {
   Future<void> loadFollowing() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null || userId.isEmpty) {
-      errorMessage.value = 'Usuário não autenticado.';
+      errorMessage.value = 'error_unauthenticated'.tr;
       return;
     }
 
@@ -311,7 +329,7 @@ class ProfileSocialController extends GetxController {
   Future<void> loadFollowers() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null || userId.isEmpty) {
-      errorMessage.value = 'Usuário não autenticado.';
+      errorMessage.value = 'error_unauthenticated'.tr;
       return;
     }
 
@@ -520,10 +538,10 @@ class ProfileSocialController extends GetxController {
 
       return list;
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
       return [];
     } catch (e) {
-      errorMessage.value = 'Erro ao carregar lista. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
       return [];
     } finally {
       isLoading.value = false;
@@ -572,35 +590,25 @@ class ProfileSocialController extends GetxController {
 
   /// Retorna abreviação do dia da semana
   String _getDayAbbreviation(int weekday) {
-    switch (weekday) {
-      case 1:
-        return 'Seg'; // Segunda
-      case 2:
-        return 'Ter'; // Terça
-      case 3:
-        return 'Qua'; // Quarta
-      case 4:
-        return 'Qui'; // Quinta
-      case 5:
-        return 'Sex'; // Sexta
-      case 6:
-        return 'Sáb'; // Sábado
-      case 7:
-        return 'Dom'; // Domingo
-      default:
-        return '';
+    const weekdayKeys = [
+      'common_weekday_mon',
+      'common_weekday_tue',
+      'common_weekday_wed',
+      'common_weekday_thu',
+      'common_weekday_fri',
+      'common_weekday_sat',
+      'common_weekday_sun',
+    ];
+
+    if (weekday >= 1 && weekday <= 7) {
+      return weekdayKeys[weekday - 1].tr;
     }
+
+    return '';
   }
 
   /// Retorna bandeira do idioma
   String _getLanguageFlag(String code) {
     return LanguageHelper.getLanguageFlag(code.toLowerCase());
-  }
-
-  // Handlers de erro
-
-  /// Handler de erros do Firestore
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

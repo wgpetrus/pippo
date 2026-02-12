@@ -9,6 +9,10 @@ import '../controllers/profile_auth_controller.dart';
 /// Modal de confirmação final de exclusão de conta
 class ConfirmDeleteModal {
   static void show(BuildContext context) {
+    // Garantir que ProfileAuthController está disponível
+    if (!Get.isRegistered<ProfileAuthController>()) {
+      Get.put(ProfileAuthController());
+    }
     final controller = Get.find<ProfileAuthController>();
 
     WoltModalSheet.show(

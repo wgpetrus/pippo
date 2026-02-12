@@ -21,6 +21,20 @@ class ProfileSearchController extends GetxController {
   final searchResults = <Map<String, dynamic>>[].obs;
   final isSearching = false.obs;
 
+  // Lifecycle
+  @override
+  void onClose() {
+    // Limpar listas
+    searchResults.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    isSearching.value = false;
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Busca usuários por username ou nome
@@ -37,7 +51,7 @@ class ProfileSearchController extends GetxController {
     try {
       final currentUserId = _auth.currentUser?.uid;
       if (currentUserId == null || currentUserId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -75,12 +89,12 @@ class ProfileSearchController extends GetxController {
       searchResults.value = results.values.toList();
 
       if (searchResults.isEmpty) {
-        errorMessage.value = 'Nenhum usuário encontrado.';
+        errorMessage.value = 'error_no_users_found'.tr;
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao buscar usuários. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isSearching.value = false;
     }
@@ -91,12 +105,5 @@ class ProfileSearchController extends GetxController {
     searchQuery.value = '';
     searchResults.clear();
     errorMessage.value = '';
-  }
-
-  // Handlers de erro
-
-  /// Handler de erros do Firestore
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

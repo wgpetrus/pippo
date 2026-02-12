@@ -48,6 +48,17 @@ class StreakController extends GetxController {
     loadStreak();
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    currentStreak.value = 0;
+    longestStreak.value = 0;
+
+    super.onClose();
+  }
+
   Future<void> loadStreak() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -147,7 +158,7 @@ class StreakController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao carregar streak. Tente novamente.';
     } finally {
@@ -391,10 +402,6 @@ class StreakController extends GetxController {
 
   String _formatDateForStreak(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {

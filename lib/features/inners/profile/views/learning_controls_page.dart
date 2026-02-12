@@ -192,7 +192,7 @@ class _LearningControlsPageState extends State<LearningControlsPage> {
               const SizedBox(height: 16),
               ...[5, 10, 15, 20, 30].map((minutes) {
                 return Obx(() => ListTile(
-                  title: Text('$minutes minutos'),
+                  title: Text('learning_controls_minutes_format'.trParams({'minutes': minutes.toString()})),
                   trailing: _controller.dailyGoal.value == minutes
                       ? const Icon(Icons.check, color: AppTheme.primary)
                       : null,

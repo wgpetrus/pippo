@@ -27,6 +27,18 @@ class TreasureChallengesController extends GetxController {
     loadChallenges();
   }
 
+  @override
+  void onClose() {
+    // Limpar listas
+    challenges.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
+
   Future<void> loadChallenges() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -34,7 +46,7 @@ class TreasureChallengesController extends GetxController {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
+        errorMessage.value = 'error_user_not_authenticated'.tr;
         return;
       }
 
@@ -42,13 +54,11 @@ class TreasureChallengesController extends GetxController {
 
       await removeExpiredChallenges();
     } on TimeoutException {
-      errorMessage.value =
-          'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      errorMessage.value = 'error_firestore_deadline_exceeded'.tr;
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value =
-          'Erro ao carregar desafios. Verifique sua conexão e tente novamente.';
+      errorMessage.value = 'error_firestore_default'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -57,13 +67,13 @@ class TreasureChallengesController extends GetxController {
   Future<void> updateChallengeProgress(String challengeType, int amount) async {
     try {
       if (amount < 0) {
-        errorMessage.value = 'O progresso não pode ser negativo.';
+        errorMessage.value = 'error_progress_negative'.tr;
         return;
       }
 
       final user = _auth.currentUser;
       if (user == null) {
-        errorMessage.value = 'Usuário não autenticado. Faça login novamente.';
+        errorMessage.value = 'error_user_not_authenticated'.tr;
         return;
       }
 
@@ -113,10 +123,10 @@ class TreasureChallengesController extends GetxController {
     } on FirebaseException catch (e) {
       // Silenciosamente falhar para não interromper fluxo principal
       // Erros de progresso não devem bloquear ações do usuário
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       // Silenciosamente falhar para não interromper fluxo principal
-      errorMessage.value = 'Erro ao atualizar progresso do desafio.';
+      errorMessage.value = 'error_update_challenge_progress'.tr;
     }
   }
 
@@ -129,7 +139,7 @@ class TreasureChallengesController extends GetxController {
       );
 
       if (challengeData == null) {
-        errorMessage.value = 'Desafio não encontrado.';
+        errorMessage.value = 'error_challenge_not_found'.tr;
         return;
       }
 
@@ -138,7 +148,7 @@ class TreasureChallengesController extends GetxController {
       } else {
       }
     } catch (e) {
-      errorMessage.value = 'Erro ao verificar conclusão do desafio.';
+      errorMessage.value = 'error_check_challenge_completion'.tr;
     }
   }
 
@@ -206,29 +216,29 @@ class TreasureChallengesController extends GetxController {
 
     for (final field in requiredFields) {
       if (!challenge.containsKey(field) || challenge[field] == null) {
-        return 'Todos os campos obrigatórios devem ser preenchidos.';
+        return 'error_validation_required_fields'.tr;
       }
     }
 
     final goal = challenge['goal'];
     if (goal is! int || goal <= 0) {
-      return 'O objetivo deve ser um número positivo.';
+      return 'error_validation_goal_positive'.tr;
     }
 
     final rewardAmount = challenge['rewardAmount'];
     if (rewardAmount is! int || rewardAmount <= 0) {
-      return 'A recompensa deve ser um valor positivo.';
+      return 'error_validation_reward_positive'.tr;
     }
 
     final rewardType = challenge['rewardType'];
     if (rewardType is! String ||
         !['gems', 'xp', 'item'].contains(rewardType)) {
-      return 'Tipo de recompensa inválido.';
+      return 'error_validation_reward_type'.tr;
     }
 
     final progress = challenge['progress'];
     if (progress is! int || progress != 0) {
-      return 'O progresso inicial deve ser zero.';
+      return 'error_validation_progress_zero'.tr;
     }
 
     return null;
@@ -532,12 +542,5 @@ class TreasureChallengesController extends GetxController {
     final progress = challenge['progress'] as int? ?? 0;
     final goal = challenge['goal'] as int? ?? 1;
     return (progress / goal).clamp(0.0, 1.0);
-  }
-
-  // Handlers
-
-  /// Handler de erros do Firestore
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

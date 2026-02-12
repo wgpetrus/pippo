@@ -16,6 +16,16 @@ class HomeNavigationController extends GetxController {
 
   // Lifecycle
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    currentNavIndex.value = 0;
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Muda a tab ativa

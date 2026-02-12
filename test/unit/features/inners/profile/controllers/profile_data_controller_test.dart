@@ -88,7 +88,7 @@ void main() {
       await controller.loadOwnProfile();
 
       // Assert
-      expect(controller.errorMessage.value, contains('não encontrado'));
+      expect(controller.errorMessage.value, contains('error_profile_not_found'));
     });
   });
 

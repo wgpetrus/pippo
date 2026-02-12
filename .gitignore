@@ -84,3 +84,34 @@ android/.kotlin/errors/
 # Arquivos temporários de teste
 test_disabled/
 unit_test_results.txt
+
+# Build artifacts
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.kiro/
+.idea/
+*.iml
+*.swp
+*.swo
+
+# Android build
+android/.gradle/
+android/.kotlin/
+android/app/build/
+android/build/
+
+# iOS build
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Documentação temporária
+BUG_*.md
+REAL_BUGS_TO_FIX.md
+*_SUMMARY.md
+TEST_*.md

@@ -35,6 +35,16 @@ class TreasureRewardsController extends GetxController {
     }
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    isClaimingReward.value = false;
+
+    super.onClose();
+  }
+
   Future<void> claimReward(String challengeId) async {
     isClaimingReward.value = true;
     errorMessage.value = '';
@@ -82,7 +92,7 @@ class TreasureRewardsController extends GetxController {
 
       Get.forceAppUpdate();
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'error_claim_reward'.tr;
     } finally {
@@ -255,7 +265,7 @@ class TreasureRewardsController extends GetxController {
         errorMessage.value = errorMessage.value;
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
       rethrow;
     }
   }
@@ -323,12 +333,5 @@ class TreasureRewardsController extends GetxController {
   bool _canClaim(Map<String, dynamic> challenge) {
     final isClaimed = challenge['isClaimed'] as bool? ?? false;
     return _isCompleted(challenge) && !isClaimed && !_isExpired(challenge);
-  }
-
-  // Handlers
-
-  /// Handler de erros do Firestore
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

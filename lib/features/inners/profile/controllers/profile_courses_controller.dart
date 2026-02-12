@@ -35,6 +35,18 @@ class ProfileCoursesController extends GetxController {
     loadUserCourses();
   }
 
+  @override
+  void onClose() {
+    // Limpar listas
+    userCourses.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Carrega cursos do usuário
@@ -45,15 +57,16 @@ class ProfileCoursesController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
+      // Carregar TODOS os cursos (sem filtro de isActive)
+      // Isso garante que todos os cursos inicializados apareçam
       final coursesSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('courses')
-          .where('isActive', isEqualTo: true)
           .get();
 
       final courses = <Map<String, dynamic>>[];
@@ -61,29 +74,33 @@ class ProfileCoursesController extends GetxController {
       for (final doc in coursesSnapshot.docs) {
         final courseData = doc.data();
         final languageCode = courseData['language'] as String;
+        final isActive = courseData['isActive'] ?? true;
 
-        courses.add({
-          'id': doc.id,
-          'language': languageCode,
-          'languageName': LanguageHelper.getLanguageName(languageCode),
-          'flag': LanguageHelper.getLanguageFlag(languageCode),
-          'flagAsset': LanguageHelper.getLanguageFlag(languageCode),
-          'isPrimary': courseData['isPrimary'] ?? false,
-          'isActive': courseData['isActive'] ?? true,
-          'progress': courseData['progress'] ?? 0,
-          'startedAt': courseData['startedAt'],
-        });
+        // Apenas adicionar cursos ativos (mas buscar todos para garantir)
+        if (isActive) {
+          courses.add({
+            'id': doc.id,
+            'language': languageCode,
+            'languageName': LanguageHelper.getLanguageName(languageCode),
+            'flag': LanguageHelper.getLanguageFlag(languageCode),
+            'flagAsset': LanguageHelper.getLanguageFlag(languageCode),
+            'isPrimary': courseData['isPrimary'] ?? false,
+            'isActive': isActive,
+            'progress': courseData['progress'] ?? 0,
+            'startedAt': courseData['startedAt'],
+          });
 
-        if (courseData['isPrimary'] == true) {
-          primaryCourseId.value = doc.id;
+          if (courseData['isPrimary'] == true) {
+            primaryCourseId.value = doc.id;
+          }
         }
       }
 
       userCourses.value = courses;
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao carregar cursos. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -100,7 +117,7 @@ class ProfileCoursesController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -139,15 +156,15 @@ class ProfileCoursesController extends GetxController {
 
       if (showSnackbar) {
         Get.snackbar(
-          'Sucesso',
-          'Curso primário atualizado!',
+          'common_success'.tr,
+          'primary_course_updated'.tr,
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao definir curso primário. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -161,7 +178,7 @@ class ProfileCoursesController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -180,7 +197,7 @@ class ProfileCoursesController extends GetxController {
 
       // Não permitir remover se for o único curso
       if (userCourses.length == 1) {
-        errorMessage.value = 'Você precisa ter pelo menos um curso ativo.';
+        errorMessage.value = 'error_last_course_cannot_remove'.tr;
         return;
       }
 
@@ -207,23 +224,16 @@ class ProfileCoursesController extends GetxController {
       userCourses.removeWhere((course) => course['id'] == courseId);
 
       Get.snackbar(
-        'Sucesso',
-        'Curso removido!',
+        'common_success'.tr,
+        'course_removed_success'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao remover curso. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
-  }
-
-  // Handlers de erro
-
-  /// Handler de erros do Firestore
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

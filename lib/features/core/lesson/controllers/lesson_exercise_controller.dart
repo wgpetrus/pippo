@@ -27,6 +27,18 @@ class LessonExerciseController extends GetxController {
     }
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    showFeedback.value = false;
+    isCorrectAnswer.value = false;
+    correctAnswerText.value = '';
+
+    super.onClose();
+  }
+
   // Métodos públicos
   
   /// Submete uma resposta do usuário para o exercício atual

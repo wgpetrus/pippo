@@ -129,6 +129,8 @@ class EnUS {
     'lesson_exit_confirmation_exit_button': 'Exit',
     'lesson_exit_confirmation_message': 'If you exit now, you\'ll lose progress on this lesson and the energy spent won\'t be returned.',
     'lesson_exit_confirmation_title': 'Exit lesson?',
+    'lesson_error_no_exercises': 'No exercises found',
+    'lesson_error_unknown_type': 'Unknown exercise type: {type}',
     'lesson_feedback_correct_button': 'Continue',
     'lesson_feedback_correct_subtitle': 'That\'s right!',
     'lesson_feedback_correct_title': 'Correct!',
@@ -145,7 +147,7 @@ class EnUS {
     'lesson_match_exercise_default_question': 'Tap the matching pairs',
     'lesson_match_exercise_not_found': 'Exercise not found',
     'lesson_section_locked_message': 'Complete the course to\nunlock.',
-    'lesson_section_progress_format': '{current}/{total}',
+    'lesson_section_progress_format': '@current/@total',
     'lesson_section_see_details': 'See details',
     'lesson_section_start_now': 'START NOW',
     'lesson_sections_error_snackbar_message': 'Could not determine which lesson to start.',
@@ -278,6 +280,9 @@ class EnUS {
     'treasure_in_progress_button': 'In Progress',
     'treasure_reward_gems': 'Gems',
     'treasure_reward_xp': 'XP',
+    'treasure_reward_animation_title': 'Reward!',
+    'treasure_reward_animation_gems': 'Gems',
+    'treasure_reward_animation_xp': 'XP',
     'treasure_section_daily': 'Daily Challenges',
     'treasure_section_special': 'Special Challenges',
     'treasure_section_weekly': 'Weekly Quests',
@@ -547,6 +552,8 @@ class EnUS {
     'error_insufficient_gems': 'You don\'t have enough gems.',
     'error_reward_already_claimed_free': 'You have already claimed this reward.',
     'error_no_active_course': 'No active course found.',
+    'error_last_course_cannot_remove':
+        'You need to have at least one active course.',
     'error_progress_negative': 'Progress cannot be negative.',
     'error_controller_unavailable': 'Challenges controller not available.',
     'error_network_check': 'Please check your internet connection',
@@ -561,5 +568,73 @@ class EnUS {
     'error_purchase_gem_multiplier': 'Error purchasing gem multiplier. Please try again.',
     'error_purchase_streak_protection': 'Error purchasing streak protection. Please try again.',
     'error_claim_free_reward': 'Error claiming reward. Please try again.',
+    'error_cannot_follow_self': 'You cannot follow yourself.',
+    'error_no_users_found': 'No users found.',
+    'error_switch_course': 'Error switching course. Please try again.',
+    'error_reload_data': 'Error reloading data. Please try again.',
+    'error_load_courses': 'Error loading courses. Please try again.',
+    'error_load_leaderboard': 'Error loading leaderboard. Please check your connection and try again.',
+    
+    // Profile messages
+    'profile_updated_success': 'Profile updated successfully!',
+    'profile_following_success': 'You are now following this user!',
+    'profile_unfollowed_success': 'You unfollowed this user.',
+    'password_changed_success': 'Password changed successfully!',
+    'phone_linked_success': 'Phone linked successfully!',
+    'account_deleted_title': 'Account Deleted',
+    'account_deleted_message': 'Your account has been deleted successfully.',
+    'reauth_required_delete_account': 'For security, please log in again to complete account deletion.',
+    'primary_course_updated': 'Primary course updated!',
+    'course_removed_success': 'Course removed!',
+    
+    // Home messages
+    'course_switched_success': 'Course switched to @course!',
+    
+    // Auth messages
+    'coming_soon_title': 'Coming Soon',
+    'facebook_login_coming_soon': 'Facebook login will be available soon.',
+    'reset_link_sent_title': 'Link Sent',
+    'reset_link_sent_message': 'A link to reset your password has been sent to @email',
+    'reset_link_sent_email': 'A link to reset your password has been sent to your email.',
+    'code_resent_title': 'Code Resent',
+    'code_resent_message': 'A new code has been sent to your email.',
+    'error_update_status': 'Error updating status. Please try again.',
+    
+    // Learning Controls
+    'learning_controls_minutes_format': '{minutes} minutes',
+    
+    // Lesson Errors
+    'lesson_no_exercises_found': 'No exercises found',
+    'lesson_unknown_exercise_type': 'Unknown exercise type: {type}',
+    
+    // Weekdays
+    'common_weekday_mon': 'Mon',
+    'common_weekday_tue': 'Tue',
+    'common_weekday_wed': 'Wed',
+    'common_weekday_thu': 'Thu',
+    'common_weekday_fri': 'Fri',
+    'common_weekday_sat': 'Sat',
+    'common_weekday_sun': 'Sun',
+    
+    // Time formats
+    'common_time_minutes_remaining': '{minutes}min remaining',
+    'common_time_hours_remaining': '{hours}h remaining',
+    
+    // Home Stats Controller
+    'home_lesson_button_continue': 'Continue',
+    'home_lesson_button_start': 'Start',
+    
+    // Profile Search
+    'profile_search_title': 'Search users',
+    'profile_search_hint': 'Enter username or name',
+    'profile_search_empty_state': 'Search by username or name',
+    'profile_search_no_results': 'No users found',
+    
+    // Treasure Challenge Validation
+    'error_validation_required_fields': 'All required fields must be filled.',
+    'error_validation_goal_positive': 'The goal must be a positive number.',
+    'error_validation_reward_positive': 'The reward must be a positive value.',
+    'error_validation_reward_type': 'Invalid reward type.',
+    'error_validation_progress_zero': 'Initial progress must be zero.',
   };
 }

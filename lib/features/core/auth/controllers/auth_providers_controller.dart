@@ -54,8 +54,8 @@ class AuthProvidersController extends GetxController {
 
   void onFacebookTap() {
     Get.snackbar(
-      'Em breve',
-      'O login com Facebook estará disponível em breve.',
+      'coming_soon_title'.tr,
+      'facebook_login_coming_soon'.tr,
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 2),
     );
@@ -201,7 +201,7 @@ class AuthProvidersController extends GetxController {
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível enviar o código. Tente novamente.';
     } finally {
@@ -228,8 +228,8 @@ class AuthProvidersController extends GetxController {
       await _auth.sendPasswordResetEmail(email: sanitizedEmail);
 
       Get.snackbar(
-        'Link Enviado',
-        'Um link para redefinir sua senha foi enviado para $sanitizedEmail',
+        'reset_link_sent_title'.tr,
+        'reset_link_sent_message'.trParams({'email': sanitizedEmail}),
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 4),
       );
@@ -266,8 +266,8 @@ class AuthProvidersController extends GetxController {
       _startResendTimer();
 
       Get.snackbar(
-        'Código reenviado',
-        'Um novo código foi enviado para seu e-mail.',
+        'code_resent_title'.tr,
+        'code_resent_message'.tr,
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
       );
@@ -276,7 +276,7 @@ class AuthProvidersController extends GetxController {
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível reenviar o código. Tente novamente.';
     } finally {
@@ -333,7 +333,7 @@ class AuthProvidersController extends GetxController {
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao verificar código. Tente novamente.';
     } finally {
@@ -368,8 +368,8 @@ class AuthProvidersController extends GetxController {
       _tempEmail = null;
 
       Get.snackbar(
-        'Link Enviado',
-        'Um link para redefinir sua senha foi enviado para seu e-mail.',
+        'reset_link_sent_title'.tr,
+        'reset_link_sent_email'.tr,
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 3),
       );
@@ -380,7 +380,7 @@ class AuthProvidersController extends GetxController {
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _handleFirebaseResetPasswordError(e);
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível redefinir a senha. Tente novamente.';
     } finally {
@@ -473,10 +473,6 @@ class AuthProvidersController extends GetxController {
 
   String _handleFirebaseResetPasswordError(FirebaseAuthException e) {
     return ErrorHandler.getResetPasswordErrorMessage(e);
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   String _handleGoogleSignInError(dynamic error) {

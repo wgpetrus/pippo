@@ -5,6 +5,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/app_assets.dart';
+import '../../../../shared/utils/phone_mask_helper.dart';
 import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_appbar.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -33,18 +34,20 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
 
   late final ProfileAuthController _controller;
 
-  // Formatador de máscara
-  final _phoneMaskFormatter = MaskTextInputFormatter(
-    mask: '(###) ###-####',
-    filter: {"#": RegExp(r'[0-9]')},
-    type: MaskAutoCompletionType.lazy,
-  );
+  // Formatador de máscara (dinâmico por país)
+  late MaskTextInputFormatter _phoneMaskFormatter;
 
   // Lifecycle
   @override
   void initState() {
     super.initState();
+    // Garantir que ProfileAuthController está disponível
+    if (!Get.isRegistered<ProfileAuthController>()) {
+      Get.put(ProfileAuthController());
+    }
     _controller = Get.find<ProfileAuthController>();
+    // Inicializar máscara com país padrão
+    _phoneMaskFormatter = PhoneMaskHelper.getMaskForCountry(_countryCode);
   }
 
   @override
@@ -99,7 +102,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
     } catch (e) {
       setState(() {
         _isSendingCode = false;
-        _errorMessage = 'Erro ao enviar código. Tente novamente.';
+        _errorMessage = 'phone_number_error_generic'.tr;
       });
     }
   }
@@ -161,6 +164,10 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
                               setState(() {
                                 _countryCode = code;
                                 _countryFlag = flag;
+                                // Atualizar máscara quando país muda
+                                _phoneMaskFormatter = PhoneMaskHelper.getMaskForCountry(code);
+                                // Limpar campo para aplicar nova máscara
+                                _phoneController.clear();
                               });
                             },
                           );
@@ -199,7 +206,7 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
                           validator: _validatePhoneNumber,
                           style: AppTheme.textMdMedium.copyWith(color: AppTheme.black),
                           decoration: InputDecoration(
-                            hintText: 'phone_number_hint'.tr,
+                            hintText: PhoneMaskHelper.getPlaceholderForCountry(_countryCode),
                             hintStyle: AppTheme.textMdMedium.copyWith(color: AppTheme.gray400),
                             border: InputBorder.none,
                             isDense: true,
@@ -254,7 +261,8 @@ class _PhoneNumberPageState extends State<PhoneNumberPage> {
       return 'phone_number_validation_required'.tr;
     }
     final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
-    if (digitsOnly.length < 10) {
+    final minDigits = PhoneMaskHelper.getMinDigitsForCountry(_countryCode);
+    if (digitsOnly.length < minDigits) {
       return 'phone_number_validation_invalid'.tr;
     }
     return null;

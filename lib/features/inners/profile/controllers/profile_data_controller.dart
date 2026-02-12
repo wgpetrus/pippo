@@ -46,6 +46,19 @@ class ProfileDataController extends GetxController {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
+  // Lifecycle
+  @override
+  void onClose() {
+    // Limpar listas
+    missingFields.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
+
   // Métodos públicos
 
   /// Carrega o perfil do usuário atual
@@ -56,7 +69,7 @@ class ProfileDataController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -68,7 +81,7 @@ class ProfileDataController extends GetxController {
       final userDoc = await _firestore.collection('users').doc(userId).get();
 
       if (!userDoc.exists) {
-        errorMessage.value = 'Perfil não encontrado.';
+        errorMessage.value = 'error_profile_not_found'.tr;
         if (kDebugMode) {
           debugPrint('⚠️ loadOwnProfile: Documento do usuário não existe');
         }
@@ -113,13 +126,13 @@ class ProfileDataController extends GetxController {
           '❌ loadOwnProfile: FirebaseException - ${e.code}: ${e.message}',
         );
       }
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e, stackTrace) {
       if (kDebugMode) {
         debugPrint('❌ loadOwnProfile: Erro genérico - $e');
         debugPrint('Stack trace: $stackTrace');
       }
-      errorMessage.value = 'Erro ao carregar perfil. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -133,7 +146,7 @@ class ProfileDataController extends GetxController {
     try {
       final userId = _auth.currentUser?.uid;
       if (userId == null || userId.isEmpty) {
-        errorMessage.value = 'Usuário não autenticado.';
+        errorMessage.value = 'error_unauthenticated'.tr;
         return;
       }
 
@@ -166,14 +179,14 @@ class ProfileDataController extends GetxController {
       }
 
       Get.snackbar(
-        'Sucesso',
-        'Perfil atualizado com sucesso!',
+        'common_success'.tr,
+        'profile_updated_success'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao atualizar perfil. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -198,9 +211,10 @@ class ProfileDataController extends GetxController {
 
       isUsernameAvailable.value = query.docs.isEmpty;
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
       isUsernameAvailable.value = false;
     } catch (e) {
+      errorMessage.value = 'error_generic'.tr;
       isUsernameAvailable.value = false;
     } finally {
       isCheckingUsername.value = false;
@@ -370,12 +384,5 @@ class ProfileDataController extends GetxController {
       return 'error_bio_max_length'.tr;
     }
     return null;
-  }
-
-  // Error Handlers
-
-  /// Trata erros do Firestore com mensagens amigáveis em português
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 }

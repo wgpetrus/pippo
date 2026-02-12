@@ -102,6 +102,30 @@ class HomeStatsController extends GetxController {
     // Verificar se há lição em progresso para mostrar "Continuar"
     _checkInProgressLesson();
   }
+
+  @override
+  void onClose() {
+    // Limpar listas
+    userCourses.clear();
+    completedLessons.clear();
+    inProgressLessons.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    selectedStat.value = null;
+    showContinue.value = false;
+    activeCourseId.value = '';
+    activeCourseName.value = '';
+    activeCourseLanguage.value = '';
+    activeCourseFlag.value = '';
+    activeCourseLevel.value = 0;
+    isLoadingCourses.value = false;
+    isLoadingProgress.value = false;
+    currentUnitIndex.value = 0;
+
+    super.onClose();
+  }
   
   // Getters
   
@@ -343,12 +367,12 @@ class HomeStatsController extends GetxController {
       }
       
       Get.snackbar(
-        'Sucesso',
-        'Curso alterado para ${activeCourseName.value}!',
+        'common_success'.tr,
+        'course_switched_success'.trParams({'course': activeCourseName.value}),
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      errorMessage.value = 'Erro ao trocar curso. Tente novamente.';
+      errorMessage.value = 'error_switch_course'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -399,7 +423,7 @@ class HomeStatsController extends GetxController {
       } catch (e) {
       }
     } catch (e) {
-      errorMessage.value = 'Erro ao recarregar dados. Tente novamente.';
+      errorMessage.value = 'error_reload_data'.tr;
     }
   }
   
@@ -438,7 +462,7 @@ class HomeStatsController extends GetxController {
         };
       }).toList();
     } catch (e) {
-      errorMessage.value = 'Erro ao carregar cursos. Tente novamente.';
+      errorMessage.value = 'error_load_courses'.tr;
     } finally {
     }
   }
@@ -525,11 +549,11 @@ class HomeStatsController extends GetxController {
     
     // Se tem alguma lição completada, mostrar "Continuar"
     if (completedCountInButton > 0) {
-      return 'Continuar';
+      return 'home_lesson_button_continue'.tr;
     }
     
     // Se não tem nenhuma lição completada, mostrar "Começar"
-    return 'Começar';
+    return 'home_lesson_button_start'.tr;
   }
 
   // Métodos privados

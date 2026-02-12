@@ -9,6 +9,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
+// Imports locais
+import '../../../../shared/utils/error_handler.dart';
+
 /// Controller de credenciais de autenticação (email/senha)
 class AuthCredentialsController extends GetxController {
   // Dependency Injection com valores padrão (backward compatible)
@@ -25,6 +28,17 @@ class AuthCredentialsController extends GetxController {
   // Firebase instances
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+
+  // Lifecycle
+
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+
+    super.onClose();
+  }
 
   // Validadores
 
@@ -136,7 +150,7 @@ class AuthCredentialsController extends GetxController {
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleFirebaseLoginError(e);
+      errorMessage.value = ErrorHandler.getLoginErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível fazer login. Tente novamente.';
     } finally {
@@ -216,55 +230,11 @@ class AuthCredentialsController extends GetxController {
     } on TimeoutException {
       errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleFirebaseRegisterError(e);
+      errorMessage.value = ErrorHandler.getRegisterErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Não foi possível criar sua conta. Tente novamente.';
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  // Métodos privados
-
-  /// Handler de erros de login do Firebase Auth
-  String _handleFirebaseLoginError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'Não encontramos uma conta com este e-mail.';
-      case 'wrong-password':
-        return 'Senha incorreta. Verifique e tente novamente.';
-      case 'invalid-email':
-        return 'Por favor, insira um e-mail válido.';
-      case 'user-disabled':
-        return 'Esta conta foi desativada. Entre em contato com o suporte.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      case 'invalid-credential':
-        return 'E-mail ou senha incorretos.';
-      default:
-        return 'Não foi possível fazer login. Tente novamente.';
-    }
-  }
-
-  /// Handler de erros de registro do Firebase Auth
-  String _handleFirebaseRegisterError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'email-already-in-use':
-        return 'Este e-mail já está sendo usado por outra conta.';
-      case 'invalid-email':
-        return 'Por favor, insira um e-mail válido.';
-      case 'operation-not-allowed':
-        return 'Operação não permitida no momento.';
-      case 'weak-password':
-        return 'A senha deve ter pelo menos 6 caracteres.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      default:
-        return 'Não foi possível criar sua conta. Tente novamente.';
     }
   }
 }

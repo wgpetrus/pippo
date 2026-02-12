@@ -45,6 +45,17 @@ class OnboardingFlowController extends GetxController {
     _dataController = Get.find<OnboardingDataController>();
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    currentStep.value = '';
+    skipWelcome.value = false;
+
+    super.onClose();
+  }
+
   // Métodos públicos - Navegação
 
   /// Lida com skip welcome (usuário autenticado retornando ao onboarding)

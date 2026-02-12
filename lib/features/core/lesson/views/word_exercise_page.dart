@@ -48,7 +48,7 @@ class _WordExercisePageState extends State<WordExercisePage> {
       if (_exerciseController.errorMessage.value.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Get.snackbar(
-            'Erro',
+            'common_error'.tr,
             _exerciseController.errorMessage.value,
             backgroundColor: AppTheme.red,
             colorText: AppTheme.white,

@@ -39,7 +39,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.white,
-      appBar: const AppAppbar(title: 'Buscar usuários'),
+      appBar: AppAppbar(title: 'profile_search_title'.tr),
       body: Column(
         children: [
           // Campo de busca
@@ -48,7 +48,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Digite username ou nome',
+                hintText: 'profile_search_hint'.tr,
                 hintStyle: AppTheme.textMd.copyWith(color: AppTheme.gray400),
                 prefixIcon: const Icon(
                   FontAwesomeIcons.magnifyingGlass,
@@ -118,7 +118,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                       ),
                       SizedBox(height: r.spacing16),
                       Text(
-                        'Busque por username ou nome',
+                        'profile_search_empty_state'.tr,
                         style: AppTheme.textMd.copyWith(
                           color: AppTheme.gray400,
                         ),
@@ -159,7 +159,7 @@ class _SearchUsersPageState extends State<SearchUsersPage> {
                       ),
                       SizedBox(height: r.spacing16),
                       Text(
-                        'Nenhum usuário encontrado',
+                        'profile_search_no_results'.tr,
                         style: AppTheme.textMd.copyWith(
                           color: AppTheme.gray600,
                         ),

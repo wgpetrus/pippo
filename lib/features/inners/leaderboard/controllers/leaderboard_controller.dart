@@ -30,6 +30,25 @@ class LeaderboardController extends GetxController {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
+  @override
+  void onClose() {
+    // Limpar listas
+    leaderboardData.clear();
+
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    currentUserRank.value = 0;
+    currentLeague.value = 'bronze';
+    selectedLeague.value = 'bronze';
+    daysRemaining.value = 0;
+    isUpdatingStatus.value = false;
+    weekStartDate.value = null;
+    weekEndDate.value = null;
+
+    super.onClose();
+  }
+
   Future<void> loadLeaderboardData() async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -158,13 +177,13 @@ class LeaderboardController extends GetxController {
       leaderboardData.value = memberDataList;
 
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleAuthError(e);
+      errorMessage.value = ErrorHandler.getLoginErrorMessage(e);
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } on TimeoutException {
-      errorMessage.value = 'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
+      errorMessage.value = 'error_firestore_deadline_exceeded'.tr;
     } catch (e) {
-      errorMessage.value = 'Erro ao carregar ranking. Verifique sua conexão e tente novamente.';
+      errorMessage.value = 'error_load_leaderboard'.tr;
     } finally {
       isLoading.value = false;
 
@@ -378,35 +397,14 @@ class LeaderboardController extends GetxController {
       }
 
     } on FirebaseAuthException catch (e) {
-      errorMessage.value = _handleAuthError(e);
+      errorMessage.value = ErrorHandler.getLoginErrorMessage(e);
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
-      errorMessage.value = 'Erro ao atualizar status. Tente novamente.';
+      errorMessage.value = 'error_update_status'.tr;
     } finally {
       isUpdatingStatus.value = false;
     }
-  }
-
-  // Métodos privados - Error Handlers
-
-  /// Converte erros de autenticação Firebase em mensagens amigáveis
-  String _handleAuthError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'Usuário não encontrado.';
-      case 'network-request-failed':
-        return 'Verifique sua conexão com a internet.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
-      default:
-        return 'Erro de autenticação. Faça login novamente.';
-    }
-  }
-
-  /// Converte erros do Firestore em mensagens amigáveis
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   /// Carrega dados mockados como fallback
@@ -420,3 +418,4 @@ class LeaderboardController extends GetxController {
     errorMessage.value = ''; // Limpar erro ao carregar mocks com sucesso
   }
 }
+

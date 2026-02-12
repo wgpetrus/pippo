@@ -8,6 +8,7 @@ import '../../../../shared/utils/responsive_utils.dart';
 import '../../../../shared/widgets/app_float_anim.dart';
 import '../../../../shared/widgets/app_lesson_button.dart';
 import '../../leaderboard/views/leaderboard_page.dart';
+import '../../profile/controllers/profile_data_controller.dart';
 import '../../profile/views/profile_page.dart';
 import '../../shop/views/shop_page.dart';
 import '../../treasure/views/treasure_page.dart';
@@ -31,24 +32,25 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final navController = Get.find<HomeNavigationController>();
     final statsController = Get.find<HomeStatsController>();
+    final profileController = Get.find<ProfileDataController>();
 
     return Obx(() => Scaffold(
       body: IndexedStack(
         index: navController.currentNavIndex.value,
         children: [
-          _buildCoursesPage(context, statsController),  // Tab 0
+          _buildCoursesPage(context, statsController, profileController),  // Tab 0
           const LeaderboardPage(),                 // Tab 1
           const ShopPage(),                        // Tab 2
           const TreasurePage(),                    // Tab 3
           const ProfilePage(),                     // Tab 4
         ],
       ),
-      bottomNavigationBar: _buildBottomBar(navController),
+      bottomNavigationBar: _buildBottomBar(navController, profileController),
     ));
   }
 
   // Bottom Navigation Bar
-  Widget _buildBottomBar(HomeNavigationController navController) {
+  Widget _buildBottomBar(HomeNavigationController navController, ProfileDataController profileController) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.white,
@@ -70,7 +72,7 @@ class HomeView extends StatelessWidget {
               _buildNavItem(1, AppAssets.bottomCoroa, navController),
               _buildNavItem(2, AppAssets.bottomCoins, navController),
               _buildNavItem(3, AppAssets.bottomBox, navController),
-              _buildAvatarNavItem(4, navController),
+              _buildAvatarNavItem(4, navController, profileController),
             ],
           )),
         ),
@@ -104,7 +106,7 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarNavItem(int index, HomeNavigationController navController) {
+  Widget _buildAvatarNavItem(int index, HomeNavigationController navController, ProfileDataController profileController) {
     final isSelected = navController.currentNavIndex.value == index;
     final containerSize = ResponsiveUtils.width(48, min: 44, max: 56);
 
@@ -128,16 +130,19 @@ class HomeView extends StatelessWidget {
             shape: BoxShape.circle,
             color: AppTheme.primary,
           ),
-          child: ClipOval(
-            child: Image.asset(AppAssets.charDiogo, fit: BoxFit.cover),
-          ),
+          child: Obx(() => ClipOval(
+            child: Image.asset(
+              _getAvatarAsset(profileController.avatarId.value),
+              fit: BoxFit.cover,
+            ),
+          )),
         ),
       ),
     );
   }
 
   // Widgets
-  Widget _buildCoursesPage(BuildContext context, HomeStatsController statsController) {
+  Widget _buildCoursesPage(BuildContext context, HomeStatsController statsController, ProfileDataController profileController) {
     return Stack(
       children: [
         // Background
@@ -156,7 +161,7 @@ class HomeView extends StatelessWidget {
         // AppBar
         Builder(
           builder: (appBarContext) => Obx(() => HomeAppbar(
-            avatarAsset: AppAssets.charDiogo,
+            avatarAsset: _getAvatarAsset(profileController.avatarId.value),
             flagAsset: statsController.activeCourseFlag.value.isEmpty 
                 ? AppAssets.flagFrance 
                 : statsController.activeCourseFlag.value,
@@ -466,5 +471,27 @@ class HomeView extends StatelessWidget {
       radius: 20,
       shadow: const [],
     );
+  }
+
+  // Helper para converter avatarId em asset path
+  String _getAvatarAsset(String avatarId) {
+    switch (avatarId) {
+      case 'avatar_01':
+        return AppAssets.charMara;
+      case 'avatar_02':
+        return AppAssets.charDafny;
+      case 'avatar_03':
+        return AppAssets.charDiogo;
+      case 'avatar_04':
+        return AppAssets.charFrancilene;
+      case 'avatar_05':
+        return AppAssets.charGlauciane;
+      case 'avatar_06':
+        return AppAssets.charLindoedson;
+      case 'avatar_07':
+        return AppAssets.charRenner;
+      default:
+        return AppAssets.charMara;
+    }
   }
 }

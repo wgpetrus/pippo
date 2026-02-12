@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../../shared/theme/theme.dart';
 import '../../../../shared/utils/responsive_utils.dart';
+import '../controllers/profile_search_controller.dart';
 import '../views/search_users_page.dart';
 
 /// Card para navegar para busca de usuários
@@ -15,7 +16,13 @@ class FindFriendsCard extends StatelessWidget {
     final r = ResponsiveUtils(context);
 
     return GestureDetector(
-      onTap: () => Get.to(() => const SearchUsersPage()),
+      onTap: () {
+        // Garantir que ProfileSearchController está disponível
+        if (!Get.isRegistered<ProfileSearchController>()) {
+          Get.put(ProfileSearchController());
+        }
+        Get.to(() => const SearchUsersPage());
+      },
       child: Container(
         key: const Key('find_friends_card'),
         margin: EdgeInsets.symmetric(horizontal: r.spacing16),

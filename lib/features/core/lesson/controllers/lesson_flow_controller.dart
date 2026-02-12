@@ -46,10 +46,14 @@ class LessonFlowController extends GetxController {
 
   @override
   void onClose() {
-    // Reset dos estados da lição ao fechar o controller
-    _resetLessonState();
+    // Limpar listas observáveis
+    currentExercises.clear();
     
-    // Reset da flag de concorrência
+    // Resetar estados
+    currentLesson.value = null;
+    currentExerciseIndex.value = 0;
+    isLoading.value = false;
+    errorMessage.value = '';
     _isLessonStarting = false;
     
     super.onClose();
@@ -62,30 +66,22 @@ class LessonFlowController extends GetxController {
   /// Implementa retry logic e fallback para lidar com timing do Firestore
   Future<void> startLessonFromActiveCourse(String lessonId) async {
     print('🚀 startLessonFromActiveCourse: Iniciando...');
+    
+    // Verificar autenticação UMA ÚNICA VEZ no início
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('❌ startLessonFromActiveCourse: Firebase Auth currentUser é null');
+      errorMessage.value = 'error_unauthenticated'.tr;
+      return;
+    }
+
+    final userId = user.uid;
+    print('✅ startLessonFromActiveCourse: Usuário autenticado - userId: $userId');
+
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // VERIFICAR AUTENTICAÇÃO PRIMEIRO (CRÍTICO)
-      // Aguardar um pouco para garantir que Firebase Auth está pronto
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      final user = _auth.currentUser;
-      if (user == null) {
-        print('❌ startLessonFromActiveCourse: Firebase Auth currentUser é null');
-        errorMessage.value = 'Usuário não autenticado.';
-        return;
-      }
-
-      final userId = user.uid;
-      if (userId.isEmpty) {
-        print('❌ startLessonFromActiveCourse: userId está vazio');
-        errorMessage.value = 'Usuário não autenticado.';
-        return;
-      }
-
-      print('✅ startLessonFromActiveCourse: Usuário autenticado - userId: $userId');
-
       String? courseId;
 
       // Tentar 3 vezes com delay para dar tempo do Firestore indexar
@@ -146,9 +142,12 @@ class LessonFlowController extends GetxController {
 
       print('🎯 Iniciando lição $lessonId do curso $courseId');
       await startLesson(courseId, lessonId);
+    } on FirebaseException catch (e) {
+      print('❌ startLessonFromActiveCourse: FirebaseException - ${e.code}: ${e.message}');
+      errorMessage.value = 'error_generic'.tr;
     } catch (e) {
       print('❌ startLessonFromActiveCourse: Erro - $e');
-      errorMessage.value = 'Não foi possível carregar o curso. Tente novamente.';
+      errorMessage.value = 'error_generic'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -160,31 +159,22 @@ class LessonFlowController extends GetxController {
       return;
     }
 
+    // Verificar autenticação UMA ÚNICA VEZ no início
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('❌ startLesson: Firebase Auth currentUser é null');
+      errorMessage.value = 'error_unauthenticated'.tr;
+      return;
+    }
+
+    final userId = user.uid;
+    print('✅ startLesson: Usuário autenticado - userId: $userId');
+
     _isLessonStarting = true;
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // VERIFICAR AUTENTICAÇÃO PRIMEIRO (CRÍTICO)
-      // Aguardar um pouco para garantir que Firebase Auth está pronto
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      final user = _auth.currentUser;
-      if (user == null) {
-        print('❌ startLesson: Firebase Auth currentUser é null');
-        errorMessage.value = 'Usuário não autenticado. Por favor, faça login novamente.';
-        return;
-      }
-
-      final userId = user.uid;
-      if (userId.isEmpty) {
-        print('❌ startLesson: userId está vazio');
-        errorMessage.value = 'Usuário não autenticado. Por favor, faça login novamente.';
-        return;
-      }
-
-      print('✅ startLesson: Usuário autenticado - userId: $userId');
-
       final lessonIdInt = int.tryParse(lessonId);
       if (lessonIdInt == null) {
         errorMessage.value = 'ID de lição inválido.';
@@ -192,7 +182,7 @@ class LessonFlowController extends GetxController {
       }
 
       print('🔓 Verificando se lição $lessonIdInt está desbloqueada...');
-      final isUnlocked = await _isLessonUnlocked(courseId, lessonIdInt);
+      final isUnlocked = await _isLessonUnlocked(courseId, lessonIdInt, userId);
       if (!isUnlocked) {
         errorMessage.value = 'Complete a lição anterior para desbloquear esta.';
         return;
@@ -222,24 +212,22 @@ class LessonFlowController extends GetxController {
 
       currentExerciseIndex.value = 0;
 
-      try {
-        await _loadLessonData(courseId, lessonId);
-      } catch (e) {
-        errorMessage.value = 'Não foi possível carregar os exercícios. Tente novamente.';
-        _resetLessonState();
-        return;
-      }
+      await _loadLessonData(courseId, lessonId, userId);
 
       if (!_validateExerciseData()) {
         errorMessage.value = 'Dados dos exercícios inválidos. Tente novamente.';
         _resetLessonState();
         return;
       }
+    } on FirebaseException catch (e) {
+      print('❌ startLesson: FirebaseException - ${e.code}: ${e.message}');
+      errorMessage.value = 'error_generic'.tr;
+      _resetLessonState();
     } catch (e) {
-      errorMessage.value = 'Não foi possível carregar a lição. Tente novamente.';
+      print('❌ startLesson: Erro - $e');
+      errorMessage.value = 'error_generic'.tr;
       _resetLessonState();
     } finally {
-      // CORREÇÃO: Sempre resetar flag, mesmo em caso de erro
       _isLessonStarting = false;
       isLoading.value = false;
     }
@@ -316,26 +304,8 @@ class LessonFlowController extends GetxController {
   /// Carrega dados da lição e exercícios do Firestore com validação
   /// Se não encontrar no Firestore, usa dados mockados
   /// Lança exceção se dados não forem encontrados ou inválidos
-  Future<void> _loadLessonData(String courseId, String lessonId) async {
+  Future<void> _loadLessonData(String courseId, String lessonId, String userId) async {
     print('📚 _loadLessonData: Iniciando carregamento...');
-    
-    // VERIFICAR AUTENTICAÇÃO PRIMEIRO (CRÍTICO)
-    // Aguardar um pouco para garantir que Firebase Auth está pronto
-    await Future.delayed(const Duration(milliseconds: 100));
-    
-    final user = _auth.currentUser;
-    if (user == null) {
-      print('❌ _loadLessonData: Firebase Auth currentUser é null');
-      throw Exception('Usuário não autenticado');
-    }
-
-    final userId = user.uid;
-    if (userId.isEmpty) {
-      print('❌ _loadLessonData: userId está vazio');
-      throw Exception('Usuário não autenticado');
-    }
-
-    print('✅ _loadLessonData: Usuário autenticado - userId: $userId');
 
     try {
       final lessonDoc = await _firestore
@@ -397,6 +367,7 @@ class LessonFlowController extends GetxController {
           })
           .toList();
     } on FirebaseException catch (e) {
+      print('❌ _loadLessonData: FirebaseException - ${e.code}: ${e.message}');
       final mockLesson = LessonMocks.getLesson(courseId, lessonId);
       if (mockLesson != null) {
         final mockExercises = mockLesson['exercises'] as List<Map<String, dynamic>>;
@@ -419,26 +390,17 @@ class LessonFlowController extends GetxController {
 
       throw Exception('Erro ao carregar lição: ${e.message}');
     } catch (e) {
+      print('❌ _loadLessonData: Erro - $e');
       throw Exception('Erro ao carregar lição: $e');
     }
   }
   
   /// Verifica se a lição está desbloqueada
   /// Lição 1 sempre desbloqueada, outras requerem lição anterior completa
-  Future<bool> _isLessonUnlocked(String courseId, int lessonId) async {
+  Future<bool> _isLessonUnlocked(String courseId, int lessonId, String userId) async {
     try {
       // Lição 1 sempre desbloqueada
       if (lessonId == 1) return true;
-
-      // VERIFICAR AUTENTICAÇÃO PRIMEIRO (CRÍTICO)
-      // Aguardar um pouco para garantir que Firebase Auth está pronto
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      final user = _auth.currentUser;
-      if (user == null) return false;
-
-      final userId = user.uid;
-      if (userId.isEmpty) return false;
 
       // Verifica se lição anterior (lessonId - 1) está completa
       final previousLessonId = lessonId - 1;
@@ -455,7 +417,11 @@ class LessonFlowController extends GetxController {
 
       final status = progressDoc.data()?['status'] as String?;
       return status == 'completed';
+    } on FirebaseException catch (e) {
+      print('❌ _isLessonUnlocked: FirebaseException - ${e.code}: ${e.message}');
+      return false;
     } catch (e) {
+      print('❌ _isLessonUnlocked: Erro - $e');
       return false;
     }
   }

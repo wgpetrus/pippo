@@ -49,9 +49,9 @@ class XpLevelController extends GetxController {
     final diff = _xpBoosterUntil!.difference(now);
 
     if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}min restantes';
+      return 'common_time_minutes_remaining'.trParams({'minutes': '${diff.inMinutes}'});
     } else {
-      return '${diff.inHours}h restantes';
+      return 'common_time_hours_remaining'.trParams({'hours': '${diff.inHours}'});
     }
   }
 
@@ -66,6 +66,20 @@ class XpLevelController extends GetxController {
     
     // Carregar dados ao inicializar
     loadXpAndLevel();
+  }
+
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    totalXp.value = 0;
+    weeklyXP.value = 0;
+    todayXp.value = 0;
+    level.value = 1;
+    xpToNextLevel.value = 100;
+
+    super.onClose();
   }
 
   Future<void> loadXpAndLevel() async {
@@ -167,7 +181,7 @@ class XpLevelController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao carregar XP. Tente novamente.';
     } finally {
@@ -496,10 +510,6 @@ class XpLevelController extends GetxController {
 
   Timestamp _dateTimeToTimestamp(DateTime date) {
     return Timestamp.fromDate(date);
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {

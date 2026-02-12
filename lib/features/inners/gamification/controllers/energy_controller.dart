@@ -29,6 +29,16 @@ class EnergyController extends GetxController {
     loadEnergy();
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    currentEnergy.value = 5;
+
+    super.onClose();
+  }
+
   final currentEnergy = 5.obs;
 
   DateTime _lastEnergyRegenAt = DateTime.now();
@@ -138,7 +148,7 @@ class EnergyController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao carregar energia. Tente novamente.';
     } finally {
@@ -200,7 +210,7 @@ class EnergyController extends GetxController {
       
       print('⚡ Energia recarregada com sucesso! Energia atual: ${currentEnergy.value}');
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
       await loadEnergy();
     } catch (e) {
       errorMessage.value =
@@ -364,10 +374,6 @@ class EnergyController extends GetxController {
 
   Timestamp _dateTimeToTimestamp(DateTime date) {
     return Timestamp.fromDate(date);
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {

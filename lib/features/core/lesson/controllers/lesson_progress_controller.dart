@@ -33,6 +33,21 @@ class LessonProgressController extends GetxController {
 
   bool get isPerfect => totalAnswers.value > 0 && correctAnswers.value == totalAnswers.value;
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    hearts.value = 3;
+    correctAnswers.value = 0;
+    totalAnswers.value = 0;
+    startTime.value = null;
+    pauseTime.value = null;
+    accumulatedTime.value = 0;
+    lessonFailed.value = false;
+
+    super.onClose();
+  }
 
   void initializeLessonState() {
     hearts.value = 3;

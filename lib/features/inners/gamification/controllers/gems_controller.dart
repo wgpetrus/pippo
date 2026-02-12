@@ -29,6 +29,18 @@ class GemsController extends GetxController {
     loadGems();
   }
 
+  @override
+  void onClose() {
+    // Resetar estados
+    isLoading.value = false;
+    errorMessage.value = '';
+    gems.value = 0;
+    totalGemsEarned.value = 0;
+    totalGemsSpent.value = 0;
+
+    super.onClose();
+  }
+
   final gems = 0.obs;
   final totalGemsEarned = 0.obs;
   final totalGemsSpent = 0.obs;
@@ -50,9 +62,9 @@ class GemsController extends GetxController {
     final diff = _gemMultiplierUntil!.difference(now);
 
     if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}min restantes';
+      return 'common_time_minutes_remaining'.trParams({'minutes': '${diff.inMinutes}'});
     } else {
-      return '${diff.inHours}h restantes';
+      return 'common_time_hours_remaining'.trParams({'hours': '${diff.inHours}'});
     }
   }
 
@@ -153,7 +165,7 @@ class GemsController extends GetxController {
       errorMessage.value =
           'Tempo de espera esgotado. Verifique sua conexão e tente novamente.';
     } on FirebaseException catch (e) {
-      errorMessage.value = _handleFirestoreError(e);
+      errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
     } catch (e) {
       errorMessage.value = 'Erro ao carregar gems. Tente novamente.';
     } finally {
@@ -183,7 +195,7 @@ class GemsController extends GetxController {
         gems.value -= gemsToAdd;
         totalGemsEarned.value -= gemsToAdd;
       } on FirebaseException catch (e) {
-        errorMessage.value = _handleFirestoreError(e);
+        errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
         // Reverter valores locais em caso de erro
         gems.value -= gemsToAdd;
         totalGemsEarned.value -= gemsToAdd;
@@ -217,7 +229,7 @@ class GemsController extends GetxController {
         gems.value += amount;
         totalGemsSpent.value -= amount;
       } on FirebaseException catch (e) {
-        errorMessage.value = _handleFirestoreError(e);
+        errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
         // Reverter valores locais em caso de erro
         gems.value += amount;
         totalGemsSpent.value -= amount;
@@ -244,7 +256,7 @@ class GemsController extends GetxController {
         // Reverter valor em caso de erro
         _gemMultiplierUntil = previousMultiplier;
       } on FirebaseException catch (e) {
-        errorMessage.value = _handleFirestoreError(e);
+        errorMessage.value = ErrorHandler.getFirestoreErrorMessage(e);
         // Reverter valor em caso de erro
         _gemMultiplierUntil = previousMultiplier;
       } catch (e) {
@@ -367,10 +379,6 @@ class GemsController extends GetxController {
 
   Timestamp _dateTimeToTimestamp(DateTime date) {
     return Timestamp.fromDate(date);
-  }
-
-  String _handleFirestoreError(FirebaseException e) {
-    return ErrorHandler.getFirestoreErrorMessage(e);
   }
 
   Future<T> _retryOperation<T>(Future<T> Function() operation) async {
